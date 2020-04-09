@@ -1,0 +1,219 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|ARM">
+      <Configuration>Debug</Configuration>
+      <Platform>ARM</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|ARM">
+      <Configuration>Release</Configuration>
+      <Platform>ARM</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|ARM64">
+      <Configuration>Debug</Configuration>
+      <Platform>ARM64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|ARM64">
+      <Configuration>Release</Configuration>
+      <Platform>ARM64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\src\android\android_binder.c" />
+    <ClCompile Include="..\src\android\android_jni.c" />
+    <ClCompile Include="..\src\android\android_na.c" />
+    <ClCompile Include="..\src\android\app_android.c" />
+    <ClCompile Include="..\src\android\haptic.c" />
+    <ClCompile Include="..\src\common\bitmap.c" />
+    <ClCompile Include="..\src\common\button.c" />
+    <ClCompile Include="..\src\common\color.c" />
+    <ClCompile Include="..\src\common\font.c" />
+    <ClCompile Include="..\src\common\glh.c" />
+    <ClCompile Include="..\src\common\linmath.c" />
+    <ClCompile Include="..\src\common\rt.c" />
+    <ClCompile Include="..\src\common\screen_writer.c" />
+    <ClCompile Include="..\src\common\slider.c" />
+    <ClCompile Include="..\src\common\stb_font.c" />
+    <ClCompile Include="..\src\common\stb_image.c" />
+    <ClCompile Include="..\src\common\ui.c" />
+    <ClCompile Include="..\src\demo.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\src\android\android_binder.h" />
+    <ClInclude Include="..\src\android\android_jni.h" />
+    <ClInclude Include="..\src\android\android_na.h" />
+    <ClInclude Include="..\src\common\app.h" />
+    <ClInclude Include="..\src\common\bitmap.h" />
+    <ClInclude Include="..\src\common\button.h" />
+    <ClInclude Include="..\src\common\color.h" />
+    <ClInclude Include="..\src\common\font.h" />
+    <ClInclude Include="..\src\common\glh.h" />
+    <ClInclude Include="..\src\common\rt.h" />
+    <ClInclude Include="..\src\common\screen_writer.h" />
+    <ClInclude Include="..\src\common\slider.h" />
+    <ClInclude Include="..\src\common\stb_inc.h" />
+    <ClInclude Include="..\src\common\ui.h" />
+    <ClInclude Include="..\src\ext\linmath.h" />
+    <ClInclude Include="..\src\ext\stb_image.h" />
+    <ClInclude Include="..\src\ext\stb_rect_pack.h" />
+    <ClInclude Include="..\src\ext\stb_truetype.h" />
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{3B14C861-EABD-4B4B-89E8-567153E741EE}</ProjectGuid>
+    <Keyword>Android</Keyword>
+    <RootNamespace>ui.demo</RootNamespace>
+    <DefaultLanguage>en-US</DefaultLanguage>
+    <MinimumVisualStudioVersion>14.0</MinimumVisualStudioVersion>
+    <ApplicationType>Android</ApplicationType>
+    <ApplicationTypeRevision>3.0</ApplicationTypeRevision>
+    <ProjectName>ui.demo.na</ProjectName>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <AndroidAPILevel>android-24</AndroidAPILevel>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <AndroidAPILevel>android-24</AndroidAPILevel>
+    <UseOfStl>system</UseOfStl>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <AndroidAPILevel>android-24</AndroidAPILevel>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <AndroidAPILevel>android-24</AndroidAPILevel>
+    <UseOfStl>system</UseOfStl>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">
+    <OutDir>$(ProjectDir)..\lib\$(PlatformShortName)\$(Configuration)\</OutDir>
+    <IntDir>$(ProjectDir)..\build\$(PlatformShortName)\$(RootNamespace)\$(Configuration)\</IntDir>
+    <UseMultiToolTask>false</UseMultiToolTask>
+    <PostBuildEventUseInBuild>false</PostBuildEventUseInBuild>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">
+    <OutDir>$(ProjectDir)..\lib\$(PlatformShortName)\$(Configuration)\</OutDir>
+    <IntDir>$(ProjectDir)..\build\$(PlatformShortName)\$(RootNamespace)\$(Configuration)\</IntDir>
+    <UseMultiToolTask>false</UseMultiToolTask>
+    <PostBuildEventUseInBuild>false</PostBuildEventUseInBuild>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">
+    <OutDir>$(ProjectDir)..\lib\$(PlatformShortName)\$(Configuration)\</OutDir>
+    <IntDir>$(ProjectDir)..\build\$(PlatformShortName)\$(RootNamespace)\$(Configuration)\</IntDir>
+    <UseMultiToolTask>false</UseMultiToolTask>
+    <PostBuildEventUseInBuild>false</PostBuildEventUseInBuild>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM'">
+    <OutDir>$(ProjectDir)..\lib\$(PlatformShortName)\$(Configuration)\</OutDir>
+    <IntDir>$(ProjectDir)..\build\$(PlatformShortName)\$(RootNamespace)\$(Configuration)\</IntDir>
+    <UseMultiToolTask>false</UseMultiToolTask>
+    <PostBuildEventUseInBuild>false</PostBuildEventUseInBuild>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">
+    <ClCompile>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <CompileAs>CompileAsC</CompileAs>
+      <PreprocessorDefinitions>DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <CppLanguageStandard>c++11</CppLanguageStandard>
+      <CLanguageStandard>c11</CLanguageStandard>
+      <PrecompiledHeaderCompileAs>CompileAsC</PrecompiledHeaderCompileAs>
+      <AdditionalIncludeDirectories>..\src\common;..\src\android;..\src\ext;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <LibraryDependencies>%(LibraryDependencies);GLESv1_CM;GLESv2;EGL;m;</LibraryDependencies>
+    </Link>
+    <PostBuildEvent>
+      <Command>
+      </Command>
+    </PostBuildEvent>
+    <PostBuildEvent>
+      <Message>
+      </Message>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">
+    <ClCompile>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <PrecompiledHeaderFile>
+      </PrecompiledHeaderFile>
+      <CompileAs>CompileAsC</CompileAs>
+      <CppLanguageStandard>c++11</CppLanguageStandard>
+      <CLanguageStandard>c11</CLanguageStandard>
+      <PrecompiledHeaderCompileAs>CompileAsC</PrecompiledHeaderCompileAs>
+      <AdditionalIncludeDirectories>..\src\common;..\src\android;..\src\ext;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <LibraryDependencies>%(LibraryDependencies);GLESv1_CM;GLESv2;EGL;m;</LibraryDependencies>
+    </Link>
+    <PostBuildEvent>
+      <Command>
+      </Command>
+    </PostBuildEvent>
+    <PostBuildEvent>
+      <Message>
+      </Message>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">
+    <ClCompile>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <CompileAs>CompileAsC</CompileAs>
+      <PreprocessorDefinitions>DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <CppLanguageStandard>c++11</CppLanguageStandard>
+      <CLanguageStandard>c11</CLanguageStandard>
+      <PrecompiledHeaderCompileAs>CompileAsC</PrecompiledHeaderCompileAs>
+      <EnableNeonCodegen>true</EnableNeonCodegen>
+      <AdditionalIncludeDirectories>..\src\common;..\src\android;..\src\ext;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <LibraryDependencies>%(LibraryDependencies);GLESv1_CM;GLESv2;EGL;m;</LibraryDependencies>
+    </Link>
+    <PostBuildEvent>
+      <Command>
+      </Command>
+    </PostBuildEvent>
+    <PostBuildEvent>
+      <Message>
+      </Message>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM'">
+    <ClCompile>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <PrecompiledHeaderFile>
+      </PrecompiledHeaderFile>
+      <CompileAs>CompileAsC</CompileAs>
+      <CppLanguageStandard>c++11</CppLanguageStandard>
+      <CLanguageStandard>c11</CLanguageStandard>
+      <PrecompiledHeaderCompileAs>CompileAsC</PrecompiledHeaderCompileAs>
+      <EnableNeonCodegen>true</EnableNeonCodegen>
+      <AdditionalIncludeDirectories>..\src\common;..\src\android;..\src\ext;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <LibraryDependencies>%(LibraryDependencies);GLESv1_CM;GLESv2;EGL;m;</LibraryDependencies>
+    </Link>
+    <PostBuildEvent>
+      <Command>
+      </Command>
+    </PostBuildEvent>
+    <PostBuildEvent>
+      <Message>
+      </Message>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

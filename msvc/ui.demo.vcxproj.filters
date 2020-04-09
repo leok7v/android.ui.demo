@@ -1,0 +1,124 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="..\src\android\app_android.c">
+      <Filter>android</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\demo.c" />
+    <ClCompile Include="..\src\common\ui.c">
+      <Filter>common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\common\button.c">
+      <Filter>common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\common\slider.c">
+      <Filter>common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\common\bitmap.c">
+      <Filter>common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\common\stb_image.c">
+      <Filter>common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\common\stb_font.c">
+      <Filter>common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\common\font.c">
+      <Filter>common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\common\glh.c">
+      <Filter>common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\android\android_binder.c">
+      <Filter>android</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\android\haptic.c">
+      <Filter>android</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\android\android_na.c">
+      <Filter>android</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\common\color.c">
+      <Filter>common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\common\rt.c">
+      <Filter>common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\common\linmath.c">
+      <Filter>common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\common\screen_writer.c">
+      <Filter>common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\android\android_jni.c">
+      <Filter>android</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="android">
+      <UniqueIdentifier>{938debf5-db12-4b42-a90d-7703557ff702}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="common">
+      <UniqueIdentifier>{40799e1b-7400-4dad-ad16-73a4d1d8c742}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ext">
+      <UniqueIdentifier>{15582b9f-ee22-40fd-a903-1684f7a07d79}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\src\common\app.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\common\rt.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\ext\stb_rect_pack.h">
+      <Filter>ext</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\ext\stb_truetype.h">
+      <Filter>ext</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\common\ui.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\common\button.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\common\slider.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\common\bitmap.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\common\font.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\common\stb_inc.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\common\glh.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\android\android_binder.h">
+      <Filter>android</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\android\android_na.h">
+      <Filter>android</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\common\color.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\common\screen_writer.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\ext\linmath.h">
+      <Filter>ext</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\ext\stb_image.h">
+      <Filter>ext</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\android\android_jni.h">
+      <Filter>android</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>
