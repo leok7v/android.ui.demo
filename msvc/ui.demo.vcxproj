@@ -19,10 +19,8 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\src\android\android_binder.c" />
     <ClCompile Include="..\src\android\android_jni.c" />
     <ClCompile Include="..\src\android\app_android.c" />
-    <ClCompile Include="..\src\android\haptic.c" />
     <ClCompile Include="..\src\common\bitmap.c" />
     <ClCompile Include="..\src\common\button.c" />
     <ClCompile Include="..\src\common\color.c" />
@@ -38,7 +36,6 @@
     <ClCompile Include="..\src\demo.c" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\src\android\android_binder.h" />
     <ClInclude Include="..\src\android\android_jni.h" />
     <ClInclude Include="..\src\common\app.h" />
     <ClInclude Include="..\src\common\bitmap.h" />

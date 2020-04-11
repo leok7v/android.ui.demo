@@ -29,12 +29,6 @@
     <ClCompile Include="..\src\common\glh.c">
       <Filter>common</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\android\android_binder.c">
-      <Filter>android</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\android\haptic.c">
-      <Filter>android</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\common\color.c">
       <Filter>common</Filter>
     </ClCompile>
@@ -95,9 +89,6 @@
     </ClInclude>
     <ClInclude Include="..\src\common\glh.h">
       <Filter>common</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\android\android_binder.h">
-      <Filter>android</Filter>
     </ClInclude>
     <ClInclude Include="..\src\common\color.h">
       <Filter>common</Filter>
