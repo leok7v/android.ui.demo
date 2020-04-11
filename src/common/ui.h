@@ -77,12 +77,17 @@ typedef struct pointf_s { float x, y; } pointf_t;
 typedef struct ui_s ui_t;
 typedef struct timer_callback_s timer_callback_t;
 
+enum {
+    NS_IN_MS = 1000000,
+    NS_IN_SEC = NS_IN_MS * 1000
+};
+
 typedef struct timer_callback_s {
-    int milliseconds;
-    int id; // timer id is only valid after succesful time
     void* that;
     void (*callback)(timer_callback_t* timer_callback);
-    int64_t last_fired_milliseconds; // must be zero before calling set_timer()
+    int id; // timer id is only valid after succesful time
+    uint64_t ns; // period in nanoseconds
+    uint64_t last_fired; // monotonic ns since app start_time, must be zero before calling set_timer()
 } timer_callback_t;
 
 /* theory of operations:

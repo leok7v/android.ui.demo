@@ -21,7 +21,6 @@
   <ItemGroup>
     <ClCompile Include="..\src\android\android_binder.c" />
     <ClCompile Include="..\src\android\android_jni.c" />
-    <ClCompile Include="..\src\android\android_na.c" />
     <ClCompile Include="..\src\android\app_android.c" />
     <ClCompile Include="..\src\android\haptic.c" />
     <ClCompile Include="..\src\common\bitmap.c" />
@@ -41,7 +40,6 @@
   <ItemGroup>
     <ClInclude Include="..\src\android\android_binder.h" />
     <ClInclude Include="..\src\android\android_jni.h" />
-    <ClInclude Include="..\src\android\android_na.h" />
     <ClInclude Include="..\src\common\app.h" />
     <ClInclude Include="..\src\common\bitmap.h" />
     <ClInclude Include="..\src\common\button.h" />

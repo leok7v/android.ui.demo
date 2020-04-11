@@ -49,11 +49,11 @@ typedef struct application_s {
 
 static inline_c float pt2px(app_t* a, float pt) { return pt * a->xdpi / 72.0f; }
 
-enum { TOAST_TIME_IN_MS = 2750 }; // 2.75s
+static const uint64_t TOAST_TIME_IN_MS = 2750; // 2.75s
 
 static void toast_timer_callback(timer_callback_t* timer_callback) {
     application_t* app = (application_t*)timer_callback->that;
-    app->a->invalidate();
+    app->a->invalidate(app->a);
 }
 
 static void toast_add(application_t* app) {
@@ -61,9 +61,9 @@ static void toast_add(application_t* app) {
     app->toast_start_time = app->a->time_in_nanoseconds;
     app->toast_timer_callback.id = 0;
     app->toast_timer_callback.that = app;
-    app->toast_timer_callback.milliseconds = TOAST_TIME_IN_MS / 10;
+    app->toast_timer_callback.ns = TOAST_TIME_IN_MS * NS_IN_MS / 10;
     app->toast_timer_callback.callback = toast_timer_callback;
-    app->toast_timer_callback.last_fired_milliseconds = 0;
+    app->toast_timer_callback.last_fired = 0;
     app->a->timer_add(app->a, &app->toast_timer_callback);
 }
 
@@ -178,12 +178,12 @@ static void textures_draw(ui_t* view) {
 
 static void on_quit(button_t* b) {
     application_t* app = (application_t*)b->ui.a->that;
-    app->a->quit();
+    app->a->quit(app->a);
 }
 
 static void on_exit(button_t* b) {
     application_t* app = (application_t*)b->ui.a->that;
-    app->a->exit(153); // gdb shows octal 0o231 exit status for some reason...
+    app->a->exit(app->a, 153); // gdb shows octal 0o231 exit status for some reason...
 }
 
 static void init_ui(application_t* app) {

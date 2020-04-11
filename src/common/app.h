@@ -22,18 +22,18 @@ enum { // vibration_effect
 typedef struct app_s app_t;
 
 typedef struct app_s {
-    void*  that;    // pointer to the application specific data
-    void*  context; // pointer to the platform application specific data
+    void*  that; // pointer to the application specific data
+    void*  glue; // pointer to the platform glue data
     ui_t*  root;
     ui_t*  focused;  // ui that has keyboard focus or null
     float xdpi;
     float ydpi;
     int keyboard_flags; // last keyboard flags (CTRL, SHIFT, ALT, SYM, FN, NUMLOCK, CAPSLOCK)
     int mouse_flags;    // last mouse button flags
-    int last_mouse_x;   // last mouse coordinates
+    int last_mouse_x;   // last mouse screen coordinates
     int last_mouse_y;
     int trace_flags;
-    int64_t time_in_nanoseconds; // since application start update on each event or animation
+    uint64_t time_in_nanoseconds; // since application start update on each event or animation
     // app callbacks:
     void (*init)(app_t* a); // called on application/activity start up but before window has been shown
     void (*shown)(app_t* a);
@@ -44,12 +44,12 @@ typedef struct app_s {
     void (*resume)(app_t* a);  // e.g. when "adb shell input keyevent KEYCODE_WAKE"
     void (*destroy)(app_t* a); // after hidden() and stop()
     // actions that application code can call:
-    void (*quit)();         // quit application/activity (on Android it will now exit process)
-    void (*exit)(int code); // trying to exit application gracefully with specified return code
-    void (*invalidate)();   // make application redraw once
-    void (*animate)(int animating); // animating !=0 make application continuosly redraw
+    void (*quit)(app_t* app);           // quit application/activity (on Android it will now exit process)
+    void (*exit)(app_t* app, int code); // trying to exit application gracefully with specified return code
+    void (*invalidate)(app_t* app);     // make application redraw once
+    void (*animate)(app_t* app, int animating); // animating !=0 make application continuosly redraw
     // ui:
-    void (*focus)(ui_t* ui); // set keyboard focus on particular ui element
+    void (*focus)(app_t* app, ui_t* ui); // set application keyboard focus on particular ui element or null
     // timers:
     int  (*timer_add)(app_t* a, timer_callback_t* tcb); // returns timer id > 0 or 0 if fails (too many timers)
     void (*timer_remove)(app_t* a, timer_callback_t* tcb);

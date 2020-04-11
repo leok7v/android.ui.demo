@@ -9,7 +9,7 @@ static const char* SLIDER_INC_LABEL = "[+]";
 
 static void slider_notify(slider_t* s) {
     s->notify(s);
-    s->ui.a->invalidate(); // after notify because notify may do something to layout etc...
+    s->ui.a->invalidate(s->ui.a); // after notify because notify may do something to layout etc...
 }
 
 static int slider_scale(slider_t* s) {
@@ -55,7 +55,9 @@ static void slider_autorepeat(timer_callback_t* tcb) {
     if ((s->ui.a->mouse_flags & MOUSE_LBUTTON_FLAG) == 0 && tcb->id > 0) {
         s->ui.a->timer_remove(s->ui.a, tcb);
     } else {
-        if (slider_click_inc_dec(s, slider_dec_inc(s, s->ui.a->last_mouse_x, s->ui.a->last_mouse_x), slider_scale(s))) {
+        const int x = s->ui.a->last_mouse_x - s->ui.x;
+        const int y = s->ui.a->last_mouse_y - s->ui.y;
+        if (slider_click_inc_dec(s, slider_dec_inc(s, x, y), slider_scale(s))) {
             slider_notify(s);
         }
     }
@@ -66,7 +68,7 @@ static void slider_start_autorepeat(timer_callback_t* tcb) {
     s->ui.a->timer_remove(s->ui.a, tcb);
     if ((s->ui.a->mouse_flags & MOUSE_LBUTTON_FLAG) != 0) {
         s->timer_callback.callback = slider_autorepeat;
-        s->timer_callback.milliseconds = 1000 / 30; // 30 times per second
+        s->timer_callback.ns = (1000ULL * NS_IN_MS) / 30; // 30 times per second
         s->ui.a->timer_add(s->ui.a, tcb);
     }
 }
@@ -80,7 +82,7 @@ static void slider_mouse(ui_t* self, int mouse_action, float x, float y) {
             if (s->timer_callback.id <= 0) {
                 s->timer_callback.that = s;
                 s->timer_callback.callback = slider_start_autorepeat;
-                s->timer_callback.milliseconds = 350; // first timer fires in 350 milliseconds
+                s->timer_callback.ns = 350ULL * NS_IN_MS; // first timer fires in 350 milliseconds
                 a->timer_add(self->a, &s->timer_callback);
             }
             slider_notify(s);

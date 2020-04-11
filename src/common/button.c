@@ -48,7 +48,7 @@ static void button_mouse(ui_t* self, int mouse_action, float x, float y) {
     button_t* b = (button_t*)self;
     if (mouse_action & MOUSE_LBUTTON_DOWN) {
         b->bitset |= BUTTON_STATE_PRESSED;
-        self->a->invalidate();
+        self->a->invalidate(self->a);
     }
     if (mouse_action & MOUSE_LBUTTON_UP) {
         // TODO: (Leo) if we need 3 (or more) state flip this is the place to do it. b->flip = (b->flip + 1) % b->checkbox_wrap_around;
@@ -56,7 +56,7 @@ static void button_mouse(ui_t* self, int mouse_action, float x, float y) {
         if (b->click != null) { b->click(b); }
         b->ui.a->vibrate(b->ui.a, EFFECT_CLICK);
         b->bitset &= ~BUTTON_STATE_PRESSED;
-        self->a->invalidate();
+        self->a->invalidate(self->a);
     }
 }
 
@@ -66,7 +66,7 @@ static void button_screen_mouse(ui_t* self, int mouse_action, float x, float y) 
     bool inside = pt.x <= x && x < pt.x + self->w && pt.y <= y && y <pt.y + self->h;
     if (!inside && (b->bitset & (BUTTON_STATE_PRESSED|BUTTON_STATE_ARMED) != 0)) {
         b->bitset &= ~(BUTTON_STATE_PRESSED|BUTTON_STATE_ARMED); // disarm button
-        self->a->invalidate();
+        self->a->invalidate(self->a);
     }
 }
 
@@ -81,7 +81,7 @@ button_t* button_create(ui_t* parent, void* that, ui_expo_t* expo,
         b->ui.parent = null;
         b->ui.children = null;
         b->ui.next = null;
-        b->ui.focusable = false;
+        b->ui.focusable = true; // buttons are focusable by default
         b->ui.hidden = false;
         b->click = null;
         b->key = key;

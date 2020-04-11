@@ -76,8 +76,7 @@ static void ui_draw(ui_t* self) {
 static void ui_mouse(ui_t* self, int mouse_action, float x, float y) {
     ui_t* c = self->children;
     while (c != null) {
-        if (!c->hidden && c->x <= x && x < c->x + c->w && c->y <= y && y < c->y + c->h &&
-            c->mouse != null) {
+        if (!c->hidden && c->x <= x && x < c->x + c->w && c->y <= y && y < c->y + c->h && c->mouse != null) {
             c->mouse(c, mouse_action, x - c->x, y - c->y);
         }
         c = c->next;
