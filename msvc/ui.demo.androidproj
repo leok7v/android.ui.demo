@@ -98,11 +98,15 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="assets\bw.png" />
+    <Content Include="assets\circle_fragment.glsl" />
+    <Content Include="assets\circle_vertex.glsl" />
     <Content Include="assets\cube-320x240.png" />
     <Content Include="assets\geometry-320x240.png" />
     <Content Include="assets\gs.png" />
     <Content Include="assets\liberation-mono-bold-ascii.ttf" />
     <Content Include="assets\machine-320x240.png" />
+    <Content Include="assets\main_fragment.glsl" />
+    <Content Include="assets\main_vertex.glsl" />
     <Content Include="assets\rgb.png" />
     <Content Include="res\drawable\ui.png" />
     <Content Include="res\values\strings.xml" />

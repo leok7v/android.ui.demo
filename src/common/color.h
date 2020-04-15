@@ -3,7 +3,7 @@
 
 BEGIN_C
 
-typedef struct colorf_s { float r, g, b, a; } colorf_t;
+typedef struct colorf_s { float r, g, b, a; } packed colorf_t;
 
 typedef struct colors_s { // treat all fields as a const
     colorf_t transparent;

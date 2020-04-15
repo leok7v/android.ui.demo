@@ -56,7 +56,6 @@ int bitmap_allocate_texture(bitmap_t* b) {
     assertion(b->ti == 0, "texture already attached to bitmap ti=%d", b->ti);
     if (b->ti != 0) {
         r = EINVAL;
-    } else if (glGetError() != 0) {
     } else {
         GLuint ti = 0;
         glGenTextures(1, &ti);

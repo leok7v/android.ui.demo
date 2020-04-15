@@ -47,6 +47,7 @@
 #define null NULL
 typedef uint8_t byte;
 #define inline_c inline
+#define packed __attribute__((packed))
 
 #define max(a, b) ((a) > (b) ? (a) : (b))
 #define min(a, b) ((a) < (b) ? (a) : (b))

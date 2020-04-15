@@ -3,6 +3,7 @@
 #include "button.h"
 #include "android_jni.h" // interface to Java only code (going via binder is too involving)
 #include <EGL/egl.h>
+#include <EGL/eglext.h>
 #include <android/configuration.h>
 #include <android/sensor.h>
 #include <android/asset_manager.h>
@@ -180,7 +181,7 @@ static const char* cmd2str(int command) {
 }
 
 static uint64_t time_monotonic_ns() {
-    struct timespec tm = { 0 };
+    struct timespec tm = {};
     clock_gettime(CLOCK_MONOTONIC, &tm);
     return NS_IN_SEC * (int64_t)tm.tv_sec + tm.tv_nsec;
 }
@@ -225,7 +226,8 @@ static int init_display(glue_t* glue) {
     eglGetConfigAttrib(display, config, EGL_NATIVE_VISUAL_ID, &format);
     ANativeWindow_setBuffersGeometry(glue->window, 0, 0, format);
     EGLSurface surface = eglCreateWindowSurface(display, config, glue->window, null);
-    EGLContext context = eglCreateContext(display, config, null, null);
+    const EGLint context_attributes[] = { EGL_CONTEXT_CLIENT_VERSION, 3, EGL_NONE };
+    EGLContext context = eglCreateContext(display, config, null, context_attributes);
     if (eglMakeCurrent(display, surface, surface, context) == EGL_FALSE) {
         traceln("eglMakeCurrent() failed");
         return -1;
@@ -241,7 +243,8 @@ static int init_display(glue_t* glue) {
     glue->a->root->h = h;
     glue->a->xdpi = w / glue->inches_wide;
     glue->a->ydpi = h / glue->inches_high;
-    gl_init(glue->a->root->w, glue->a->root->h);
+    gl_init(glue->a->root->w, glue->a->root->h, glue->a->projection);
+    mat4x4_identity(glue->a->view);
     return 0;
 }
 

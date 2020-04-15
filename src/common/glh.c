@@ -1,5 +1,6 @@
 #include "glh.h"
 #include <GLES/gl.h>
+#include <GLES3/gl3.h>
 
 BEGIN_C
 
@@ -60,27 +61,31 @@ void gl_ortho2D(float* mat, float left, float right, float bottom, float top) {
     *mat   = 1;
 }
 
-int gl_init(int w, int h) {
+static mat4x4 m4x4_zero;
+
+int gl_init(int w, int h, mat4x4 projection_matrix) {
     int r = 0;
     const char* gl_version = (const char*)glGetString(GL_VERSION); (void)gl_version;
-//  traceln("GL_VERSION=%s", gl_version);
-    float projection_matrix[16] = { 0 };
- // gl_if_no_error(glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_FASTEST));
-    gl_if_no_error(r, glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST));
-    gl_if_no_error(r, glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE));
-    gl_if_no_error(r, glEnable(GL_TEXTURE_2D));
+    traceln("GL_VERSION=%s", gl_version);
+    memcpy(projection_matrix, m4x4_zero, sizeof(m4x4_zero));
+//  These hints were removed in OpenGL ES 3.x and above
+//  gl_if_no_error(r, glHint(GL_POINT_SMOOTH_HINT, GL_NICEST));
+//  gl_if_no_error(r, glHint(GL_LINE_SMOOTH_HINT, GL_NICEST));
+//  gl_if_no_error(r, glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_FASTEST));
+//  gl_if_no_error(r, glEnable(GL_TEXTURE_2D));
+//  gl_if_no_error(r, glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE));
     gl_if_no_error(r, glEnable(GL_BLEND));
     gl_if_no_error(r, glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
-    gl_if_no_error(r, glShadeModel(GL_SMOOTH));
+//  gl_if_no_error(r, glShadeModel(GL_SMOOTH));
     gl_if_no_error(r, glDisable(GL_CULL_FACE));
-    gl_if_no_error(r, glDisable(GL_LIGHTING));
+//  gl_if_no_error(r, glDisable(GL_LIGHTING));
     gl_if_no_error(r, glDisable(GL_DEPTH_TEST));
     gl_if_no_error(r, glViewport(0, 0, w, h));
-    gl_if_no_error(r, glMatrixMode(GL_PROJECTION));
-    gl_if_no_error(r, glLoadIdentity());
-    gl_if_no_error(r, gl_ortho2D(projection_matrix, 0, w, h, 0));/* near -1 far +1 */
-    gl_if_no_error(r, glMultMatrixf(projection_matrix));
-    gl_if_no_error(r, glMatrixMode(GL_MODELVIEW));
+//  gl_if_no_error(r, glMatrixMode(GL_PROJECTION));
+//  gl_if_no_error(r, glLoadIdentity());
+//  gl_if_no_error(r, gl_ortho2D(projection_matrix, 0, w, h, 0));/* near -1 far +1 */
+//  gl_if_no_error(r, glMultMatrixf(projection_matrix));
+//  gl_if_no_error(r, glMatrixMode(GL_MODELVIEW));
     return r;
 }
 
@@ -88,8 +93,8 @@ int gl_init_texture(int ti) {
     int r = 0;
     gl_if_no_error(r, glBindTexture(GL_TEXTURE_2D, ti));
     gl_if_no_error(r, glPixelStorei(GL_UNPACK_ALIGNMENT, 1));
-    gl_if_no_error(r, glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
-    gl_if_no_error(r, glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
+    gl_if_no_error(r, glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST)); // !no interpolation please!
+    gl_if_no_error(r, glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST)); // vs GL_LINEAR
     gl_if_no_error(r, glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
     gl_if_no_error(r, glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
     gl_if_no_error(r, glBindTexture(GL_TEXTURE_2D, 0));
@@ -220,7 +225,7 @@ int gl_trace_errors_(const char* file, int line, const char* func, const char* c
             gle = e; // last error
         }
         text[countof(text) - 1] = 0;
-        _traceln_(f, line, func, "%s failed %s", call, text);
+//      _traceln_(f, line, func, "%s failed %s", call, text);
         _assertion_(f, line, func, call, "failed %s", text);
     }
     return gle;

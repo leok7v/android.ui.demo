@@ -29,6 +29,7 @@
     <ClCompile Include="..\src\common\linmath.c" />
     <ClCompile Include="..\src\common\rt.c" />
     <ClCompile Include="..\src\common\screen_writer.c" />
+    <ClCompile Include="..\src\common\shaders_gles3.c" />
     <ClCompile Include="..\src\common\slider.c" />
     <ClCompile Include="..\src\common\stb_font.c" />
     <ClCompile Include="..\src\common\stb_image.c" />
@@ -45,6 +46,7 @@
     <ClInclude Include="..\src\common\glh.h" />
     <ClInclude Include="..\src\common\rt.h" />
     <ClInclude Include="..\src\common\screen_writer.h" />
+    <ClInclude Include="..\src\common\shaders.h" />
     <ClInclude Include="..\src\common\slider.h" />
     <ClInclude Include="..\src\common\stb_inc.h" />
     <ClInclude Include="..\src\common\ui.h" />
@@ -127,7 +129,7 @@
       <AdditionalIncludeDirectories>..\src\common;..\src\android;..\src\ext;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
-      <LibraryDependencies>%(LibraryDependencies);GLESv1_CM;GLESv2;EGL;m;</LibraryDependencies>
+      <LibraryDependencies>%(LibraryDependencies);GLESv1_CM;GLESv2;GLESv3;EGL;m;</LibraryDependencies>
     </Link>
     <PostBuildEvent>
       <Command>
@@ -150,7 +152,7 @@
       <AdditionalIncludeDirectories>..\src\common;..\src\android;..\src\ext;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
-      <LibraryDependencies>%(LibraryDependencies);GLESv1_CM;GLESv2;EGL;m;</LibraryDependencies>
+      <LibraryDependencies>%(LibraryDependencies);GLESv1_CM;GLESv2;GLESv3;EGL;m;</LibraryDependencies>
     </Link>
     <PostBuildEvent>
       <Command>
@@ -173,7 +175,7 @@
       <AdditionalIncludeDirectories>..\src\common;..\src\android;..\src\ext;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
-      <LibraryDependencies>%(LibraryDependencies);GLESv1_CM;GLESv2;EGL;m;</LibraryDependencies>
+      <LibraryDependencies>%(LibraryDependencies);GLESv1_CM;GLESv2;GLESv3;EGL;m;</LibraryDependencies>
     </Link>
     <PostBuildEvent>
       <Command>
@@ -197,7 +199,7 @@
       <AdditionalIncludeDirectories>..\src\common;..\src\android;..\src\ext;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
-      <LibraryDependencies>%(LibraryDependencies);GLESv1_CM;GLESv2;EGL;m;</LibraryDependencies>
+      <LibraryDependencies>%(LibraryDependencies);GLESv1_CM;GLESv2;GLESv3;EGL;m;</LibraryDependencies>
     </Link>
     <PostBuildEvent>
       <Command>

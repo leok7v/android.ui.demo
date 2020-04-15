@@ -55,8 +55,8 @@ static int pack_font_to_texture(font_t* f, const void* ttf, stbtt_packedchar* ch
 
 static int load_asset(font_t* f, app_t* a, const char* name, int hpx, int from, int count) {
     int r = 0;
-    const void* data = null;
     int bytes = 0;
+    const void* data = null;
     void* asset = a->asset_map(a, name, &data, &bytes);
     assertion(asset != null, "asset \"%s\"not found", name);
     if (asset == null) {

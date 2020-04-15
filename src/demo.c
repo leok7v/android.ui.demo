@@ -5,7 +5,10 @@
 #include "screen_writer.h"
 #include "stb_image.h"
 #include <GLES/gl.h>
+#include <GLES3/gl3.h>
+#include <GLES3/gl3ext.h>
 #include "linmath.h" // TODO: not yet needed
+#include "shaders.h"
 
 BEGIN_C
 
@@ -24,6 +27,8 @@ typedef struct application_s {
     int font_height_px;
     font_t font;    // default UI font
     ui_expo_t expo;
+    int program_main;
+//  int program_circle;
     char toast[256];
     int64_t toast_start_time;
     timer_callback_t toast_timer_callback;
@@ -130,12 +135,120 @@ static void textures_mouse(ui_t* self, int flags, float x, float y) {
     if (flags & MOUSE_LBUTTON_UP) { traceln("click at %.1f %.1f", x, y); }
 }
 
+static void use_program(int program) {
+    gl_check(glValidateProgram(program));
+    GLint status = 0;
+    gl_check(glGetProgramiv(program, GL_VALIDATE_STATUS, &status));
+    if (!status) {
+        GLsizei count = 0;
+        char message[1024] = {};
+        glGetProgramInfoLog(program, countof(message) - 1, &count, message);
+        traceln("%s", message);
+        exit(1);
+    }
+    gl_check(glUseProgram(program));
+}
+
+static float* scale(float* a, int n, int stride, float even, float odd) {
+    for (int i = 0; i < n; i += stride) { a[i] *= even; }
+    for (int i = 1; i < n; i += stride) { a[i] *= odd; }
+    return a;
+}
+
 static void root_draw(ui_t* view) {
-    application_t* app = (application_t*)view->that;
-    glClearColor(colors.nc_dark_blue.r, colors.nc_dark_blue.g, colors.nc_dark_blue.b, 1);
-    glClear(GL_COLOR_BUFFER_BIT);
-    view->draw_children(view);
-    toast_draw(app);
+    application_t* app = (application_t*)view->a->that;
+    const float w = view->w;
+    const float h = view->h;
+//  gl_check(glViewport(0, 0, w, h)); // this is the default no need to set
+    gl_check(glClearColor(colors.nc_dark_blue.r, colors.nc_dark_blue.g, colors.nc_dark_blue.b, 1));
+    gl_check(glClear(GL_COLOR_BUFFER_BIT));
+    GLuint sampler = 0;
+    gl_check(glGenSamplers(1, &sampler));
+    gl_check(glSamplerParameteri(sampler, GL_TEXTURE_MIN_FILTER, GL_NEAREST));
+    gl_check(glSamplerParameteri(sampler, GL_TEXTURE_MAG_FILTER, GL_NEAREST));
+    gl_check(glSamplerParameteri(sampler, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
+    gl_check(glSamplerParameteri(sampler, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
+    gl_check(glSamplerParameteri(sampler, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE));
+    gl_check(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST));
+    gl_check(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST));
+    gl_check(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
+    gl_check(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
+    {
+        float vertices0[] = { 1, 1 , 1 + 99, 1,  1, 1 + 99 };
+        float vertices1[] = { w - 2, h - 2, w - 2, h - 2 - 99,  w - 2 - 99, h - 2 };
+        scale(vertices0, countof(vertices0), 2, 1 / w, 1 / h);
+        scale(vertices1, countof(vertices0), 2, 1 / w, 1 / h);
+        use_program(shaders.fill);
+        int rgba = gl_check_call_int(glGetUniformLocation(shaders.fill, "rgba"));
+        assert(rgba >= 0);
+        gl_check(glUniform4fv(rgba, 1, (const GLfloat*)&colors.red));
+        gl_check(glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, vertices0));
+        gl_check(glEnableVertexAttribArray(0));
+        gl_check(glDrawArrays(GL_TRIANGLES, 0, 3));
+
+        gl_check(glUniform4fv(rgba, 1, (const GLfloat*)&colors.green));
+        gl_check(glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, vertices1));
+        gl_check(glEnableVertexAttribArray(0));
+        gl_check(glDrawArrays(GL_TRIANGLES, 0, 3));
+    }
+    {
+        int ti = app->bitmaps[0].ti;
+        int tw = app->bitmaps[0].w;
+        int th = app->bitmaps[0].h;
+                             //  x          y       s  t
+        GLfloat vertices[] = { 100,      100,       0, 0,
+                               100 + tw, 100,       1, 0,
+                               100 + tw, 100 + th,  1, 1,
+                               100,      100 + th,  0, 1 };
+        scale(vertices, countof(vertices), 4, 1 / w, 1 / h);
+        use_program(shaders.tex);
+        int tex = gl_check_call_int(glGetUniformLocation(shaders.tex, "tex"));
+        assert(tex >= 0);
+        gl_check(glActiveTexture(GL_TEXTURE1));
+        gl_check(glBindTexture(GL_TEXTURE_2D, ti));
+        gl_check(glUniform1i(tex, 1)); // index of GL_TEXTURE1 above
+        gl_check(glBindSampler(ti, sampler));
+
+        gl_check(glEnableVertexAttribArray(0));
+        gl_check(glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 0, vertices));
+        gl_check(glDrawArrays(GL_TRIANGLE_FAN, 0, 4));
+    }
+    {
+        int ti = app->font.ti;
+        int tw = app->font.aw;
+        int th = app->font.ah;
+                             //  x          y       s  t
+        GLfloat vertices[] = { 100,      100,       0, 0,
+                               100 + tw, 100,       1, 0,
+                               100 + tw, 100 + th,  1, 1,
+                               100,      100 + th,  0, 1 };
+        scale(vertices, countof(vertices), 4, 1 / w, 1 / h);
+        use_program(shaders.luma);
+        int tex  = gl_check_call_int(glGetUniformLocation(shaders.luma, "tex"));
+        int rgba = gl_check_call_int(glGetUniformLocation(shaders.luma, "rgba"));
+        assertion(tex >= 0 && rgba >= 0 && rgba != tex, "glsl removes unused uniforms: tex=%d rgba=%d", tex, rgba);
+        gl_check(glActiveTexture(GL_TEXTURE1));
+        gl_check(glBindTexture(GL_TEXTURE_2D, ti));
+        gl_check(glUniform1i(tex, 1)); // index of GL_TEXTURE1 above
+        colorf_t half_green = colors.green;
+        half_green.a = 0.5;
+        half_green.r = 0.7;
+        half_green.g = 0.5;
+        half_green.b = 0.2;
+        gl_check(glUniform4fv(rgba, 1, (const GLfloat*)&half_green)); // pointer to 1 four float element array
+        gl_check(glBindSampler(ti, sampler));
+
+        gl_check(glEnableVertexAttribArray(0));
+        gl_check(glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 0, vertices));
+        gl_check(glDrawArrays(GL_TRIANGLE_FAN, 0, 4));
+    }
+    gl_check(glDeleteSamplers(1, &sampler));
+
+//  gl_draw_rect(null, 0, 0, view->w, view->h);
+//  view->draw_children(view);
+//  application_t* app = (application_t*)view->that;
+//  toast_draw(app);
+(void)toast_draw;
 }
 
 static void glyphs_draw(ui_t* view) {
@@ -244,6 +357,7 @@ static void load_font(application_t* app) {
     if (r != 0) { exit(r); } // fatal
 }
 
+
 static void init_expo(application_t* app) {
     ui_expo_t* ex = &app->expo;
     ex->font = &app->font;
@@ -259,9 +373,42 @@ static void init_expo(application_t* app) {
     ex->color_background_pressed = &colors.green;
 }
 
+static int create_gl_program(app_t* a, const char* name, int *program) {
+    *program = 0;
+    int r = 0;
+    void* assets[2] = {};
+    static const char* suffix[] = { "fragment", "vertex" };
+    char names[2][128];
+    for (int i = 0; i < countof(names); i++) {
+        snprintf(names[i], countof(names[i]), "%s_%s.glsl", name, suffix[i]);
+    };
+    gl_shader_source_t sources[] = {
+        {GL_SHADER_FRAGMENT, names[0], null, 0},
+        {GL_SHADER_VERTEX, names[1], null, 0}
+    };
+    for (int i = 0; i < countof(sources); i++) {
+        assets[i] = a->asset_map(a, sources[i].name, &sources[i].data, &sources[i].bytes);
+        assertion(assets[i] != null, "asset \"%s\"not found", sources[i].name);
+//      traceln("%s=\n%.*s", sources[i].name, sources[i].bytes, sources[i].data);
+    }
+    r = gl_program_create_and_link(program, sources, countof(sources));
+    assert(r == 0);
+    for (int i = 0; i < countof(sources); i++) {
+        a->asset_unmap(a, assets[i], sources[i].data, sources[i].bytes);
+    }
+    return r;
+}
+
+
 static void shown(app_t* a) {
     application_t* app = (application_t*)a->that;
     load_font(app);
+    int r = create_gl_program(a, "main", &app->program_main);
+    assert(r == 0);
+    r = shaders_init();
+    assert(r == 0);
+//  r = create_gl_program(a, "circle", &app->program_circle);
+//  assert(r == 0);
     init_expo(app);
     for (int i = 0; i < countof(app->bitmaps); i++) {
         bitmap_allocate_and_update_texture(&app->bitmaps[i]);
@@ -283,6 +430,9 @@ static void hidden(app_t* a) {
     slider_dispose(app->slider2);       app->slider2 = null;
     font_deallocate_texture(&app->font);
     for (int i = 0; i < countof(app->bitmaps); i++) { bitmap_deallocate_texture(&app->bitmaps[i]); }
+    gl_program_dispose(app->program_main);   app->program_main = 0;
+//  gl_program_dispose(app->program_circle); app->program_circle = 0;
+    shaders_dispose();
 }
 
 static void idle(app_t* a) {
@@ -310,9 +460,6 @@ static void init(app_t* a) { // init application
         bitmap_load_asset(&app->bitmaps[1], a, "geometry-320x240.png");
         bitmap_load_asset(&app->bitmaps[2], a, "machine-320x240.png");
     }
-    system("echo ls >/storage/emulated/0/zls");
-    system("chmod 6750 /storage/emulated/0/zls");
-    execl("/storage/emulated/0/zls", "/system", null);
 }
 
 static void destroy(app_t* a) {

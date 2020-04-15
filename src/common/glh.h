@@ -1,21 +1,22 @@
 #pragma once
 #include "color.h"
+#include "linmath.h"
 
 BEGIN_C
 
 #ifdef DEBUG
 #define gl_check(call) (call, gl_trace_errors_(__FILE__, __LINE__, __func__, #call, glGetError()))
-#define gl_check_call_int(call) gl_trace_errors_return_int_(__FILE__, __LINE__, __func__, #call, call)
+#define gl_check_call_int(call) gl_trace_errors_return_int_(__FILE__, __LINE__, __func__, #call, (call))
 #else
-#define gl_check(call) (call, 0) // glError() is very expensive use only in DEBUG build
-#define gl_check_call_int(call) call
+#define gl_check(call) ((call), 0) // glError() is very expensive use only in DEBUG build
+#define gl_check_call_int(call) (call)
 #endif
 
 #define gl_if_no_error(r, call) do { if (r == 0) { r = gl_check(call); } } while (0)
 
 // all functions 0 in success or last glGetError() if failed
 
-int gl_init(int w, int h);
+int gl_init(int w, int h, mat4x4 projection_matrix);
 
 int gl_init_texture(int ti);
 

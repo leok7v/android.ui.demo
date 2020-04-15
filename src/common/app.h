@@ -2,6 +2,7 @@
 #include "glh.h"
 #include "ui.h"
 #include "font.h"
+#include "linmath.h"
 
 BEGIN_C
 
@@ -57,6 +58,8 @@ typedef struct app_s {
     void* (*asset_map)(app_t* a, const char* name, const void* *data, int *bytes);
     void  (*asset_unmap)(app_t* a, void* asset, const void* data, int bytes);
     void  (*vibrate)(app_t* a, int vibration_effect);
+    mat4x4 projection;
+    mat4x4 view;
 } app_t;
 
 // app_create() MUST be implemented by application. It is called before main()

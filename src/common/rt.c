@@ -24,13 +24,12 @@ int _traceln_(const char* filename, int line, const char* function, const char* 
 }
 
 int _assertion_(const char* filename, int line, const char* function, const char* a, const char* format, ...) {
-    int r = _traceln_(filename, line, function, "assert(%s) failed", a);
     va_list vl;
     va_start(vl, format);
-    if (r >= 0) {
-        r += logln(filename, line, function, format, vl);
-    }
+    char text[1024];
+    vsnprintf(text, countof(text) - 1, format, vl); text[countof(text) - 1] = 0;
     va_end(vl);
+    int r = _traceln_(filename, line, function, "assert(%s) failed %s", a, text);
     raise(SIGTRAP);
     return r;
 }
