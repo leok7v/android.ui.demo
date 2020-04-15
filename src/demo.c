@@ -27,7 +27,7 @@ typedef struct application_s {
     int font_height_px;
     font_t font;    // default UI font
     ui_expo_t expo;
-    int program_main;
+//  int program_main;
     char toast[256];
     int64_t toast_start_time;
     timer_callback_t toast_timer_callback;
@@ -49,6 +49,7 @@ typedef struct application_s {
     int  slider2_maximum;
     int  slider2_current;
     char slider2_label[64];
+    mat4x4 mvp; // model * view * projection
 } application_t;
 
 static inline_c float pt2px(app_t* a, float pt) { return pt * a->xdpi / 72.0f; }
@@ -155,19 +156,13 @@ static float* scale(float* a, int n, int stride, float even, float odd) {
 }
 
 static void root_draw(ui_t* view) {
+(void)scale;
     application_t* app = (application_t*)view->a->that;
     const float w = view->w;
     const float h = view->h;
 //  gl_check(glViewport(0, 0, w, h)); // this is the default no need to set
     gl_check(glClearColor(colors.nc_dark_blue.r, colors.nc_dark_blue.g, colors.nc_dark_blue.b, 1));
     gl_check(glClear(GL_COLOR_BUFFER_BIT));
-    GLuint sampler = 0;
-    gl_check(glGenSamplers(1, &sampler));
-    gl_check(glSamplerParameteri(sampler, GL_TEXTURE_MIN_FILTER, GL_NEAREST));
-    gl_check(glSamplerParameteri(sampler, GL_TEXTURE_MAG_FILTER, GL_NEAREST));
-    gl_check(glSamplerParameteri(sampler, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
-    gl_check(glSamplerParameteri(sampler, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
-    gl_check(glSamplerParameteri(sampler, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE));
     gl_check(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST));
     gl_check(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST));
     gl_check(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
@@ -175,11 +170,13 @@ static void root_draw(ui_t* view) {
     {
         float vertices0[] = { 1, 1 , 1 + 99, 1,  1, 1 + 99 };
         float vertices1[] = { w - 2, h - 2, w - 2, h - 2 - 99,  w - 2 - 99, h - 2 };
-        scale(vertices0, countof(vertices0), 2, 1 / w, 1 / h);
-        scale(vertices1, countof(vertices0), 2, 1 / w, 1 / h);
+//      scale(vertices0, countof(vertices0), 2, 1 / w, 1 / h);
+//      scale(vertices1, countof(vertices0), 2, 1 / w, 1 / h);
         use_program(shaders.fill);
+        int mvp  = gl_check_call_int(glGetUniformLocation(shaders.fill, "mvp"));
         int rgba = gl_check_call_int(glGetUniformLocation(shaders.fill, "rgba"));
-        assert(rgba >= 0);
+        assert(mvp >= 0 && rgba >= 0);
+        gl_check(glUniformMatrix4fv(mvp, 1, false, (const GLfloat*)app->mvp));
         gl_check(glUniform4fv(rgba, 1, (const GLfloat*)&colors.red));
         gl_check(glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, vertices0));
         gl_check(glEnableVertexAttribArray(0));
@@ -199,15 +196,15 @@ static void root_draw(ui_t* view) {
                                100 + tw, 100,       1, 0,
                                100 + tw, 100 + th,  1, 1,
                                100,      100 + th,  0, 1 };
-        scale(vertices, countof(vertices), 4, 1 / w, 1 / h);
+//      scale(vertices, countof(vertices), 4, 1 / w, 1 / h);
         use_program(shaders.tex);
+        int mvp = gl_check_call_int(glGetUniformLocation(shaders.tex, "mvp"));
         int tex = gl_check_call_int(glGetUniformLocation(shaders.tex, "tex"));
-        assert(tex >= 0);
+        assert(mvp >= 0 && tex >= 0);
+        gl_check(glUniformMatrix4fv(mvp, 1, false, (const GLfloat*)app->mvp));
+        gl_check(glUniform1i(tex, 1)); // index of GL_TEXTURE1:
         gl_check(glActiveTexture(GL_TEXTURE1));
         gl_check(glBindTexture(GL_TEXTURE_2D, ti));
-        gl_check(glUniform1i(tex, 1)); // index of GL_TEXTURE1 above
-//      gl_check(glBindSampler(ti, sampler));
-
         gl_check(glEnableVertexAttribArray(0));
         gl_check(glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 0, vertices));
         gl_check(glDrawArrays(GL_TRIANGLE_FAN, 0, 4));
@@ -221,11 +218,14 @@ static void root_draw(ui_t* view) {
                                100 + tw, 100,       1, 0,
                                100 + tw, 100 + th,  1, 1,
                                100,      100 + th,  0, 1 };
-        scale(vertices, countof(vertices), 4, 1 / w, 1 / h);
+//      scale(vertices, countof(vertices), 4, 1 / w, 1 / h);
         use_program(shaders.luma);
+        int mvp  = gl_check_call_int(glGetUniformLocation(shaders.luma, "mvp"));
         int tex  = gl_check_call_int(glGetUniformLocation(shaders.luma, "tex"));
         int rgba = gl_check_call_int(glGetUniformLocation(shaders.luma, "rgba"));
-        assertion(tex >= 0 && rgba >= 0 && rgba != tex, "glsl removes unused uniforms: tex=%d rgba=%d", tex, rgba);
+//      assertion(mvp >= 0 && tex >= 0 && rgba >= 0,
+//                "glsl removes unused uniforms: mvp=%d tex=%d rgba=%d", mvp, tex, rgba);
+        gl_check(glUniformMatrix4fv(mvp, 1, false, (const GLfloat*)app->mvp));
         gl_check(glActiveTexture(GL_TEXTURE1));
         gl_check(glBindTexture(GL_TEXTURE_2D, ti));
         gl_check(glUniform1i(tex, 1)); // index of GL_TEXTURE1 above
@@ -235,31 +235,30 @@ static void root_draw(ui_t* view) {
         half_green.g = 0.5;
         half_green.b = 0.2;
         gl_check(glUniform4fv(rgba, 1, (const GLfloat*)&half_green)); // pointer to 1 four float element array
-//      gl_check(glBindSampler(ti, sampler));
-
         gl_check(glEnableVertexAttribArray(0));
         gl_check(glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 0, vertices));
         gl_check(glDrawArrays(GL_TRIANGLE_FAN, 0, 4));
     }
-
     {
         float tw = 256;
         float th = 256;
         float ro = 0.75;
         float ri = 0.25;
                              //  x         y        t  s
-        GLfloat vertices[] = { 600,      600,       0, 0,
-                               600 + tw, 600,       1, 0,
-                               600 + tw, 600 + th,  1, 1,
-                               600,      600 + th,  0, 1 };
-        scale(vertices, countof(vertices), 4, 1 / w, 1 / h);
+        GLfloat vertices[] = { 500,      500,       0, 0,
+                               500 + tw, 500,       1, 0,
+                               500 + tw, 500 + th,  1, 1,
+                               500,      500 + th,  0, 1 };
+//      scale(vertices, countof(vertices), 4, 1 / w, 1 / h);
         use_program(shaders.ring);
+        int mvp = gl_check_call_int(glGetUniformLocation(shaders.ring, "mvp"));
         // outter and inner radius (inclusive)
         int ro2 = gl_check_call_int(glGetUniformLocation(shaders.ring, "ro2"));
         int ri2 = gl_check_call_int(glGetUniformLocation(shaders.ring, "ri2"));
         int rgba = gl_check_call_int(glGetUniformLocation(shaders.ring, "rgba"));
-        assertion(ri2 >= 0 && ro2 >= 0 && rgba >= 0,
-                  "glsl removes unused uniforms: c=%d ri2=%d ro2=%d rgba=%d", ri2, ro2, rgba);
+        assertion(mvp >= 0 && ri2 >= 0 && ro2 >= 0 && rgba >= 0,
+                  "glsl removes unused uniforms: mvp=%d ri2=%d ro2=%d rgba=%d", mvp, ri2, ro2, rgba);
+        gl_check(glUniformMatrix4fv(mvp, 1, false, (const GLfloat*)app->mvp));
         gl_check(glUniform4fv(rgba, 1, (const GLfloat*)&colors.red)); // pointer to 1 four float element array
         gl_check(glUniform1f(ri2, ri * ri));
         gl_check(glUniform1f(ro2, ro * ro));
@@ -267,9 +266,6 @@ static void root_draw(ui_t* view) {
         gl_check(glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 0, vertices));
         gl_check(glDrawArrays(GL_TRIANGLE_FAN, 0, 4));
     }
-
-    gl_check(glDeleteSamplers(1, &sampler));
-
 //  gl_draw_rect(null, 0, 0, view->w, view->h);
 //  view->draw_children(view);
 //  application_t* app = (application_t*)view->that;
@@ -383,7 +379,6 @@ static void load_font(application_t* app) {
     if (r != 0) { exit(r); } // fatal
 }
 
-
 static void init_expo(application_t* app) {
     ui_expo_t* ex = &app->expo;
     ex->font = &app->font;
@@ -425,13 +420,14 @@ static int create_gl_program(app_t* a, const char* name, int *program) {
     return r;
 }
 
-
 static void shown(app_t* a) {
     application_t* app = (application_t*)a->that;
+    // both model and view matricies are identity
+    gl_ortho2D(app->mvp, 0, a->root->w, a->root->h, 0);
     load_font(app);
-    int r = create_gl_program(a, "main", &app->program_main);
-    assert(r == 0);
-    r = shaders_init();
+    (void)create_gl_program;
+//  int r = create_gl_program(a, "main", &app->program_main);
+    int r = shaders_init();
     assert(r == 0);
     init_expo(app);
     for (int i = 0; i < countof(app->bitmaps); i++) {
@@ -454,7 +450,7 @@ static void hidden(app_t* a) {
     slider_dispose(app->slider2);       app->slider2 = null;
     font_deallocate_texture(&app->font);
     for (int i = 0; i < countof(app->bitmaps); i++) { bitmap_deallocate_texture(&app->bitmaps[i]); }
-    shader_program_dispose(app->program_main);   app->program_main = 0;
+//  shader_program_dispose(app->program_main);   app->program_main = 0;
     shaders_dispose();
 }
 

@@ -24,8 +24,6 @@ int gl_init_texture(int ti);
 extern const colorf_t gl_color_invalid;
 extern colorf_t gl_color;
 
-colorf_t gl_rgb2colorf(int argb);
-
 int gl_set_color(const colorf_t* c); // if c != null set global variable gl_color and calls glColor4f()
 
 int gl_texture_draw_quad(float x0, float y0, float x1, float y1, float s0, float t0, float s1, float t1);
@@ -37,7 +35,7 @@ int gl_draw_line(const colorf_t* color, float x1, float y1, float x2, float y2, 
 int gl_draw_rect(const colorf_t* c, float x, float y, float w, float h); // filled
 int gl_draw_rectangle(const colorf_t* c, float x0, float y0, float w, float h, float width); // outline, line "width" in pixels
 
-void gl_ortho2D(float* mat4x4, float left, float right, float bottom, float top);
+void gl_ortho2D(mat4x4 mx, float left, float right, float bottom, float top);
 
 const char* gl_strerror(int gle);
 int gl_trace_errors_(const char* file, int line, const char* func, const char* call, int gle); // returns last glGetError()

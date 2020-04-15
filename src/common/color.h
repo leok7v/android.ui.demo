@@ -5,6 +5,8 @@ BEGIN_C
 
 typedef struct colorf_s { float r, g, b, a; } packed colorf_t;
 
+colorf_t colorf_from_rgb(uint32_t argb);
+
 typedef struct colors_s { // treat all fields as a const
     colorf_t transparent;
     colorf_t black;

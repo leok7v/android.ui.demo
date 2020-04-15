@@ -14,13 +14,6 @@ const colorf_t gl_color_invalid = { -1, -1, -1, -1 };
 
 colorf_t gl_color = { -1, -1, -1, -1 };
 
-colorf_t gl_rgb2colorf(int argb) {
-    int a = (argb >> 24) & 0xFF;
-    colorf_t f = { ((argb >> 16) & 0xFF) / 255.0f, ((argb >> 8) & 0xFF) / 255.0f,
-                   ((argb >>  0) & 0xFF) / 255.0f, a == 0 ? 1 : a / 255.0f };
-    return f;
-}
-
 int gl_set_color(const colorf_t* c) {
     int r = 0;
     if (c != null) {
@@ -35,7 +28,7 @@ int gl_set_color(const colorf_t* c) {
     return r;
 }
 
-void gl_ortho2D(float* mat, float left, float right, float bottom, float top) {
+void gl_ortho2D(mat4x4 m, float left, float right, float bottom, float top) {
     // this is basically from
     // http://en.wikipedia.org/wiki/Orthographic_projection_(geometry)
     const float znear = -1;
@@ -43,49 +36,51 @@ void gl_ortho2D(float* mat, float left, float right, float bottom, float top) {
     const float inv_z = 1 / (zfar - znear);
     const float inv_y = 1 / (top - bottom);
     const float inv_x = 1 / (right - left);
-    *mat++ = 2 * inv_x; // first column
-    *mat++ = 0;
-    *mat++ = 0;
-    *mat++ = 0;
-    *mat++ = 0; // second
-    *mat++ = 2 * inv_y;
-    *mat++ = 0;
-    *mat++ = 0;
-    *mat++ = 0; // third
-    *mat++ = 0;
-    *mat++ = -2 * inv_z;
-    *mat++ = 0;
-    *mat++ = -(right + left) * inv_x;  // fourth
-    *mat++ = -(top + bottom) * inv_y;
-    *mat++ = -(zfar + znear) * inv_z;
-    *mat   = 1;
+    // first column:
+    m[0][0] = 2 * inv_x;
+    m[1][0] = 0;
+    m[2][0] = 0;
+    m[3][0] = 0;
+    // second column:
+    m[0][1] = 0;
+    m[1][1] = inv_y * 2;
+    m[2][1] = 0;
+    m[3][1] = 0;
+    // third column:
+    m[0][2] = 0;
+    m[1][2] = 0;
+    m[2][2] = inv_z * -2;
+    m[3][2] = 0;
+    // forth column:
+    m[0][3] = -(right + left) * inv_x;
+    m[1][3] = -(top + bottom) * inv_y;
+    m[2][3] = -(zfar + znear) * inv_z;
+    m[3][3] = 1;
 }
 
 static mat4x4 m4x4_zero;
 
 int gl_init(int w, int h, mat4x4 projection_matrix) {
     int r = 0;
-    const char* gl_version = (const char*)glGetString(GL_VERSION); (void)gl_version;
-    traceln("GL_VERSION=%s", gl_version);
+    const char* version = (const char*)glGetString(GL_VERSION); (void)version;
+    int major = 0;
+    int minor = 0;
+    glGetIntegerv(GL_MAJOR_VERSION, &major);
+    glGetIntegerv(GL_MINOR_VERSION, &minor);
+    // calls do fail on GL ES 2.0:
+    if (glGetError() != 0) {
+        const char* p = version;
+        while (*p != 0 && !isdigit(*p)) { p++; }
+        if (p != 0) { sscanf(p, "%d.%d", &major, &minor); }
+        while (glGetError() != 0) { }
+    }
+    traceln("GL_VERSION=%d.%d %s", major, minor, version);
     memcpy(projection_matrix, m4x4_zero, sizeof(m4x4_zero));
-//  These hints were removed in OpenGL ES 3.x and above
-//  gl_if_no_error(r, glHint(GL_POINT_SMOOTH_HINT, GL_NICEST));
-//  gl_if_no_error(r, glHint(GL_LINE_SMOOTH_HINT, GL_NICEST));
-//  gl_if_no_error(r, glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_FASTEST));
-//  gl_if_no_error(r, glEnable(GL_TEXTURE_2D));
-//  gl_if_no_error(r, glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE));
     gl_if_no_error(r, glEnable(GL_BLEND));
     gl_if_no_error(r, glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
-//  gl_if_no_error(r, glShadeModel(GL_SMOOTH));
-    gl_if_no_error(r, glDisable(GL_CULL_FACE));
-//  gl_if_no_error(r, glDisable(GL_LIGHTING));
-    gl_if_no_error(r, glDisable(GL_DEPTH_TEST));
     gl_if_no_error(r, glViewport(0, 0, w, h));
-//  gl_if_no_error(r, glMatrixMode(GL_PROJECTION));
-//  gl_if_no_error(r, glLoadIdentity());
-//  gl_if_no_error(r, gl_ortho2D(projection_matrix, 0, w, h, 0));/* near -1 far +1 */
-//  gl_if_no_error(r, glMultMatrixf(projection_matrix));
-//  gl_if_no_error(r, glMatrixMode(GL_MODELVIEW));
+    gl_if_no_error(r, glDisable(GL_DEPTH_TEST));
+    gl_if_no_error(r, glDisable(GL_CULL_FACE));
     return r;
 }
 
