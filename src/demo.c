@@ -28,7 +28,6 @@ typedef struct application_s {
     font_t font;    // default UI font
     ui_expo_t expo;
     int program_main;
-//  int program_circle;
     char toast[256];
     int64_t toast_start_time;
     timer_callback_t toast_timer_callback;
@@ -207,7 +206,7 @@ static void root_draw(ui_t* view) {
         gl_check(glActiveTexture(GL_TEXTURE1));
         gl_check(glBindTexture(GL_TEXTURE_2D, ti));
         gl_check(glUniform1i(tex, 1)); // index of GL_TEXTURE1 above
-        gl_check(glBindSampler(ti, sampler));
+//      gl_check(glBindSampler(ti, sampler));
 
         gl_check(glEnableVertexAttribArray(0));
         gl_check(glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 0, vertices));
@@ -236,12 +235,39 @@ static void root_draw(ui_t* view) {
         half_green.g = 0.5;
         half_green.b = 0.2;
         gl_check(glUniform4fv(rgba, 1, (const GLfloat*)&half_green)); // pointer to 1 four float element array
-        gl_check(glBindSampler(ti, sampler));
+//      gl_check(glBindSampler(ti, sampler));
 
         gl_check(glEnableVertexAttribArray(0));
         gl_check(glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 0, vertices));
         gl_check(glDrawArrays(GL_TRIANGLE_FAN, 0, 4));
     }
+
+    {
+        float tw = 256;
+        float th = 256;
+        float ro = 0.75;
+        float ri = 0.25;
+                             //  x         y        t  s
+        GLfloat vertices[] = { 600,      600,       0, 0,
+                               600 + tw, 600,       1, 0,
+                               600 + tw, 600 + th,  1, 1,
+                               600,      600 + th,  0, 1 };
+        scale(vertices, countof(vertices), 4, 1 / w, 1 / h);
+        use_program(shaders.ring);
+        // outter and inner radius (inclusive)
+        int ro2 = gl_check_call_int(glGetUniformLocation(shaders.ring, "ro2"));
+        int ri2 = gl_check_call_int(glGetUniformLocation(shaders.ring, "ri2"));
+        int rgba = gl_check_call_int(glGetUniformLocation(shaders.ring, "rgba"));
+        assertion(ri2 >= 0 && ro2 >= 0 && rgba >= 0,
+                  "glsl removes unused uniforms: c=%d ri2=%d ro2=%d rgba=%d", ri2, ro2, rgba);
+        gl_check(glUniform4fv(rgba, 1, (const GLfloat*)&colors.red)); // pointer to 1 four float element array
+        gl_check(glUniform1f(ri2, ri * ri));
+        gl_check(glUniform1f(ro2, ro * ro));
+        gl_check(glEnableVertexAttribArray(0));
+        gl_check(glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 0, vertices));
+        gl_check(glDrawArrays(GL_TRIANGLE_FAN, 0, 4));
+    }
+
     gl_check(glDeleteSamplers(1, &sampler));
 
 //  gl_draw_rect(null, 0, 0, view->w, view->h);
@@ -377,21 +403,21 @@ static int create_gl_program(app_t* a, const char* name, int *program) {
     *program = 0;
     int r = 0;
     void* assets[2] = {};
-    static const char* suffix[] = { "fragment", "vertex" };
+    static const char* suffix[] = { "vertex", "fragment" };
     char names[2][128];
     for (int i = 0; i < countof(names); i++) {
         snprintf(names[i], countof(names[i]), "%s_%s.glsl", name, suffix[i]);
     };
     gl_shader_source_t sources[] = {
-        {GL_SHADER_FRAGMENT, names[0], null, 0},
-        {GL_SHADER_VERTEX, names[1], null, 0}
+        {GL_SHADER_VERTEX, names[0], null, 0},
+        {GL_SHADER_FRAGMENT, names[1], null, 0}
     };
     for (int i = 0; i < countof(sources); i++) {
         assets[i] = a->asset_map(a, sources[i].name, &sources[i].data, &sources[i].bytes);
         assertion(assets[i] != null, "asset \"%s\"not found", sources[i].name);
 //      traceln("%s=\n%.*s", sources[i].name, sources[i].bytes, sources[i].data);
     }
-    r = gl_program_create_and_link(program, sources, countof(sources));
+    r = shader_program_create_and_link(program, sources, countof(sources));
     assert(r == 0);
     for (int i = 0; i < countof(sources); i++) {
         a->asset_unmap(a, assets[i], sources[i].data, sources[i].bytes);
@@ -407,8 +433,6 @@ static void shown(app_t* a) {
     assert(r == 0);
     r = shaders_init();
     assert(r == 0);
-//  r = create_gl_program(a, "circle", &app->program_circle);
-//  assert(r == 0);
     init_expo(app);
     for (int i = 0; i < countof(app->bitmaps); i++) {
         bitmap_allocate_and_update_texture(&app->bitmaps[i]);
@@ -430,8 +454,7 @@ static void hidden(app_t* a) {
     slider_dispose(app->slider2);       app->slider2 = null;
     font_deallocate_texture(&app->font);
     for (int i = 0; i < countof(app->bitmaps); i++) { bitmap_deallocate_texture(&app->bitmaps[i]); }
-    gl_program_dispose(app->program_main);   app->program_main = 0;
-//  gl_program_dispose(app->program_circle); app->program_circle = 0;
+    shader_program_dispose(app->program_main);   app->program_main = 0;
     shaders_dispose();
 }
 
