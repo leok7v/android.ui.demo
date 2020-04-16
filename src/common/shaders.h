@@ -10,8 +10,8 @@ const char* shader_fill_vx;
 const char* shader_fill_px;
 
 // uniform sampler2D tex (texture index e.g. 1 for GL_TEXTURE1)
-const char* shader_tex_vx;
-const char* shader_tex_px;
+const char* shader_bblt_vx;
+const char* shader_bblt_px;
 
 // uniform sampler2D tex (texture index e.g. 1 for GL_TEXTURE1)
 // in vec4 rgba color components in range [0..1]
@@ -42,9 +42,20 @@ int shader_program_dispose(int program);
 
 typedef struct shaders_s {
     int fill;
-    int tex;
+    int fill_mvp; // mvp "in" location
+    int fill_rgba;
+    int bblt;
+    int bblt_mvp;
+    int bblt_tex;
     int luma; // 8 bit GL_ALPHA tex * rgba color
+    int luma_mvp;
+    int luma_tex;
+    int luma_rgba;
     int ring;
+    int ring_mvp;
+    int ring_rgba;
+    int ring_ro2;
+    int ring_ri2;
 } shaders_t;
 
 extern shaders_t shaders;

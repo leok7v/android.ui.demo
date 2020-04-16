@@ -24,12 +24,13 @@
     <ClCompile Include="..\src\common\bitmap.c" />
     <ClCompile Include="..\src\common\button.c" />
     <ClCompile Include="..\src\common\color.c" />
+    <ClCompile Include="..\src\common\dc.c" />
     <ClCompile Include="..\src\common\font.c" />
     <ClCompile Include="..\src\common\glh.c" />
     <ClCompile Include="..\src\common\linmath.c" />
     <ClCompile Include="..\src\common\rt.c" />
     <ClCompile Include="..\src\common\screen_writer.c" />
-    <ClCompile Include="..\src\common\shaders_gles3.c" />
+    <ClCompile Include="..\src\common\shaders_gles2.c" />
     <ClCompile Include="..\src\common\slider.c" />
     <ClCompile Include="..\src\common\stb_font.c" />
     <ClCompile Include="..\src\common\stb_image.c" />
@@ -42,6 +43,7 @@
     <ClInclude Include="..\src\common\bitmap.h" />
     <ClInclude Include="..\src\common\button.h" />
     <ClInclude Include="..\src\common\color.h" />
+    <ClInclude Include="..\src\common\dc.h" />
     <ClInclude Include="..\src\common\font.h" />
     <ClInclude Include="..\src\common\glh.h" />
     <ClInclude Include="..\src\common\rt.h" />

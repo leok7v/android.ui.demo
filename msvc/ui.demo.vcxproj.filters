@@ -44,7 +44,10 @@
     <ClCompile Include="..\src\android\android_jni.c">
       <Filter>android</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\common\shaders_gles3.c">
+    <ClCompile Include="..\src\common\dc.c">
+      <Filter>common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\common\shaders_gles2.c">
       <Filter>common</Filter>
     </ClCompile>
   </ItemGroup>
@@ -109,6 +112,9 @@
       <Filter>android</Filter>
     </ClInclude>
     <ClInclude Include="..\src\common\shaders.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\common\dc.h">
       <Filter>common</Filter>
     </ClInclude>
   </ItemGroup>

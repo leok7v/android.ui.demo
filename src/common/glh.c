@@ -226,9 +226,13 @@ int gl_trace_errors_(const char* file, int line, const char* func, const char* c
     return gle;
 }
 
-int gl_trace_errors_return_int_(const char* file, int line, const char* func, const char* call, int r) {
+int gl_trace_errors_return_int_(const char* file, int line, const char* func,
+                                int* result, const char* call, int r) {
     int gle = glGetError();
-    if (gle != 0) { gl_trace_errors_(file, line, func, call, gle); }
+    if (gle != 0) {
+        if (result != null) { *result = gle; }
+        gl_trace_errors_(file, line, func, call, gle);
+    }
     return r;
 }
 

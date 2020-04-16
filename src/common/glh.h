@@ -6,7 +6,8 @@ BEGIN_C
 
 #ifdef DEBUG
 #define gl_check(call) (call, gl_trace_errors_(__FILE__, __LINE__, __func__, #call, glGetError()))
-#define gl_check_call_int(call) gl_trace_errors_return_int_(__FILE__, __LINE__, __func__, #call, (call))
+#define gl_check_call_int(call) gl_trace_errors_return_int_(__FILE__, __LINE__, __func__, null, #call, (call))
+#define gl_check_int_call(r, call) gl_trace_errors_return_int_(__FILE__, __LINE__, __func__, &(r), #call, (call))
 #else
 #define gl_check(call) ((call), 0) // glError() is very expensive use only in DEBUG build
 #define gl_check_call_int(call) (call)
@@ -39,6 +40,6 @@ void gl_ortho2D(mat4x4 mx, float left, float right, float bottom, float top);
 
 const char* gl_strerror(int gle);
 int gl_trace_errors_(const char* file, int line, const char* func, const char* call, int gle); // returns last glGetError()
-int gl_trace_errors_return_int_(const char* file, int line, const char* func, const char* call, int result_of_call); // returns int result of call()
+int gl_trace_errors_return_int_(const char* file, int line, const char* func, int* r, const char* call, int result_of_call); // returns int result of call()
 
 END_C

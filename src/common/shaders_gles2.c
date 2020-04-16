@@ -5,54 +5,54 @@
 
 BEGIN_C
 
-// gles 3.2 differences:
+// to move to gles 3.2:
 //  #version 320 es
-//  out highp vec4 fc // instead of: varying out highp vec4 gl_FragColor;
+//  out highp vec4 fc
 //  void main() {
 //      fc = texture(tex, ts);  // instead of gl_FragColor = texture2D()
 //  }
+//  replace attribute -> in
+//  replace varying -> out
 
 const char* shader_fill_vx = "\
     #version 100            \n\
     uniform highp mat4 mvp; \n\
-    in vec2 xy;             \n\
+    attribute vec2 xy;      \n\
     void main() {           \n\
         gl_Position = vec4(xy, 0.0, 1.0) * mvp; \n\
     }";
 
 const char* shader_fill_px = "\
-    #version 100                         \n\
-    uniform highp vec4 rgba;             \n\
-    varying out highp vec4 gl_FragColor; \n\
-    void main() {                        \n\
-        gl_FragColor = rgba;             \n\
+    #version 100                     \n\
+    uniform highp vec4 rgba;         \n\
+    void main() {                    \n\
+        gl_FragColor = rgba;         \n\
     }";
 
-const char* shader_tex_vx = "\
-    #version 100               \n\
-    uniform highp mat4 mvp;    \n\
-    in  vec4 xyts;             \n\
-    varying out highp vec2 ts; \n\
-    void main() {              \n\
+const char* shader_bblt_vx = "\
+    #version 100            \n\
+    uniform highp mat4 mvp; \n\
+    attribute vec4 xyts;    \n\
+    varying highp vec2 ts;  \n\
+    void main() {           \n\
         gl_Position = vec4(xyts.x, xyts.y, 0.0, 1.0) * mvp; \n\
         ts = vec2(xyts[2], xyts[3]); \n\
     }";
 
-const char* shader_tex_px = "\
-    #version 100                           \n\
-    uniform sampler2D tex;                 \n\
-    in highp vec2 ts;                      \n\
-    varying out highp vec4 gl_FragColor;   \n\
-    void main() {                          \n\
+const char* shader_bblt_px = "\
+    #version 100                     \n\
+    uniform sampler2D tex;           \n\
+    varying highp vec2 ts;           \n\
+    void main() {                    \n\
         gl_FragColor = texture2D(tex, ts); \n\
     }";
 
 const char* shader_luma_vx = "\
-    #version 100               \n\
-    uniform highp mat4 mvp;    \n\
-    in vec4 xyts;              \n\
-    varying out highp vec2 ts; \n\
-    void main() {              \n\
+    #version 100            \n\
+    uniform highp mat4 mvp; \n\
+    attribute vec4 xyts;    \n\
+    varying highp vec2 ts;  \n\
+    void main() {           \n\
         gl_Position = vec4(xyts.x, xyts.y, 0.0, 1.0) * mvp; \n\
         ts = vec2(xyts[2], xyts[3]); \n\
     }";
@@ -60,9 +60,8 @@ const char* shader_luma_vx = "\
 const char* shader_luma_px = "\
     #version 100             \n\
     uniform highp vec4 rgba; \n\
-    uniform sampler2D tex;   \n\
-    in highp vec2 ts;        \n\
-    varying out highp vec4 gl_FragColor;                                \n\
+    uniform sampler2D  tex;  \n\
+    varying highp vec2 ts;   \n\
     void main() {                                                       \n\
         highp vec4 c = texture2D(tex, ts);                              \n\
         gl_FragColor = vec4(rgba[0], rgba[1], rgba[2], rgba[3] * c[3]); \n\
@@ -71,9 +70,9 @@ const char* shader_luma_px = "\
 const char* shader_ring_vx = "\
     #version 100            \n\
     uniform highp mat4 mvp; \n\
-    in vec4 xyts;           \n\
-    varying out highp vec2 ts;                              \n\
-    void main() {                                           \n\
+    attribute vec4 xyts;    \n\
+    varying highp vec2 ts;  \n\
+    void main() {           \n\
         gl_Position = vec4(xyts.x, xyts.y, 0.0, 1.0) * mvp; \n\
         ts = vec2(xyts[2], xyts[3]);                        \n\
     }";
@@ -81,11 +80,10 @@ const char* shader_ring_vx = "\
 const char* shader_ring_px = "\
     #version 100             \n\
     precision highp float;   \n\
+    uniform highp vec4 rgba; \n\
     uniform float ro2;       \n\
     uniform float ri2;       \n\
-    uniform highp vec4 rgba; \n\
-    in highp vec2 ts;        \n\
-    varying out highp vec4 gl_FragColor;    \n\
+    varying highp vec2 ts;   \n\
     void main() {                           \n\
         float x = ts.x * 2.0 - 1.0;         \n\
         float y = ts.y * 2.0 - 1.0;         \n\
@@ -160,32 +158,57 @@ int shader_program_dispose(int program) {
 
 shaders_t shaders;
 
-static int create_and_link_program(int *program, const char* vertex, const char* fragment) {
+static int create_and_link_program(int *program,
+                                   const char* vertex, const char* vs,
+                                   const char* fragment, const char* fs) {
     *program = 0;
     int r = 0;
     gl_shader_source_t sources[] = {
-        {GL_SHADER_VERTEX,   "vertex",   vertex,   (int)strlen(vertex)},
-        {GL_SHADER_FRAGMENT, "fragment", fragment, (int)strlen(fragment)}
+        {GL_SHADER_VERTEX,   vertex,   vs, (int)strlen(vs)},
+        {GL_SHADER_FRAGMENT, fragment, fs, (int)strlen(fs)}
     };
     r = shader_program_create_and_link(program, sources, countof(sources));
     assert(r == 0);
     return r;
 }
 
+#define create_program(p, v, f) create_and_link_program(p, #v, v, #f, f)
+
 int shaders_init() {
     int r = 0;
-    if (r == 0) { r = create_and_link_program(&shaders.fill, shader_fill_vx, shader_fill_px); }
-    if (r == 0) { r = create_and_link_program(&shaders.tex,  shader_tex_vx,  shader_tex_px);  }
-    if (r == 0) { r = create_and_link_program(&shaders.luma, shader_luma_vx, shader_luma_px); }
-    if (r == 0) { r = create_and_link_program(&shaders.ring, shader_ring_vx, shader_ring_px); }
+    if (r == 0) { r = create_program(&shaders.fill, shader_fill_vx, shader_fill_px); }
+    if (r == 0) { r = create_program(&shaders.bblt, shader_bblt_vx, shader_bblt_px); }
+    if (r == 0) { r = create_program(&shaders.luma, shader_luma_vx, shader_luma_px); }
+    if (r == 0) { r = create_program(&shaders.ring, shader_ring_vx, shader_ring_px); }
+    if (r == 0) { // glsl compiler removes unused uniforms and in/out (attributes/varyings)
+        shaders.fill_mvp  = gl_check_int_call(r, glGetUniformLocation(shaders.fill, "mvp"));
+        shaders.fill_rgba = gl_check_int_call(r, glGetUniformLocation(shaders.fill, "rgba"));
+        assert(shaders.fill_mvp >= 0 && shaders.fill_rgba >= 0);
+        shaders.bblt_mvp  = gl_check_int_call(r, glGetUniformLocation(shaders.bblt, "mvp"));
+        shaders.bblt_tex  = gl_check_int_call(r, glGetUniformLocation(shaders.bblt, "tex"));
+        assert(shaders.bblt_mvp >= 0 && shaders.bblt_tex  >= 0);
+        shaders.luma_mvp  = gl_check_int_call(r, glGetUniformLocation(shaders.luma, "mvp"));
+        shaders.luma_tex  = gl_check_int_call(r, glGetUniformLocation(shaders.luma, "tex"));
+        shaders.luma_rgba = gl_check_int_call(r, glGetUniformLocation(shaders.luma, "rgba"));
+        assert(shaders.luma_mvp >= 0 && shaders.luma_rgba >= 0);
+        assert(shaders.luma_tex >= 0);
+        shaders.ring_mvp  = gl_check_int_call(r, glGetUniformLocation(shaders.ring, "mvp"));
+        shaders.ring_rgba = gl_check_int_call(r, glGetUniformLocation(shaders.ring, "rgba"));
+        shaders.ring_ro2  = gl_check_int_call(r, glGetUniformLocation(shaders.ring, "ro2"));
+        shaders.ring_ri2  = gl_check_int_call(r, glGetUniformLocation(shaders.ring, "ri2"));
+        assert(shaders.ring_mvp >= 0 && shaders.ring_rgba >= 0);
+        assert(shaders.ring_ro2 >= 0 && shaders.ring_ri2 >= 0);
+    }
+    assert(r == 0);
     return r;
 }
 
 void shaders_dispose() { // glDeleteProgram(0) is legal NOOP
-    shader_program_dispose(shaders.fill);  shaders.fill = 0;
-    shader_program_dispose(shaders.tex);   shaders.tex  = 0;
-    shader_program_dispose(shaders.luma);  shaders.luma = 0;
-    shader_program_dispose(shaders.ring);  shaders.ring = 0;
+    shader_program_dispose(shaders.fill);
+    shader_program_dispose(shaders.bblt);
+    shader_program_dispose(shaders.luma);
+    shader_program_dispose(shaders.ring);
+    memset(&shaders, 0, sizeof(shaders));
 }
 
 END_C

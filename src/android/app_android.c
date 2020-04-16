@@ -226,7 +226,7 @@ static int init_display(glue_t* glue) {
     eglGetConfigAttrib(display, config, EGL_NATIVE_VISUAL_ID, &format);
     ANativeWindow_setBuffersGeometry(glue->window, 0, 0, format);
     EGLSurface surface = eglCreateWindowSurface(display, config, glue->window, null);
-    const EGLint context_attributes[] = { EGL_CONTEXT_CLIENT_VERSION, 3, EGL_NONE };
+    const EGLint context_attributes[] = { EGL_CONTEXT_CLIENT_VERSION, 2, EGL_NONE };
     EGLContext context = eglCreateContext(display, config, null, context_attributes);
     if (eglMakeCurrent(display, surface, surface, context) == EGL_FALSE) {
         traceln("eglMakeCurrent() failed");

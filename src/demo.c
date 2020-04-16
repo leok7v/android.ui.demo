@@ -149,14 +149,7 @@ static void use_program(int program) {
     gl_check(glUseProgram(program));
 }
 
-static float* scale(float* a, int n, int stride, float even, float odd) {
-    for (int i = 0; i < n; i += stride) { a[i] *= even; }
-    for (int i = 1; i < n; i += stride) { a[i] *= odd; }
-    return a;
-}
-
 static void root_draw(ui_t* view) {
-(void)scale;
     application_t* app = (application_t*)view->a->that;
     const float w = view->w;
     const float h = view->h;
@@ -170,19 +163,14 @@ static void root_draw(ui_t* view) {
     {
         float vertices0[] = { 1, 1 , 1 + 99, 1,  1, 1 + 99 };
         float vertices1[] = { w - 2, h - 2, w - 2, h - 2 - 99,  w - 2 - 99, h - 2 };
-//      scale(vertices0, countof(vertices0), 2, 1 / w, 1 / h);
-//      scale(vertices1, countof(vertices0), 2, 1 / w, 1 / h);
         use_program(shaders.fill);
-        int mvp  = gl_check_call_int(glGetUniformLocation(shaders.fill, "mvp"));
-        int rgba = gl_check_call_int(glGetUniformLocation(shaders.fill, "rgba"));
-        assert(mvp >= 0 && rgba >= 0);
-        gl_check(glUniformMatrix4fv(mvp, 1, false, (const GLfloat*)app->mvp));
-        gl_check(glUniform4fv(rgba, 1, (const GLfloat*)&colors.red));
+        gl_check(glUniformMatrix4fv(shaders.fill_mvp, 1, false, (const GLfloat*)app->mvp));
+        gl_check(glUniform4fv(shaders.fill_rgba, 1, (const GLfloat*)&colors.red));
         gl_check(glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, vertices0));
         gl_check(glEnableVertexAttribArray(0));
         gl_check(glDrawArrays(GL_TRIANGLES, 0, 3));
 
-        gl_check(glUniform4fv(rgba, 1, (const GLfloat*)&colors.green));
+        gl_check(glUniform4fv(shaders.fill_rgba, 1, (const GLfloat*)&colors.green));
         gl_check(glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, vertices1));
         gl_check(glEnableVertexAttribArray(0));
         gl_check(glDrawArrays(GL_TRIANGLES, 0, 3));
@@ -196,13 +184,9 @@ static void root_draw(ui_t* view) {
                                100 + tw, 100,       1, 0,
                                100 + tw, 100 + th,  1, 1,
                                100,      100 + th,  0, 1 };
-//      scale(vertices, countof(vertices), 4, 1 / w, 1 / h);
-        use_program(shaders.tex);
-        int mvp = gl_check_call_int(glGetUniformLocation(shaders.tex, "mvp"));
-        int tex = gl_check_call_int(glGetUniformLocation(shaders.tex, "tex"));
-        assert(mvp >= 0 && tex >= 0);
-        gl_check(glUniformMatrix4fv(mvp, 1, false, (const GLfloat*)app->mvp));
-        gl_check(glUniform1i(tex, 1)); // index of GL_TEXTURE1:
+        use_program(shaders.bblt);
+        gl_check(glUniformMatrix4fv(shaders.bblt_mvp, 1, false, (const GLfloat*)app->mvp));
+        gl_check(glUniform1i(shaders.bblt_tex, 1)); // index(!) of GL_TEXTURE1 below:
         gl_check(glActiveTexture(GL_TEXTURE1));
         gl_check(glBindTexture(GL_TEXTURE_2D, ti));
         gl_check(glEnableVertexAttribArray(0));
@@ -218,23 +202,17 @@ static void root_draw(ui_t* view) {
                                100 + tw, 100,       1, 0,
                                100 + tw, 100 + th,  1, 1,
                                100,      100 + th,  0, 1 };
-//      scale(vertices, countof(vertices), 4, 1 / w, 1 / h);
         use_program(shaders.luma);
-        int mvp  = gl_check_call_int(glGetUniformLocation(shaders.luma, "mvp"));
-        int tex  = gl_check_call_int(glGetUniformLocation(shaders.luma, "tex"));
-        int rgba = gl_check_call_int(glGetUniformLocation(shaders.luma, "rgba"));
-//      assertion(mvp >= 0 && tex >= 0 && rgba >= 0,
-//                "glsl removes unused uniforms: mvp=%d tex=%d rgba=%d", mvp, tex, rgba);
-        gl_check(glUniformMatrix4fv(mvp, 1, false, (const GLfloat*)app->mvp));
+        gl_check(glUniformMatrix4fv(shaders.luma_mvp, 1, false, (const GLfloat*)app->mvp));
         gl_check(glActiveTexture(GL_TEXTURE1));
         gl_check(glBindTexture(GL_TEXTURE_2D, ti));
-        gl_check(glUniform1i(tex, 1)); // index of GL_TEXTURE1 above
+        gl_check(glUniform1i(shaders.luma_tex, 1)); // index of GL_TEXTURE1 above
         colorf_t half_green = colors.green;
         half_green.a = 0.5;
         half_green.r = 0.7;
         half_green.g = 0.5;
         half_green.b = 0.2;
-        gl_check(glUniform4fv(rgba, 1, (const GLfloat*)&half_green)); // pointer to 1 four float element array
+        gl_check(glUniform4fv(shaders.luma_rgba, 1, (const GLfloat*)&half_green)); // pointer to 1 float[4] array
         gl_check(glEnableVertexAttribArray(0));
         gl_check(glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 0, vertices));
         gl_check(glDrawArrays(GL_TRIANGLE_FAN, 0, 4));
@@ -249,19 +227,12 @@ static void root_draw(ui_t* view) {
                                500 + tw, 500,       1, 0,
                                500 + tw, 500 + th,  1, 1,
                                500,      500 + th,  0, 1 };
-//      scale(vertices, countof(vertices), 4, 1 / w, 1 / h);
         use_program(shaders.ring);
-        int mvp = gl_check_call_int(glGetUniformLocation(shaders.ring, "mvp"));
-        // outter and inner radius (inclusive)
-        int ro2 = gl_check_call_int(glGetUniformLocation(shaders.ring, "ro2"));
-        int ri2 = gl_check_call_int(glGetUniformLocation(shaders.ring, "ri2"));
-        int rgba = gl_check_call_int(glGetUniformLocation(shaders.ring, "rgba"));
-        assertion(mvp >= 0 && ri2 >= 0 && ro2 >= 0 && rgba >= 0,
-                  "glsl removes unused uniforms: mvp=%d ri2=%d ro2=%d rgba=%d", mvp, ri2, ro2, rgba);
-        gl_check(glUniformMatrix4fv(mvp, 1, false, (const GLfloat*)app->mvp));
-        gl_check(glUniform4fv(rgba, 1, (const GLfloat*)&colors.red)); // pointer to 1 four float element array
-        gl_check(glUniform1f(ri2, ri * ri));
-        gl_check(glUniform1f(ro2, ro * ro));
+        gl_check(glUniformMatrix4fv(shaders.ring_mvp, 1, false, (const GLfloat*)app->mvp));
+        gl_check(glUniform4fv(shaders.ring_rgba, 1, (const GLfloat*)&colors.red)); // pointer to 1 float[4] array
+        // outter and inner radius (inclusive) squared:
+        gl_check(glUniform1f(shaders.ring_ri2, ri * ri));
+        gl_check(glUniform1f(shaders.ring_ro2, ro * ro));
         gl_check(glEnableVertexAttribArray(0));
         gl_check(glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 0, vertices));
         gl_check(glDrawArrays(GL_TRIANGLE_FAN, 0, 4));
