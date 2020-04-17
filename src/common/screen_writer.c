@@ -12,8 +12,7 @@ static void screen_writer_draw_text(screen_writer_t* sw, const char* format, va_
     char text[1024];
     int r = vsnprintf(text, countof(text), format, vl);
     (void)r; // unused - can be used for stack_alloc() resize of text
-    gl_set_color(sw->color);
-    float x = font_draw_text(sw->font, sw->x, sw->y, text);
+    float x = dc.text(&dc, sw->color, sw->font, sw->x, sw->y, text, (int)strlen(text));
     if (line_feed) {
         sw->y += sw->font->height;
     } else {

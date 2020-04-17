@@ -294,7 +294,6 @@ static void draw_frame(glue_t* glue) {
             bool swapped = eglSwapBuffers(glue->display, glue->surface);
             assertion(swapped, "eglSwapBuffers() failed"); (void)swapped;
 //          traceln("eglSwapBuffers()=%d", swapped);
-            gl_set_color(&gl_color_invalid); // this is needed for glColorf() calls optimization
         }
     }
     if (glue->animating && glue->running) { glue->a->invalidate(glue->a); }

@@ -1,6 +1,7 @@
 #include "dc.h"
 #include "glh.h"
 #include "shaders.h"
+#include "font.h"
 #ifndef  MAKE_USE_OF_GLES3
 #include <GLES/gl.h>
 #include <GLES2/gl2.h>
@@ -13,14 +14,15 @@ BEGIN_C
 
 static void init(dc_t* dc, mat4x4 mvp, ...);
 static void dispose(dc_t* dc);
-static void clear(dc_t* dc, colorf_t* color);
-static void fill(dc_t* dc, colorf_t* color, float x, float y, float w, float h);
-static void rect(dc_t* dc, colorf_t* color, float x, float y, float w, float h, float width);
-static void ring(dc_t* dc, colorf_t* color, float x, float y, float radius, float inner);
-static void bblt(dc_t* dc, bitmap_t* bitmap, float x, float y);
-static void luma(dc_t* dc, colorf_t* color, bitmap_t* bitmap, float x, float y, float w, float h);
-static void quad(dc_t* dc, colorf_t* color, bitmap_t* bitmap, quadf_t* quads, int count);
-static void poly(dc_t* dc, colorf_t* color, pointf_t* vertices, int count);
+static void clear(dc_t* dc, const colorf_t* color);
+static void fill(dc_t* dc, const colorf_t* color, float x, float y, float w, float h);
+static void rect(dc_t* dc, const colorf_t* color, float x, float y, float w, float h, float width);
+static void ring(dc_t* dc, const colorf_t* color, float x, float y, float radius, float inner);
+static void bblt(dc_t* dc, const bitmap_t* bitmap, float x, float y);
+static void luma(dc_t* dc, const colorf_t* color, bitmap_t* bitmap, float x, float y);
+static void quad(dc_t* dc, const colorf_t* color, bitmap_t* bitmap, quadf_t* quads, int count);
+static void poly(dc_t* dc, const colorf_t* color, pointf_t* vertices, int count);
+static int  text(dc_t* dc, const colorf_t* color, font_t* font, float x, float y, const char* text, int count);
 
 dc_t dc = {
     init,
@@ -32,7 +34,8 @@ dc_t dc = {
     bblt,
     luma,
     quad,
-    poly
+    poly,
+    text
 };
 
 static void init(dc_t* dc, mat4x4 mvp, ...) {
@@ -58,7 +61,7 @@ static void init(dc_t* dc, mat4x4 mvp, ...) {
 static void dispose(dc_t* dc) {
 }
 
-static void clear(dc_t* dc, colorf_t* color) {
+static void clear(dc_t* dc, const colorf_t* color) {
     if (color->a != 0) {
         gl_check(glClearColor(color->r, color->g, color->b, color->a));
         gl_check(glClear(GL_COLOR_BUFFER_BIT));
@@ -81,7 +84,7 @@ static void use_program(int program) {
     gl_check(glUseProgram(program));
 }
 
-static void fill(dc_t* dc, colorf_t* color, float x, float y, float w, float h) {
+static void fill(dc_t* dc, const colorf_t* color, float x, float y, float w, float h) {
     const float vertices[] = { x, y, x + w, y,  x + w, y + h, x, y + h };
     use_program(shaders.fill);
     gl_check(glUniformMatrix4fv(shaders.fill_mvp, 1, false, (GLfloat*)dc->mvp));
@@ -90,7 +93,7 @@ static void fill(dc_t* dc, colorf_t* color, float x, float y, float w, float h) 
     gl_check(glDrawArrays(GL_TRIANGLE_FAN, 0, 4));
 }
 
-static void rect(dc_t* dc, colorf_t* color, float x, float y, float w, float h, float thickness) {
+static void rect(dc_t* dc, const colorf_t* color, float x, float y, float w, float h, float thickness) {
     assert(0 < thickness && thickness <= min(w, h)); // use fill() for thickness out of this range
     fill(dc, color, x, y, w, thickness);
     fill(dc, color, x, y + h - thickness, w, thickness);
@@ -98,14 +101,14 @@ static void rect(dc_t* dc, colorf_t* color, float x, float y, float w, float h, 
     fill(dc, color, x + w - thickness, y, thickness, h);
 }
 
-static void ring(dc_t* dc, colorf_t* color, float x, float y, float radius, float inner) {
+static void ring(dc_t* dc, const colorf_t* color, float x, float y, float radius, float inner) {
     assert(inner < radius);
-    float x0 = x - radius;
-    float y0 = y - radius;
-    float x1 = x + radius;
-    float y1 = y + radius;
-    float ri = inner / radius;
-    GLfloat vertices[] = {
+    const float x0 = x - radius;
+    const float y0 = y - radius;
+    const float x1 = x + radius;
+    const float y1 = y + radius;
+    const float ri = inner / radius;
+    const GLfloat vertices[] = {
         x0, y0,  0, 0,
         x1, y0,  1, 0,
         x1, y1,  1, 1,
@@ -116,39 +119,36 @@ static void ring(dc_t* dc, colorf_t* color, float x, float y, float radius, floa
     // outter and inner radius (inclusive) squared:
     gl_check(glUniform1f(shaders.ring_ro2, 1.0)); // outer radius is 1.0 ^ 2 = 1.0
     gl_check(glUniform1f(shaders.ring_ri2, ri * ri));
-    gl_check(glEnableVertexAttribArray(0));
     gl_check(glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 0, vertices));
     gl_check(glDrawArrays(GL_TRIANGLE_FAN, 0, 4));
 }
 
-static void bblt(dc_t* dc, bitmap_t* bitmap, float x, float y) {
-    int ti = bitmap->ti;
-    int tw = bitmap->w;
-    int th = bitmap->h;
-    GLfloat vertices[] = {
-        x,      y,       0, 0,
-        x + tw, y,       1, 0,
-        x + tw, y + th,  1, 1,
-        x,      y + th,  0, 1
+static void bblt(dc_t* dc, const bitmap_t* bitmap, float x, float y) {
+    const int w = bitmap->w;
+    const int h = bitmap->h;
+    const GLfloat vertices[] = {
+        x,     y,      0, 0,
+        x + w, y,      1, 0,
+        x + w, y + h,  1, 1,
+        x,     y + h,  0, 1
     };
     use_program(shaders.bblt);
     gl_check(glUniformMatrix4fv(shaders.bblt_mvp, 1, false, (GLfloat*)dc->mvp));
     gl_check(glUniform1i(shaders.bblt_tex, 1)); // index(!) of GL_TEXTURE1 below:
     gl_check(glActiveTexture(GL_TEXTURE1));
-    gl_check(glBindTexture(GL_TEXTURE_2D, ti));
-    gl_check(glEnableVertexAttribArray(0));
+    gl_check(glBindTexture(GL_TEXTURE_2D, bitmap->ti));
     gl_check(glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 0, vertices));
     gl_check(glDrawArrays(GL_TRIANGLE_FAN, 0, 4));
 }
 
-static void luma(dc_t* dc, colorf_t* color, bitmap_t* bitmap, float x, float y, float w, float h) {
-    int tw = bitmap->w;
-    int th = bitmap->h;
+static void luma(dc_t* dc, const colorf_t* color, bitmap_t* bitmap, float x, float y) {
+    const float w = bitmap->w;
+    const float h = bitmap->h;
     GLfloat vertices[] = {
-        x,      y,       0, 0,
-        x + tw, y,       1, 0,
-        x + tw, y + th,  1, 1,
-        x,      y + th,  0, 1
+        x,     y,      0, 0,
+        x + w, y,      1, 0,
+        x + w, y + h,  1, 1,
+        x,     y + h,  0, 1
     };
     use_program(shaders.luma);
     gl_check(glUniformMatrix4fv(shaders.luma_mvp, 1, false, (GLfloat*)dc->mvp));
@@ -156,30 +156,47 @@ static void luma(dc_t* dc, colorf_t* color, bitmap_t* bitmap, float x, float y, 
     gl_check(glUniform1i(shaders.luma_tex, 1)); // index(!) of GL_TEXTURE1 below
     gl_check(glActiveTexture(GL_TEXTURE1));
     gl_check(glBindTexture(GL_TEXTURE_2D, bitmap->ti));
-    gl_check(glEnableVertexAttribArray(0));
     gl_check(glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 0, vertices));
     gl_check(glDrawArrays(GL_TRIANGLE_FAN, 0, 4));
 }
 
-static void quad(dc_t* dc, colorf_t* color, bitmap_t* bitmap, quadf_t* quads, int count) {
+static void quad(dc_t* dc, const colorf_t* color, bitmap_t* bitmap, quadf_t* quads, int count) {
     use_program(shaders.luma);
     gl_check(glUniformMatrix4fv(shaders.luma_mvp, 1, false, (GLfloat*)dc->mvp));
     gl_check(glUniform4fv(shaders.luma_rgba, 1, (GLfloat*)color));
     gl_check(glUniform1i(shaders.luma_tex, 1)); // index(!) of GL_TEXTURE1 below
     gl_check(glActiveTexture(GL_TEXTURE1));
     gl_check(glBindTexture(GL_TEXTURE_2D, bitmap->ti));
-    gl_check(glEnableVertexAttribArray(0));
-    gl_check(glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 0, (GLfloat*)quads));
-    gl_check(glDrawArrays(GL_TRIANGLE_FAN, 0, 4));
+    for (int i = 0; i < count; i++) {
+        gl_check(glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 0, (GLfloat*)&quads[i * 4]));
+        gl_check(glDrawArrays(GL_TRIANGLE_FAN, 0, 4));
+    }
 }
 
-static void poly(dc_t* dc, colorf_t* color, pointf_t* vertices, int count) {
+static void poly(dc_t* dc, const colorf_t* color, pointf_t* vertices, int count) {
     use_program(shaders.fill);
     gl_check(glUniformMatrix4fv(shaders.fill_mvp, 1, false, (GLfloat*)dc->mvp));
     gl_check(glUniform4fv(shaders.fill_rgba, 1, (GLfloat*)color));
-    gl_check(glEnableVertexAttribArray(0));
     gl_check(glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, vertices));
     gl_check(glDrawArrays(GL_TRIANGLE_FAN, 0, count));
+}
+
+static int text(dc_t* dc, const colorf_t* c, font_t* f, float x, float y, const char* text, int n) {
+    quadf_t quads[n * 4];
+    const int w = f->atlas.w;
+    const int h = f->atlas.h;
+    stbtt_packedchar* chars = (stbtt_packedchar*)f->chars;
+    int k = 0;
+    for (int i = 0; i < n; i++) {
+        stbtt_aligned_quad q;
+        stbtt_GetPackedQuad(chars, w, h, text[i] - f->from, &x, &y, &q, 0);
+        quadf_t q0 = {q.x0, q.y0, q.s0, q.t0}; quads[k++] = q0;
+        quadf_t q1 = {q.x1, q.y0, q.s1, q.t0}; quads[k++] = q1;
+        quadf_t q2 = {q.x1, q.y1, q.s1, q.t1}; quads[k++] = q2;
+        quadf_t q3 = {q.x0, q.y1, q.s0, q.t1}; quads[k++] = q3;
+    }
+    dc->quad(dc, c, &f->atlas, quads, n * 4);
+    return x;
 }
 
 END_C

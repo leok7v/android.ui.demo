@@ -25,43 +25,43 @@ BEGIN_C
 
 #define linmath_curly_init(...) { __VA_ARGS__ } // because cannot use {,} inside linmat_implements()
 
-#define linmath_vec_definition(n) \
-\
-typedef float vec##n[n]; \
-void vec##n##_add(vec##n r, vec##n const a, vec##n const b) linmat_implements({ \
-    for (int i = 0; i < n; i++) { r[i] = a[i] + b[i]; } \
-}) \
-\
-void vec##n##_sub(vec##n r, vec##n const a, vec##n const b) linmat_implements({ \
-    for (int i = 0; i < n; i++) { r[i] = a[i] - b[i]; } \
-}) \
-\
+#define linmath_vec_definition(n)                                                \
+                                                                                 \
+typedef float vec##n[n];                                                         \
+void vec##n##_add(vec##n r, vec##n const a, vec##n const b) linmat_implements({  \
+    for (int i = 0; i < n; i++) { r[i] = a[i] + b[i]; }                          \
+})                                                                               \
+                                                                                 \
+void vec##n##_sub(vec##n r, vec##n const a, vec##n const b) linmat_implements({  \
+    for (int i = 0; i < n; i++) { r[i] = a[i] - b[i]; }                          \
+})                                                                               \
+                                                                                 \
 void vec##n##_scale(vec##n r, vec##n const v, float const s) linmat_implements({ \
-    for (int i = 0; i < n; i++) { r[i] = v[i] * s; }\
-}) \
-\
-float vec##n##_mul_inner(vec##n const a, vec##n const b) linmat_implements({ \
-    float p = 0; \
-    for (int i = 0; i < n; i++) \
-        p += b[i] * a[i]; \
-    return p; \
-}) \
-\
-float vec##n##_len(vec##n const v) linmat_implements({ \
-    return sqrtf(vec##n##_mul_inner(v,v)); \
-}) \
-\
-void vec##n##_norm(vec##n r, vec##n const v) linmat_implements({ \
-    float k = 1 / vec##n##_len(v); \
-    vec##n##_scale(r, v, k); \
-}) \
-\
-void vec##n##_min(vec##n r, vec##n const a, vec##n const b) linmat_implements({ \
-    for (int i = 0; i < n; i++) { r[i] = a[i]<b[i] ? a[i] : b[i]; } \
-}) \
-\
-void vec##n##_max(vec##n r, vec##n const a, vec##n const b) linmat_implements({ \
-    for (int i = 0; i < n; i++) { r[i] = a[i]>b[i] ? a[i] : b[i]; } \
+    for (int i = 0; i < n; i++) { r[i] = v[i] * s; }                             \
+})                                                                               \
+                                                                                 \
+float vec##n##_mul_inner(vec##n const a, vec##n const b) linmat_implements({     \
+    float p = 0;                                                                 \
+    for (int i = 0; i < n; i++)                                                  \
+        p += b[i] * a[i];                                                        \
+    return p;                                                                    \
+})                                                                               \
+                                                                                 \
+float vec##n##_len(vec##n const v) linmat_implements({                           \
+    return sqrtf(vec##n##_mul_inner(v,v));                                       \
+})                                                                               \
+                                                                                 \
+void vec##n##_norm(vec##n r, vec##n const v) linmat_implements({                 \
+    float k = 1 / vec##n##_len(v);                                               \
+    vec##n##_scale(r, v, k);                                                     \
+})                                                                               \
+                                                                                 \
+void vec##n##_min(vec##n r, vec##n const a, vec##n const b) linmat_implements({  \
+    for (int i = 0; i < n; i++) { r[i] = a[i]<b[i] ? a[i] : b[i]; }              \
+})                                                                               \
+                                                                                 \
+void vec##n##_max(vec##n r, vec##n const a, vec##n const b) linmat_implements({  \
+    for (int i = 0; i < n; i++) { r[i] = a[i]>b[i] ? a[i] : b[i]; }              \
 })
 
 linmath_vec_definition(2)

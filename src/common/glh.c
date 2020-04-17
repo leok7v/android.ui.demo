@@ -10,24 +10,6 @@ BEGIN_C
 #define gl_error() 0
 #endif
 
-const colorf_t gl_color_invalid = { -1, -1, -1, -1 };
-
-colorf_t gl_color = { -1, -1, -1, -1 };
-
-int gl_set_color(const colorf_t* c) {
-    int r = 0;
-    if (c != null) {
-        if (memcmp(&gl_color, c, sizeof(gl_color)) != 0) {
-            gl_color = *c;
-            if (c != &gl_color_invalid) { gl_if_no_error(r, glColor4f(c->r, c->g, c->b, c->a)); }
-//          traceln("color := %.3f %.3f %.3f %.3f", c->r, c->g, c->b, c->a);
-        } else {
-//          traceln("same color %.3f %.3f %.3f %.3f", c->r, c->g, c->b, c->a);
-        }
-    }
-    return r;
-}
-
 void gl_ortho2D(mat4x4 m, float left, float right, float bottom, float top) {
     // this is basically from
     // http://en.wikipedia.org/wiki/Orthographic_projection_(geometry)
@@ -98,96 +80,6 @@ int gl_init_texture(int ti) {
     gl_if_no_error(r, glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
     gl_if_no_error(r, glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
     gl_if_no_error(r, glBindTexture(GL_TEXTURE_2D, 0));
-    return r;
-}
-
-int gl_texture_draw_quad(float x0, float y0, float x1, float y1, float s0, float t0, float s1, float t1) {
-    GLfloat vertices[] = { x0,y0, x1,y0, x1,y1, x1,y1, x0,y1, x0,y0 };
-    GLfloat texture_coordinates[]  = { s0,t0, s1,t0, s1,t1, s1,t1, s0,t1, s0,t0 };
-    int r = 0;
-    gl_if_no_error(r, glEnableClientState(GL_VERTEX_ARRAY));
-    gl_if_no_error(r, glEnableClientState(GL_TEXTURE_COORD_ARRAY));
-    gl_if_no_error(r, glVertexPointer(2, GL_FLOAT, 0, vertices));
-    gl_if_no_error(r, glTexCoordPointer(2, GL_FLOAT, 0, texture_coordinates));
-    gl_if_no_error(r, glDrawArrays(GL_TRIANGLES, 0, 6));
-    gl_if_no_error(r, glDisableClientState(GL_TEXTURE_COORD_ARRAY));
-    gl_if_no_error(r, glDisableClientState(GL_VERTEX_ARRAY));
-    return r;
-}
-
-int gl_draw_texture_quads(const float* vertices, const float* texture_coordinates, int n) {
-    int r = 0;
-    gl_if_no_error(r, glEnableClientState(GL_VERTEX_ARRAY));
-    gl_if_no_error(r, glEnableClientState(GL_TEXTURE_COORD_ARRAY));
-    gl_if_no_error(r, glVertexPointer(2, GL_FLOAT, 0, vertices));
-    gl_if_no_error(r, glTexCoordPointer(2, GL_FLOAT, 0, texture_coordinates));
-    gl_if_no_error(r, glDrawArrays(GL_TRIANGLES, 0, n * 6));
-    gl_if_no_error(r, glDisableClientState(GL_TEXTURE_COORD_ARRAY));
-    gl_if_no_error(r, glDisableClientState(GL_VERTEX_ARRAY));
-    return r;
-}
-
-int gl_draw_texture(int ti, float x0, float y0, float x1, float y1, float s0, float t0, float s1, float t1) {
-    int r = 0;
-    // GL_DECAL ignores the primary color and just shows the texel
-    gl_if_no_error(r, glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL));
-    gl_if_no_error(r, glBindTexture(GL_TEXTURE_2D, ti));
-    gl_if_no_error(r, gl_texture_draw_quad(x0, y0, x1, y1, s0, t0, s1, t1));
-    gl_if_no_error(r, glBindTexture(GL_TEXTURE_2D, 0));
-    return r;
-}
-
-int gl_blend_texture(int ti, float x0, float y0, float x1, float y1, float s0, float t0, float s1, float t1) {
-    int r = 0;
-    // GL_MODULE multiplies primary color and texel and shows the result.
-    gl_if_no_error(r, glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE));
-    gl_if_no_error(r, glBindTexture(GL_TEXTURE_2D, ti));
-    gl_texture_draw_quad(x0, y0, x1, y1, s0, t0, s1, t1);
-    gl_if_no_error(r, glBindTexture(GL_TEXTURE_2D, 0));
-    return r;
-}
-
-int gl_draw_points(const colorf_t* c, const float* xy, int count) {
-    int r = 0;
-    gl_if_no_error(r, gl_set_color(c));
-    gl_if_no_error(r, glEnableClientState(GL_VERTEX_ARRAY));
-    gl_if_no_error(r, glVertexPointer(2, GL_FLOAT, 0, xy));
-    gl_if_no_error(r, glDrawArrays(GL_POINTS, 0, count));
-    gl_if_no_error(r, glDisableClientState(GL_VERTEX_ARRAY));
-    return r;
-}
-
-int gl_draw_line(const colorf_t* c, float x0, float y0, float x1, float y1, float width) {
-    int r = 0;
-    float line_vertex[]= { x0, y0, x1, y1 };
-    gl_if_no_error(r, gl_set_color(c));
-    gl_if_no_error(r, glEnableClientState(GL_VERTEX_ARRAY));
-    gl_if_no_error(r, glLineWidth(width));
-    gl_if_no_error(r, glVertexPointer(2, GL_FLOAT, 0, line_vertex));
-    gl_if_no_error(r, glDrawArrays(GL_LINES, 0, 2));
-    gl_if_no_error(r, glDisableClientState(GL_VERTEX_ARRAY));
-    return r;
-}
-
-int gl_draw_rect(const colorf_t* c, float x0, float y0, float w, float h) {
-    int r = 0;
-    float x1 = x0 + w;
-    float y1 = y0 + h;
-    GLfloat vertices[] = { x0, y0, x1, y0, x1, y1, x1, y1, x0, y1, x0, y0 };
-    gl_if_no_error(r, gl_set_color(c));
-    gl_if_no_error(r, glEnableClientState(GL_VERTEX_ARRAY));
-    gl_if_no_error(r, glVertexPointer(2, GL_FLOAT, 0, vertices));
-    gl_if_no_error(r, glDrawArrays(GL_TRIANGLES, 0, 6));
-    gl_if_no_error(r, glDisableClientState(GL_VERTEX_ARRAY));
-    return r;
-}
-
-int gl_draw_rectangle(const colorf_t* c, float x0, float y0, float w, float h, float width) {
-    int r = 0;
-    gl_if_no_error(r, gl_draw_line(c, x0, y0, x0 + w - width, y0, width));
-    gl_if_no_error(r, gl_draw_line(null, x0 + w, y0, x0 + w, y0 + h - width, width));
-    gl_if_no_error(r, gl_draw_line(null, x0 + w, y0 + h, x0 + width, y0 + h, width));
-    gl_if_no_error(r, gl_draw_line(null, x0, y0 + h, x0, y0 - width, width));
     return r;
 }
 

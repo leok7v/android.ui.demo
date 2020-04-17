@@ -1,6 +1,7 @@
 #pragma once
 #include "rt.h"
 #include "bitmap.h"
+#include "color.h"
 #include "stb_inc.h"
 #include "stb_truetype.h" // for stbtt_fontinfo
 
@@ -26,19 +27,9 @@ int font_find_glyph_index(font_t* f, int unicode_codepoint); // returns -1 if gl
 
 // all functions returns 0 on success posix error otherwise
 
-int font_allocate_texture(font_t* f);
-
-int font_deallocate_texture(font_t* f);
-
-int font_update_texture(font_t* f);
-
-int font_allocate_and_update_texture(font_t* f);
-
 int font_load_asset(font_t* f, app_t* a, const char* name, int height_in_pixels, int from, int count);
 
 float font_text_width(font_t* f, const char* text);
-
-float font_draw_text(font_t* f, float x, float y, const char* text);
 
 void font_dispose(font_t* font);
 

@@ -23,8 +23,6 @@ int bitmap_update_texture(bitmap_t* b);
 
 int bitmap_allocate_and_update_texture(bitmap_t* b);
 
-int bitmap_draw(bitmap_t* b, app_t* a, float x, float y);
-
 int bitmap_load_asset(bitmap_t* b, app_t* a, const char* name);
 
 void bitmap_dispose(bitmap_t* b);

@@ -89,12 +89,11 @@ static void toast_draw(application_t* app) {
         if (time_on_screen / 1000 > TOAST_TIME_IN_MS * 1000) { // nanoseconds
             toast_remove(app);
         } else {
-            gl_set_color(&colors.red);
             float fh = app->font.height;
             float w = (int)font_text_width(&app->font, app->toast);
             int x = (a->root->w - w) / 2;
             int y = (int)((a->root->h - fh) / 2);
-            font_draw_text(&app->font, x, y, app->toast);
+            dc.text(&dc, &colors.red, &app->font, x, y, app->toast, (int)strlen(app->toast));
         }
     }
 }
@@ -135,133 +134,35 @@ static void textures_mouse(ui_t* self, int flags, float x, float y) {
     if (flags & MOUSE_LBUTTON_UP) { traceln("click at %.1f %.1f", x, y); }
 }
 
-static void use_program(int program) {
-    gl_check(glValidateProgram(program));
-    GLint status = 0;
-    gl_check(glGetProgramiv(program, GL_VALIDATE_STATUS, &status));
-    if (!status) {
-        GLsizei count = 0;
-        char message[1024] = {};
-        glGetProgramInfoLog(program, countof(message) - 1, &count, message);
-        traceln("%s", message);
-        exit(1);
-    }
-    gl_check(glUseProgram(program));
-}
-
-static void root_draw(ui_t* view) {
+static void test(ui_t* view) {
     application_t* app = (application_t*)view->a->that;
     const float w = view->w;
     const float h = view->h;
-//  gl_check(glViewport(0, 0, w, h)); // this is the default no need to set
-    gl_check(glClearColor(colors.nc_dark_blue.r, colors.nc_dark_blue.g, colors.nc_dark_blue.b, 1));
-    gl_check(glClear(GL_COLOR_BUFFER_BIT));
-    gl_check(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST));
-    gl_check(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST));
-    gl_check(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
-    gl_check(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
-if (0)
-    {
-        float vertices0[] = { 1, 1 , 1 + 99, 1,  1, 1 + 99 };
-        float vertices1[] = { w - 2, h - 2, w - 2, h - 2 - 99,  w - 2 - 99, h - 2 };
-        use_program(shaders.fill);
-        gl_check(glUniformMatrix4fv(shaders.fill_mvp, 1, false, (const GLfloat*)app->mvp));
-        gl_check(glUniform4fv(shaders.fill_rgba, 1, (const GLfloat*)&colors.red));
-        gl_check(glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, vertices0));
-        gl_check(glEnableVertexAttribArray(0));
-        gl_check(glDrawArrays(GL_TRIANGLES, 0, 3));
-
-        gl_check(glUniform4fv(shaders.fill_rgba, 1, (const GLfloat*)&colors.green));
-        gl_check(glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, vertices1));
-        gl_check(glEnableVertexAttribArray(0));
-        gl_check(glDrawArrays(GL_TRIANGLES, 0, 3));
-    }
-    {
-        pointf_t vertices0[] = { {1, 1}, {1 + 99, 1},  {1, 1 + 99} };
-        pointf_t vertices1[] = { {w - 2, h - 2}, {w - 2, h - 2 - 99},  {w - 2 - 99, h - 2} };
-        dc.poly(&dc, &colors.red,   vertices0, countof(vertices0));
-        dc.poly(&dc, &colors.green, vertices1, countof(vertices1));
-
-    }
-if (0)
-    {
-        int ti = app->bitmaps[0].ti;
-        int tw = app->bitmaps[0].w;
-        int th = app->bitmaps[0].h;
-                             //  x          y       s  t
-        GLfloat vertices[] = { 100,      100,       0, 0,
-                               100 + tw, 100,       1, 0,
-                               100 + tw, 100 + th,  1, 1,
-                               100,      100 + th,  0, 1 };
-        use_program(shaders.bblt);
-        gl_check(glUniformMatrix4fv(shaders.bblt_mvp, 1, false, (const GLfloat*)app->mvp));
-        gl_check(glUniform1i(shaders.bblt_tex, 1)); // index(!) of GL_TEXTURE1 below:
-        gl_check(glActiveTexture(GL_TEXTURE1));
-        gl_check(glBindTexture(GL_TEXTURE_2D, ti));
-        gl_check(glEnableVertexAttribArray(0));
-        gl_check(glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 0, vertices));
-        gl_check(glDrawArrays(GL_TRIANGLE_FAN, 0, 4));
-    }
+    pointf_t vertices0[] = { {1, 1}, {1 + 99, 1},  {1, 1 + 99} };
+    pointf_t vertices1[] = { {w - 2, h - 2}, {w - 2, h - 2 - 99},  {w - 2 - 99, h - 2} };
+    dc.poly(&dc, &colors.red,   vertices0, countof(vertices0));
+    dc.poly(&dc, &colors.green, vertices1, countof(vertices1));
     dc.fill(&dc, &colors.black, 100, 100, app->bitmaps[2].w, app->bitmaps[2].h);
     dc.bblt(&dc, &app->bitmaps[2], 100, 100);
     colorf_t green = colors.green;
     green.a = 0.75; // translucent
-    dc.luma(&dc, &green, &app->font.atlas, 100, 100, app->font.atlas.w, app->font.atlas.h);
-if (0)
-    {
-        int ti = app->font.atlas.ti;
-        int tw = app->font.atlas.w;
-        int th = app->font.atlas.h;
-                             //  x          y       s  t
-        GLfloat vertices[] = { 100,      100,       0, 0,
-                               100 + tw, 100,       1, 0,
-                               100 + tw, 100 + th,  1, 1,
-                               100,      100 + th,  0, 1 };
-        use_program(shaders.luma);
-        gl_check(glUniformMatrix4fv(shaders.luma_mvp, 1, false, (const GLfloat*)app->mvp));
-        gl_check(glActiveTexture(GL_TEXTURE1));
-        gl_check(glBindTexture(GL_TEXTURE_2D, ti));
-        gl_check(glUniform1i(shaders.luma_tex, 1)); // index of GL_TEXTURE1 above
-        colorf_t half_green = colors.green;
-        half_green.a = 0.5;
-        half_green.r = 0.7;
-        half_green.g = 0.5;
-        half_green.b = 0.2;
-        gl_check(glUniform4fv(shaders.luma_rgba, 1, (const GLfloat*)&half_green)); // pointer to 1 float[4] array
-        gl_check(glEnableVertexAttribArray(0));
-        gl_check(glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 0, vertices));
-        gl_check(glDrawArrays(GL_TRIANGLE_FAN, 0, 4));
+    dc.luma(&dc, &green, &app->font.atlas, 100, 100);
+    dc.rect(&dc, &colors.white, 100, 100, w - 200, h - 200, 4);
+    dc.ring(&dc, &colors.white, w / 2, h / 2, 100, 50);
+    dc.text(&dc, &colors.white, &app->font, 500, 500, "Hello World", strlen("Hello World"));
+    dc.text(&dc, &colors.white, &app->font, 560, 560, "ABC", strlen("ABC"));
+}
+
+static void root_draw(ui_t* view) {
+    application_t* app = (application_t*)view->a->that;
+    dc.clear(&dc, &colors.nc_dark_blue);
+    const bool simple_test = false;
+    if (simple_test) {
+        test(view);
+    } else {
+        view->draw_children(view);
+        toast_draw(app);
     }
-if (0)
-    {
-        float tw = 256;
-        float th = 256;
-        float ro = 0.75;
-        float ri = 0.25;
-                             //  x         y        t  s
-        GLfloat vertices[] = { 500,      500,       0, 0,
-                               500 + tw, 500,       1, 0,
-                               500 + tw, 500 + th,  1, 1,
-                               500,      500 + th,  0, 1 };
-        use_program(shaders.ring);
-        gl_check(glUniformMatrix4fv(shaders.ring_mvp, 1, false, (const GLfloat*)app->mvp));
-        gl_check(glUniform4fv(shaders.ring_rgba, 1, (const GLfloat*)&colors.red)); // pointer to 1 float[4] array
-        // outter and inner radius (inclusive) squared:
-        gl_check(glUniform1f(shaders.ring_ri2, ri * ri));
-        gl_check(glUniform1f(shaders.ring_ro2, ro * ro));
-        gl_check(glEnableVertexAttribArray(0));
-        gl_check(glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 0, vertices));
-        gl_check(glDrawArrays(GL_TRIANGLE_FAN, 0, 4));
-    }
-    {
-        dc.rect(&dc, &colors.white, 100, 100, w - 200, h - 200, 4);
-        dc.ring(&dc, &colors.white, w / 2, h / 2, 100, 50);
-    }
-//  gl_draw_rect(null, 0, 0, view->w, view->h);
-//  view->draw_children(view);
-//  application_t* app = (application_t*)view->that;
-//  toast_draw(app);
-(void)toast_draw;
 }
 
 static void glyphs_draw(ui_t* view) {
@@ -269,8 +170,7 @@ static void glyphs_draw(ui_t* view) {
     font_t* f = &app->font;
     float x = view->x + 0.5;
     float y = view->y + 0.5;
-    gl_set_color(&colors.white);
-    gl_blend_texture(f->atlas.ti, x, y, x + f->atlas.w, y + f->atlas.h, 0, 0, 1, 1);
+    dc.luma(&dc, &colors.white, &f->atlas, x, y);
     view->draw_children(view);
 }
 
@@ -287,18 +187,31 @@ static void ascii_draw(ui_t* view) {
     view->draw_children(view);
 }
 
+static void draw_line(colorf_t* c, float x0, float y0, float x1, float y1, float thickness) {
+    const int x = min(x0, x1);
+    const int y = min(y0, y1);
+    const int w = max(x0, x1) - x;
+    const int h = max(y0, y1) - y;
+    if (h == 0) {
+        dc.fill(&dc, c, x, y, w, thickness);
+    } else if (w == 0) {
+        dc.fill(&dc, c, x, y, thickness, h);
+    } else {
+        assertion(false, "only horizontal and vertical lines supported");
+    }
+}
+
 static void textures_draw(ui_t* view) {
     application_t* app = (application_t*)view->a->that;
-    gl_draw_line(&colors.white, 0.5, 0.5, 0.5, 240 + 2.5, 1);
+    draw_line(&colors.white, 0.5, 0.5, 0.5, 240 + 2.5, 1);
     for (int i = 0; i < countof(app->bitmaps); i++) {
         bitmap_t* b = &app->bitmaps[i];
         float x = i * (b->w + 1.5);
-        gl_set_color(&colors.black);
-        bitmap_draw(b, app->a, x + 1.5, 1.5);
-        gl_draw_line(&colors.white, x + b->w + 1.5, 1.5, x + b->w + 1.5, b->h + 1.5, 1.5);
+        dc.bblt(&dc, b, x + 1.5, 1.5);
+        draw_line(&colors.white, x + b->w + 1.5, 1.5, x + b->w + 1.5, b->h + 1.5, 1.5);
     }
-    gl_draw_line(&colors.white, 0.5, 1.5, view->w, 1.5, 1);
-    gl_draw_line(&colors.white, 0.5, 240 + 2.5, view->w, 240 + 2.5, 1);
+    draw_line(&colors.white, 0.5, 1.5, view->w, 1.5, 1);
+    draw_line(&colors.white, 0.5, 240 + 2.5, view->w, 240 + 2.5, 1);
     view->draw_children(view);
 }
 
@@ -365,7 +278,7 @@ static void load_font(application_t* app) {
         r = font_load_asset(&app->font, app->a, "liberation-mono-bold-ascii.ttf", hpx, 32, 98);
         assert(r == 0); (void)r;
     }
-    r = font_allocate_and_update_texture(&app->font);
+    r = bitmap_allocate_and_update_texture(&app->font.atlas);
     assert(r == 0);
     if (r != 0) { exit(r); } // fatal
 }
@@ -440,7 +353,7 @@ static void hidden(app_t* a) {
     button_dispose(app->checkbox);      app->checkbox = null;
     slider_dispose(app->slider1);       app->slider1 = null;
     slider_dispose(app->slider2);       app->slider2 = null;
-    font_deallocate_texture(&app->font);
+    bitmap_deallocate_texture(&app->font.atlas);
     for (int i = 0; i < countof(app->bitmaps); i++) { bitmap_deallocate_texture(&app->bitmaps[i]); }
 //  shader_program_dispose(app->program_main);   app->program_main = 0;
     shaders_dispose();

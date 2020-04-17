@@ -1,6 +1,6 @@
 #include "bitmap.h"
 #include "app.h"
-#include "glh.h"
+#include "dc.h"
 #include "stb_inc.h"
 #include "stb_image.h"
 #include <GLES/gl.h>
@@ -82,7 +82,7 @@ int bitmap_deallocate_texture(bitmap_t* b) {
 int bitmap_update_texture(bitmap_t* b) {
     int r = 0;
     int c = b->comp - 1;
-    static const int formats[] = { GL_LUMINANCE, GL_LUMINANCE_ALPHA, GL_RGB, GL_RGBA };
+    static const int formats[] = { GL_ALPHA, GL_LUMINANCE_ALPHA, GL_RGB, GL_RGBA };
     assertion(0 <= c && c < countof(formats), "invalid number of components: %d", b->comp);
     if (0 <= c && c < countof(formats)) {
         int format = formats[c];
@@ -99,11 +99,6 @@ int bitmap_allocate_and_update_texture(bitmap_t* b) {
     assert(b->data != null && b->w > 0 && b->h > 0 && b->comp > 0);
     int r = bitmap_allocate_texture(b);
     return r != 0 ? r : bitmap_update_texture(b);
-}
-
-int bitmap_draw(bitmap_t* b, app_t* a, float x, float y) {
-    assert(b->ti != 0);
-    return gl_draw_texture(b->ti, x, y, x + b->w, y + b->h, 0, 0, 1, 1);
 }
 
 void bitmap_dispose(bitmap_t* b) {

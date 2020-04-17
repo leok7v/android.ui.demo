@@ -21,6 +21,7 @@ int gl_init(int w, int h, mat4x4 projection_matrix);
 
 int gl_init_texture(int ti);
 
+/*
 // gl_color must be reset to gl_color_invalid on [e]glSwapBuffers by caller code
 extern const colorf_t gl_color_invalid;
 extern colorf_t gl_color;
@@ -35,7 +36,7 @@ int gl_draw_points(const colorf_t* c, const float* xy, int count);
 int gl_draw_line(const colorf_t* color, float x1, float y1, float x2, float y2, float width); // line "width" in pixels
 int gl_draw_rect(const colorf_t* c, float x, float y, float w, float h); // filled
 int gl_draw_rectangle(const colorf_t* c, float x0, float y0, float w, float h, float width); // outline, line "width" in pixels
-
+*/
 void gl_ortho2D(mat4x4 mx, float left, float right, float bottom, float top);
 
 const char* gl_strerror(int gle);

@@ -8,7 +8,7 @@ static void button_draw(ui_t* ui) {
     button_t* b = (button_t*)ui;
     colorf_t* color = b->bitset & BUTTON_STATE_PRESSED ? b->expo->color_background_pressed : b->expo->color_background;
     pointf_t pt = ui->screen_xy(ui);
-    gl_draw_rect(color, pt.x, pt.y, ui->w, ui->h);
+    dc.fill(&dc, color, pt.x, pt.y, ui->w, ui->h);
     int k = (int)strlen(b->label) + 1;
     const char* mn = b->mnemonic;
     char letter[2] = {};
@@ -30,17 +30,15 @@ static void button_draw(ui_t* ui) {
     float baseline = f->baseline;
     pt.y += (int)(baseline + (ui->h - fh) / 2);
     pt.x += em;
-    gl_set_color(b->expo->color_text);
     if (b->flip != null) {
         const char* check = *b->flip ? "[X] " : "[.] ";
-        pt.x = font_draw_text(f, pt.x, pt.y, check);
+        pt.x = dc.text(&dc, b->expo->color_text, f, pt.x, pt.y, check, (int)strlen(check));
     }
-    font_draw_text(f, pt.x, pt.y, b->label);
+    dc.text(&dc, b->expo->color_text, f, pt.x, pt.y, b->label, (int)strlen(b->label));
     if (m >= 0) { // draw highlighted mnemonic
         copy[m] = 0;
         float mx = pt.x + font_text_width(f, copy);
-        gl_set_color(b->expo->color_mnemonic);
-        font_draw_text(f, mx, pt.y, mn);
+        dc.text(&dc, b->expo->color_mnemonic, f, mx, pt.y, mn, (int)strlen(mn));
     }
 }
 

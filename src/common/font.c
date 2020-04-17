@@ -22,6 +22,7 @@ static int pack_font_to_texture(font_t* f, const void* ttf, stbtt_packedchar* ch
     // for a single attempt on [32..127] range
     f->atlas.w = next_power_of_2((int)sqrt(bytes_needed / 4));
     f->atlas.h = f->atlas.w / 2;
+    f->atlas.comp = 1;
     bool done = true;
     do {
         deallocate(f->atlas.data);
@@ -121,47 +122,10 @@ int font_find_glyph_index(font_t* f, int unicode_codepoint) {
     return ix;
 }
 
-int font_allocate_texture(font_t* f) {
-    assertion(f->atlas.ti == 0, "texture already allocated ti=0x%08X", f->atlas.ti);
-    int r = 0;
-    if (f->atlas.ti != 0) {
-        r = EINVAL;
-    } else {
-        GLuint ti = 0;
-        glGenTextures(1, &ti);
-        if (ti == 0) {
-            r = ENOMEM;
-        } else {
-            f->atlas.ti = ti;
-            assert(f->atlas.ti > 0);
-            gl_init_texture(ti);
-        }
-    }
-    return r;
-}
-
-int font_deallocate_texture(font_t* f) {
-    if (f->atlas.ti != 0) { GLuint ti = f->atlas.ti; glDeleteTextures(1, &ti); f->atlas.ti = 0; }
-    return 0;
-}
-
-int font_update_texture(font_t* f) {
-    assert(f->atlas.data != null && f->chars != null && f->atlas.ti > 0);
-    glBindTexture(GL_TEXTURE_2D, f->atlas.ti);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA, f->atlas.w, f->atlas.h, 0, GL_ALPHA, GL_UNSIGNED_BYTE, f->atlas.data);
-    glBindTexture(GL_TEXTURE_2D, 0);
-    return 0;
-}
-
-int font_allocate_and_update_texture(font_t* f) {
-    int r = font_allocate_texture(f);
-    return r != 0 ? r : font_update_texture(f);
-}
-
 void font_dispose(font_t* f) {
     assertion(f->atlas.ti == 0, "font_deallocate_texture() must be called on hidden() before font_dispose()");
     // Plan B: just in case font_dispose() called while window is still not hidden()
-    if (f->atlas.ti != 0) { font_deallocate_texture(f); }
+    if (f->atlas.ti != 0) { bitmap_deallocate_texture(&f->atlas); }
     deallocate(f->atlas.data);
     deallocate(f->chars);
     memset(f, 0, sizeof(*f));
@@ -178,35 +142,6 @@ float font_text_width(font_t* f, const char* text) {
         stbtt_GetPackedQuad(chars, w, h, *text - f->from, &x, &y, &q, 0);
         text++;
     }
-    return x;
-}
-
-float font_draw_text(font_t* f, float x, float y, const char* text) {
-    int r = 0;
-    int n = (int)strlen(text);
-    GLfloat vertices[12 * n];
-    GLfloat texture_coordinates[12 * n];
-    GLfloat* pv = vertices;
-    GLfloat* pt = texture_coordinates;
-    gl_if_no_error(r, glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE));
-    gl_if_no_error(r, glBindTexture(GL_TEXTURE_2D, f->atlas.ti));
-    const int w = f->atlas.w;
-    const int h = f->atlas.h;
-    stbtt_packedchar* chars = (stbtt_packedchar*)f->chars;
-    while (*text != 0) {
-        stbtt_aligned_quad q;
-        stbtt_GetPackedQuad(chars, w, h, *text - f->from, &x, &y, &q, 0);
-        text++;
-        const float x0 = q.x0, x1 = q.x1, y0 = q.y0, y1 = q.y1;
-        const float s0 = q.s0, t0 = q.t0, s1 = q.s1, t1 = q.t1;
-        *pv++ = x0; *pv++ = y0; *pv++ = x1; *pv++ = y0; *pv++ = x1; *pv++ = y1;
-        *pv++ = x1; *pv++ = y1; *pv++ = x0; *pv++ = y1; *pv++ = x0; *pv++ = y0;
-        *pt++ = s0; *pt++ = t0; *pt++ = s1; *pt++ = t0; *pt++ = s1; *pt++ = t1;
-        *pt++ = s1; *pt++ = t1; *pt++ = s0; *pt++ = t1; *pt++ = s0; *pt++ = t0;
-    }
-    gl_if_no_error(r, gl_draw_texture_quads(vertices, texture_coordinates, n));
-    gl_if_no_error(r, glBindTexture(GL_TEXTURE_2D, 0));
-    assertion(r == 0, "failed %s", gl_strerror(r));
     return x;
 }
 

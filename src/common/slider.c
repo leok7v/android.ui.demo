@@ -153,24 +153,21 @@ static void slider_draw(ui_t* self) {
     app_t* a = self->a;
     assertion(*s->maximum - *s->minimum > 0, "range must be positive [%d..%d]", *s->minimum, *s->maximum);
     const pointf_t pt = self->screen_xy(self);
-    const float fh = s->expo->font->height;
-    const float em4 = s->expo->font->em / 4;
-    const float baseline = s->expo->font->baseline;
+    font_t* f = s->expo->font;
+    const float fh = f->height;
+    const float em4 = f->em / 4;
+    const float baseline = f->baseline;
     float x = pt.x;
     float y = pt.y + (int)(baseline + (self->h - fh) / 2);
-    const float dec_width = s->ui.focusable ? font_text_width(s->expo->font, SLIDER_DEC_LABEL) + em4 : 0;
-    const float inc_width = s->ui.focusable ? font_text_width(s->expo->font, SLIDER_INC_LABEL) + em4 : 0;
+    const float dec_width = s->ui.focusable ? font_text_width(f, SLIDER_DEC_LABEL) + em4 : 0;
+    const float inc_width = s->ui.focusable ? font_text_width(f, SLIDER_INC_LABEL) + em4 : 0;
     const float indicator_width = self->w - dec_width - inc_width;
-//  traceln("ui.(x,y)[w x h] = (%.1f,%.1f)[%.1fx%.1f]", ui->x, ui->y, ui->w, ui->h);
-//  traceln("label_width=%.1f dec_width=%.1f inc_width=%.1f indicator_width=%.1f", label_width, dec_width, inc_width, indicator_width);
     if (s->label != null) {
-        gl_set_color(s->expo->color_text);
-        font_draw_text(s->expo->font, x + dec_width, y, s->label);
+        dc.text(&dc, s->expo->color_text, f, x + dec_width, y, s->label, (int)strlen(s->label));
     }
     if (s->ui.focusable) {
-        gl_set_color(s->expo->color_background); // TODO: ???
-        font_draw_text(s->expo->font, x, y, SLIDER_DEC_LABEL);
-        font_draw_text(s->expo->font, x + self->w - inc_width, y, SLIDER_INC_LABEL);
+        dc.text(&dc, s->expo->color_background, f, x, y, SLIDER_DEC_LABEL, (int)strlen(SLIDER_DEC_LABEL));
+        dc.text(&dc, s->expo->color_background, f, x + self->w - inc_width, y, SLIDER_INC_LABEL, (int)strlen(SLIDER_INC_LABEL));
     }
     if (indicator_width <= 0) {
         traceln("WARNING: indicator_width=%.1f < 0", indicator_width);
@@ -181,13 +178,18 @@ static void slider_draw(ui_t* self) {
         y = self->y + baseline + 1.5;
         const float w = (float)(indicator_width * r);
         const float h = self->h - baseline - 3;
-        gl_draw_rect(s->color_slider, x, y, w, h);
-        gl_draw_rect(s->expo->color_background, x + w, y, indicator_width - w, h);
+        dc.fill(&dc, s->color_slider, x, y, w, h);
+        dc.fill(&dc, s->expo->color_background, x + w, y, indicator_width - w, h);
     }
     if (a->focused == self) {
         // draw focus rectangles around buttons (TODO: make color customizable including tranfparent)
-        gl_draw_rectangle(&colors.red, pt.x, pt.y, dec_width, self->h, 1);
-        gl_draw_rectangle(&colors.red, pt.x + self->w - inc_width, pt.y, inc_width, self->h, 1);
+//      dc.rect(&dc, &colors.red, pt.x, pt.y, dec_width, self->h, 1);
+//      dc.rect(&dc, &colors.red, pt.x + self->w - inc_width, pt.y, inc_width, self->h, 1);
+        // highlight +/= with mnemonics color:
+        x = pt.x;
+        y = pt.y + (int)(baseline + (self->h - fh) / 2);
+        dc.text(&dc, s->expo->color_mnemonic, f, x + f->em, y, SLIDER_DEC_LABEL + 1, 1);
+        dc.text(&dc, s->expo->color_mnemonic, f, x + f->em + self->w - inc_width, y, SLIDER_INC_LABEL + 1, 1);
     }
 }
 
