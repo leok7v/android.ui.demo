@@ -1,12 +1,12 @@
 #include "app.h"
-#include "bitmap.h"
+#include "dc.h"
 #include "button.h"
 #include "slider.h"
 #include "screen_writer.h"
 #include "stb_image.h"
 #include <GLES/gl.h>
-#include <GLES3/gl3.h>
-#include <GLES3/gl3ext.h>
+#include <GLES2/gl2.h>
+#include <GLES2/gl2ext.h>
 #include "linmath.h" // TODO: not yet needed
 #include "shaders.h"
 
@@ -160,6 +160,7 @@ static void root_draw(ui_t* view) {
     gl_check(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST));
     gl_check(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
     gl_check(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
+if (0)
     {
         float vertices0[] = { 1, 1 , 1 + 99, 1,  1, 1 + 99 };
         float vertices1[] = { w - 2, h - 2, w - 2, h - 2 - 99,  w - 2 - 99, h - 2 };
@@ -175,6 +176,14 @@ static void root_draw(ui_t* view) {
         gl_check(glEnableVertexAttribArray(0));
         gl_check(glDrawArrays(GL_TRIANGLES, 0, 3));
     }
+    {
+        pointf_t vertices0[] = { {1, 1}, {1 + 99, 1},  {1, 1 + 99} };
+        pointf_t vertices1[] = { {w - 2, h - 2}, {w - 2, h - 2 - 99},  {w - 2 - 99, h - 2} };
+        dc.poly(&dc, &colors.red,   vertices0, countof(vertices0));
+        dc.poly(&dc, &colors.green, vertices1, countof(vertices1));
+
+    }
+if (0)
     {
         int ti = app->bitmaps[0].ti;
         int tw = app->bitmaps[0].w;
@@ -193,10 +202,16 @@ static void root_draw(ui_t* view) {
         gl_check(glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 0, vertices));
         gl_check(glDrawArrays(GL_TRIANGLE_FAN, 0, 4));
     }
+    dc.fill(&dc, &colors.black, 100, 100, app->bitmaps[2].w, app->bitmaps[2].h);
+    dc.bblt(&dc, &app->bitmaps[2], 100, 100);
+    colorf_t green = colors.green;
+    green.a = 0.75; // translucent
+    dc.luma(&dc, &green, &app->font.atlas, 100, 100, app->font.atlas.w, app->font.atlas.h);
+if (0)
     {
-        int ti = app->font.ti;
-        int tw = app->font.aw;
-        int th = app->font.ah;
+        int ti = app->font.atlas.ti;
+        int tw = app->font.atlas.w;
+        int th = app->font.atlas.h;
                              //  x          y       s  t
         GLfloat vertices[] = { 100,      100,       0, 0,
                                100 + tw, 100,       1, 0,
@@ -217,6 +232,7 @@ static void root_draw(ui_t* view) {
         gl_check(glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 0, vertices));
         gl_check(glDrawArrays(GL_TRIANGLE_FAN, 0, 4));
     }
+if (0)
     {
         float tw = 256;
         float th = 256;
@@ -237,6 +253,10 @@ static void root_draw(ui_t* view) {
         gl_check(glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 0, vertices));
         gl_check(glDrawArrays(GL_TRIANGLE_FAN, 0, 4));
     }
+    {
+        dc.rect(&dc, &colors.white, 100, 100, w - 200, h - 200, 4);
+        dc.ring(&dc, &colors.white, w / 2, h / 2, 100, 50);
+    }
 //  gl_draw_rect(null, 0, 0, view->w, view->h);
 //  view->draw_children(view);
 //  application_t* app = (application_t*)view->that;
@@ -250,7 +270,7 @@ static void glyphs_draw(ui_t* view) {
     float x = view->x + 0.5;
     float y = view->y + 0.5;
     gl_set_color(&colors.white);
-    gl_blend_texture(f->ti, x, y, x + f->aw, y + f->ah, 0, 0, 1, 1);
+    gl_blend_texture(f->atlas.ti, x, y, x + f->atlas.w, y + f->atlas.h, 0, 0, 1, 1);
     view->draw_children(view);
 }
 
@@ -317,12 +337,12 @@ static void init_ui(application_t* app) {
     app->slider2 = create_slider(app, x, y, app->slider2_label, &app->slider2_minimum, &app->slider2_maximum, &app->slider2_current);
 
     y += bh + vgap;
-    app->view_glyphs = app->a->root->create(app->a->root, app, x, y, app->font.aw, app->font.ah);
+    app->view_glyphs = app->a->root->create(app->a->root, app, x, y, app->font.atlas.w, app->font.atlas.h);
     app->view_glyphs->draw = glyphs_draw;
     app->view_glyphs->hidden = true;
     app->checkbox->flip = &app->view_glyphs->hidden;
 
-    y += app->font.ah;
+    y += app->font.atlas.h;
     app->view_ascii = app->a->root->create(app->a->root, app, 0, y, app->font.em * 26, app->font.em * 4);
     app->view_ascii->draw = ascii_draw;
 
@@ -337,7 +357,7 @@ static void load_font(application_t* app) {
     int r = 0;
     int hpx = (int)(pt2px(app->a, FONT_HEIGHT_PT) + 0.5); // font height in pixels
     if (hpx != app->font.height) {
-        if (app->font.data != null) { font_dispose(&app->font); }
+        if (app->font.atlas.data != null) { font_dispose(&app->font); }
         // https://en.wikipedia.org/wiki/Liberation_fonts https://github.com/liberationfonts
         // https://github.com/liberationfonts/liberation-fonts/releases
         // Useful: https://www.glyphrstudio.com/online/ and https://convertio.co/otf-ttf/
@@ -395,6 +415,7 @@ static void shown(app_t* a) {
     application_t* app = (application_t*)a->that;
     // both model and view matricies are identity
     gl_ortho2D(app->mvp, 0, a->root->w, a->root->h, 0);
+    dc.init(&dc, app->mvp);
     load_font(app);
     (void)create_gl_program;
 //  int r = create_gl_program(a, "main", &app->program_main);
@@ -423,6 +444,7 @@ static void hidden(app_t* a) {
     for (int i = 0; i < countof(app->bitmaps); i++) { bitmap_deallocate_texture(&app->bitmaps[i]); }
 //  shader_program_dispose(app->program_main);   app->program_main = 0;
     shaders_dispose();
+    dc.dispose(&dc);
 }
 
 static void idle(app_t* a) {

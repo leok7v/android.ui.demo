@@ -3,28 +3,6 @@
 
 BEGIN_C
 
-// shaders to fill a polygon with color
-// in vec2 xy       [0..1], [0..1]
-// in vec4 rgba     color components in range [0..1]
-const char* shader_fill_vx;
-const char* shader_fill_px;
-
-// uniform sampler2D tex (texture index e.g. 1 for GL_TEXTURE1)
-const char* shader_bblt_vx;
-const char* shader_bblt_px;
-
-// uniform sampler2D tex (texture index e.g. 1 for GL_TEXTURE1)
-// in vec4 rgba color components in range [0..1]
-const char* shader_luma_vx;
-const char* shader_luma_px;
-
-// in vec4 quad with [x, y, t, s] where ts are 0, 1 interpolated
-// in ri2 inner  radius ^ 2 (inclusive) [0..1]
-// in ro2 outter radius ^ 2 (inclusive) [0..1]
-// in vec4 rgba color components in range [0..1]
-const char* shader_ring_vx;
-const char* shader_ring_px;
-
 enum { // gl_shader_source_t.type
     GL_SHADER_VERTEX = 0,
     GL_SHADER_FRAGMENT = 1

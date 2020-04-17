@@ -1,5 +1,5 @@
 #pragma once
-#include "color.h"
+#include "dc.h"
 
 BEGIN_C
 
@@ -73,7 +73,6 @@ enum {
 
 typedef struct app_s app_t;
 
-typedef struct pointf_s { float x, y; } pointf_t;
 typedef struct ui_s ui_t;
 typedef struct timer_callback_s timer_callback_t;
 

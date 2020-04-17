@@ -14,6 +14,13 @@ BEGIN_C
 //  replace attribute -> in
 //  replace varying -> out
 
+// All shaders are parametrized with:
+// uniform mat4 mvp model * view * projection matrix
+
+// shaders.fill fill a polygon with color
+// in vec2 xy       [0..w], [0..h]
+// in vec4 rgba     color components in range [0..1]
+
 const char* shader_fill_vx = "\
     #version 100            \n\
     uniform highp mat4 mvp; \n\
@@ -28,6 +35,10 @@ const char* shader_fill_px = "\
     void main() {                    \n\
         gl_FragColor = rgba;         \n\
     }";
+
+// shaders.bblt `bit' block transfer or 4 component texture
+// uniform sampler2D tex (texture index e.g. 1 for GL_TEXTURE1)
+// in vec4 xyts       [0..w] [0..h] [0..1], [0..1]
 
 const char* shader_bblt_vx = "\
     #version 100            \n\
@@ -46,6 +57,11 @@ const char* shader_bblt_px = "\
     void main() {                    \n\
         gl_FragColor = texture2D(tex, ts); \n\
     }";
+
+// shaders.luma blend 1 component alpha texture with rgba color
+// uniform sampler2D tex (texture index e.g. 1 for GL_TEXTURE1)
+// uniform rgba
+// in vec4 xyts       [0..w] [0..h] [0..1], [0..1]
 
 const char* shader_luma_vx = "\
     #version 100            \n\
@@ -66,6 +82,13 @@ const char* shader_luma_px = "\
         highp vec4 c = texture2D(tex, ts);                              \n\
         gl_FragColor = vec4(rgba[0], rgba[1], rgba[2], rgba[3] * c[3]); \n\
     }";
+
+// shaders.ring
+// in vec4 quad with [x, y, t, s] where ts are 0, 1 interpolated
+// in ri2 inner  radius ^ 2 (inclusive) [0..1]
+// in ro2 outter radius ^ 2 (inclusive) [0..1]
+// in vec4 rgba color components in range [0..1]
+// IMPORTANT: radius is measured as ration of [x0, y0, x1, y1] square
 
 const char* shader_ring_vx = "\
     #version 100            \n\

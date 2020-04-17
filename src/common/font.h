@@ -1,7 +1,8 @@
 #pragma once
 #include "rt.h"
+#include "bitmap.h"
 #include "stb_inc.h"
-#include "stb_truetype.h"
+#include "stb_truetype.h" // for stbtt_fontinfo
 
 BEGIN_C
 
@@ -16,10 +17,7 @@ typedef struct font_s {
     // internal implementation details:
     stbtt_fontinfo fi;
     void* chars;  // per character info
-    void* data;   // packed font bitmap
-    int   ti;     // texture index
-    int   ah;     // atlas width
-    int   aw;     // atlas height
+    bitmap_t atlas;
 } font_t;
 
 typedef struct app_s app_t;

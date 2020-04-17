@@ -1,6 +1,6 @@
 #include "glh.h"
 #include <GLES/gl.h>
-#include <GLES3/gl3.h>
+#include <GLES2/gl2.h>
 
 BEGIN_C
 
@@ -65,20 +65,25 @@ int gl_init(int w, int h, mat4x4 projection_matrix) {
     const char* version = (const char*)glGetString(GL_VERSION); (void)version;
     int major = 0;
     int minor = 0;
+#if defined(GL_MAJOR_VERSION) && defined(GL_MINOR_VERSION) // GLES3
     glGetIntegerv(GL_MAJOR_VERSION, &major);
     glGetIntegerv(GL_MINOR_VERSION, &minor);
+    bool got_version = glGetError() == 0;
+    while (glGetError() != 0) { }
+#else
+    bool got_version = false;
+#endif
     // calls do fail on GL ES 2.0:
-    if (glGetError() != 0) {
+    if (!got_version) {
         const char* p = version;
         while (*p != 0 && !isdigit(*p)) { p++; }
         if (p != 0) { sscanf(p, "%d.%d", &major, &minor); }
-        while (glGetError() != 0) { }
     }
     traceln("GL_VERSION=%d.%d %s", major, minor, version);
     memcpy(projection_matrix, m4x4_zero, sizeof(m4x4_zero));
+    gl_if_no_error(r, glViewport(0, 0, w, h));
     gl_if_no_error(r, glEnable(GL_BLEND));
     gl_if_no_error(r, glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
-    gl_if_no_error(r, glViewport(0, 0, w, h));
     gl_if_no_error(r, glDisable(GL_DEPTH_TEST));
     gl_if_no_error(r, glDisable(GL_CULL_FACE));
     return r;
