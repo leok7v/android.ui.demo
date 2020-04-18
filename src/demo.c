@@ -7,7 +7,6 @@
 #include <GLES/gl.h>
 #include <GLES2/gl2.h>
 #include <GLES2/gl2ext.h>
-#include "linmath.h" // TODO: not yet needed
 #include "shaders.h"
 
 BEGIN_C
@@ -26,7 +25,7 @@ typedef struct application_s {
     app_t* a;
     int font_height_px;
     font_t font;    // default UI font
-    ui_expo_t expo;
+    ui_expo_t theme;
 //  int program_main;
     char toast[256];
     int64_t toast_start_time;
@@ -103,8 +102,8 @@ static button_t* create_button(application_t* app, float x, float y, int key_fla
     app_t* a = app->a;
     const float lw = font_text_width(&app->font, label) + app->font.em;
     const float bw = max(lw, pt2px(a, MIN_BUTTON_WIDTH_PT));
-    const float bh = app->font.height * app->expo.ui_height;
-    button_t* b = button_create(a->root, app, &app->expo, key_flags, key, mnemonic, label, x, y, bw, bh);
+    const float bh = app->font.height * app->theme.ui_height;
+    button_t* b = button_create(a->root, app, &app->theme, key_flags, key, mnemonic, label, x, y, bw, bh);
     b->ui.that = app;
     b->click = click;
     return b;
@@ -122,7 +121,7 @@ static void slider_notify(slider_t* s) {
 static slider_t* create_slider(application_t* app, float x, float y, const char* label, int* minimum, int* maximum, int* current) {
     float fh = app->font.height;
     float w = font_text_width(&app->font, label) + app->font.em * 2;
-    slider_t* s = slider_create(app->a->root, app, &app->expo, &colors.orange, label, x, y, w, fh, minimum, maximum, current);
+    slider_t* s = slider_create(app->a->root, app, &app->theme, &colors.orange, label, x, y, w, fh, minimum, maximum, current);
     s->ui.that = app;
     s->notify = slider_notify;
     s->ui.focusable = true; // has buttons
@@ -151,6 +150,7 @@ static void test(ui_t* view) {
     dc.ring(&dc, &colors.white, w / 2, h / 2, 100, 50);
     dc.text(&dc, &colors.white, &app->font, 500, 500, "Hello World", strlen("Hello World"));
     dc.text(&dc, &colors.white, &app->font, 560, 560, "ABC", strlen("ABC"));
+    dc.line(&dc, &colors.red, w / 2 - 100, h / 2, w / 2 + 100, h / 2 + 100, 10);
 }
 
 static void root_draw(ui_t* view) {
@@ -180,38 +180,24 @@ static void ascii_draw(ui_t* view) {
     float y = view->y + 0.5;
     char text[97] = {};
     for (int i = 0; i < 96; i++) { text[i] = 32 + i; }
-    screen_writer_t sw = screen_writer(x, y, app->expo.font, &colors.green);
+    screen_writer_t sw = screen_writer(x, y, app->theme.font, &colors.green);
     for (int i = 0; i < countof(text); i += 24) {
         sw.println(&sw, "%-24.24s", &text[i]);
     }
     view->draw_children(view);
 }
 
-static void draw_line(colorf_t* c, float x0, float y0, float x1, float y1, float thickness) {
-    const int x = min(x0, x1);
-    const int y = min(y0, y1);
-    const int w = max(x0, x1) - x;
-    const int h = max(y0, y1) - y;
-    if (h == 0) {
-        dc.fill(&dc, c, x, y, w, thickness);
-    } else if (w == 0) {
-        dc.fill(&dc, c, x, y, thickness, h);
-    } else {
-        assertion(false, "only horizontal and vertical lines supported");
-    }
-}
-
 static void textures_draw(ui_t* view) {
     application_t* app = (application_t*)view->a->that;
-    draw_line(&colors.white, 0.5, 0.5, 0.5, 240 + 2.5, 1);
+    dc.line(&dc, &colors.white, 0.5, 0.5, 0.5, 240 + 2.5, 1);
     for (int i = 0; i < countof(app->bitmaps); i++) {
         bitmap_t* b = &app->bitmaps[i];
         float x = i * (b->w + 1.5);
         dc.bblt(&dc, b, x + 1.5, 1.5);
-        draw_line(&colors.white, x + b->w + 1.5, 1.5, x + b->w + 1.5, b->h + 1.5, 1.5);
+        dc.line(&dc, &colors.white, x + b->w + 1.5, 1.5, x + b->w + 1.5, b->h + 1.5, 1.5);
     }
-    draw_line(&colors.white, 0.5, 1.5, view->w, 1.5, 1);
-    draw_line(&colors.white, 0.5, 240 + 2.5, view->w, 240 + 2.5, 1);
+    dc.line(&dc, &colors.white, 0.5, 1.5, view->w, 1.5, 1);
+    dc.line(&dc, &colors.white, 0.5, 240 + 2.5, view->w, 240 + 2.5, 1);
     view->draw_children(view);
 }
 
@@ -284,14 +270,14 @@ static void load_font(application_t* app) {
 }
 
 static void init_expo(application_t* app) {
-    ui_expo_t* ex = &app->expo;
+    ui_expo_t* ex = &app->theme;
     ex->font = &app->font;
     ex->ui_height = 1.5; // 150% of font height in pixels for UI elements height
     ex->color_text = &colors.nc_light_blue;
     ex->color_background =&colors.nc_teal;
     ex->color_mnemonic = &colors.nc_dirty_gold;
     ex->color_focused = ex->color_text; // TODO: lighter
-    ex->color_background_focused = &colors.nc_light_grey;
+    ex->color_background_focused = &colors.nc_light_gray;
     ex->color_armed = ex->color_text; // TODO: different
     ex->color_background_armed = &colors.orange;
     ex->color_pressed = ex->color_text; // TODO: different

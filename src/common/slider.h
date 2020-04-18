@@ -1,4 +1,14 @@
 #pragma once
+/* Copyright 2020 "Leo" Dmitry Kuznetsov
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+       http://www.apache.org/licenses/LICENSE-2.0
+   Unless required by applicable law or agreed to in writing, software distributed
+   under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+   CONDITIONS OF ANY KIND, either express or implied. See the License for the specific
+   language governing permissions and limitations under the License.
+*/
 #include "ui.h"
 
 BEGIN_C
@@ -7,7 +17,7 @@ typedef struct slider_s slider_t;
 
 typedef struct slider_s {
     ui_t ui; // if ui.focusable - slider has [+]/[-] buttons, otherwise it is buttonless progress indicator
-    ui_expo_t* expo;
+    ui_expo_t* theme;
     void (*notify)(slider_t* self); // on [+]/[-] click, Ctrl+Click (+/- 10), Shift+Click  (+/- 100), Ctrl+Shift+Click  (+/- 1000)
     int* minimum; // may be changed by caller on the fly, thus pointer
     int* maximum;
@@ -19,7 +29,7 @@ typedef struct slider_s {
     timer_callback_t timer_callback;
 } slider_t;
 
-slider_t* slider_create(ui_t* parent, void* that, ui_expo_t* expo,
+slider_t* slider_create(ui_t* parent, void* that, ui_expo_t* theme,
                         colorf_t* color_slider,
                         const char* label, float x, float y, float w, float h,
                         int* minimum, int* maximum, int* current);

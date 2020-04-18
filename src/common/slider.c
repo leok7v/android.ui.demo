@@ -1,3 +1,13 @@
+/* Copyright 2020 "Leo" Dmitry Kuznetsov
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+       http://www.apache.org/licenses/LICENSE-2.0
+   Unless required by applicable law or agreed to in writing, software distributed
+   under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+   CONDITIONS OF ANY KIND, either express or implied. See the License for the specific
+   language governing permissions and limitations under the License.
+*/
 #include "ui.h"
 #include "slider.h"
 #include "app.h"
@@ -21,9 +31,9 @@ static int slider_scale(slider_t* s) {
 }
 
 static int slider_dec_inc(slider_t* s, float x, float y) {
-    const float em4 = s->expo->font->em / 4;
-    const float dec_width = font_text_width(s->expo->font, SLIDER_DEC_LABEL) + em4;
-    const float inc_width = font_text_width(s->expo->font, SLIDER_INC_LABEL) + em4;
+    const float em4 = s->theme->font->em / 4;
+    const float dec_width = font_text_width(s->theme->font, SLIDER_DEC_LABEL) + em4;
+    const float inc_width = font_text_width(s->theme->font, SLIDER_INC_LABEL) + em4;
     if (0 <= x && x <= dec_width) {
         if (s->minimum != null && s->maximum != null && s->current != null && *s->minimum < *s->current) {
             return -1;
@@ -88,9 +98,9 @@ static void slider_mouse(ui_t* self, int mouse_action, float x, float y) {
             slider_notify(s);
         }
     } else if (s->ui.focusable && (a->mouse_flags & MOUSE_LBUTTON_FLAG)) { // drag with mouse button down
-        const float em4 = s->expo->font->em / 4;
-        const float dec_width = font_text_width(s->expo->font, SLIDER_DEC_LABEL) + em4;
-        const float inc_width = font_text_width(s->expo->font, SLIDER_INC_LABEL) + em4;
+        const float em4 = s->theme->font->em / 4;
+        const float dec_width = font_text_width(s->theme->font, SLIDER_DEC_LABEL) + em4;
+        const float inc_width = font_text_width(s->theme->font, SLIDER_INC_LABEL) + em4;
         if (dec_width <= x && x <= self->w - inc_width) {
             if (s->minimum != null && s->maximum != null && s->current != null) {
                 int range = *s->maximum - *s->minimum + 1;
@@ -153,7 +163,7 @@ static void slider_draw(ui_t* self) {
     app_t* a = self->a;
     assertion(*s->maximum - *s->minimum > 0, "range must be positive [%d..%d]", *s->minimum, *s->maximum);
     const pointf_t pt = self->screen_xy(self);
-    font_t* f = s->expo->font;
+    font_t* f = s->theme->font;
     const float fh = f->height;
     const float em4 = f->em / 4;
     const float baseline = f->baseline;
@@ -163,11 +173,11 @@ static void slider_draw(ui_t* self) {
     const float inc_width = s->ui.focusable ? font_text_width(f, SLIDER_INC_LABEL) + em4 : 0;
     const float indicator_width = self->w - dec_width - inc_width;
     if (s->label != null) {
-        dc.text(&dc, s->expo->color_text, f, x + dec_width, y, s->label, (int)strlen(s->label));
+        dc.text(&dc, s->theme->color_text, f, x + dec_width, y, s->label, (int)strlen(s->label));
     }
     if (s->ui.focusable) {
-        dc.text(&dc, s->expo->color_background, f, x, y, SLIDER_DEC_LABEL, (int)strlen(SLIDER_DEC_LABEL));
-        dc.text(&dc, s->expo->color_background, f, x + self->w - inc_width, y, SLIDER_INC_LABEL, (int)strlen(SLIDER_INC_LABEL));
+        dc.text(&dc, s->theme->color_background, f, x, y, SLIDER_DEC_LABEL, (int)strlen(SLIDER_DEC_LABEL));
+        dc.text(&dc, s->theme->color_background, f, x + self->w - inc_width, y, SLIDER_INC_LABEL, (int)strlen(SLIDER_INC_LABEL));
     }
     if (indicator_width <= 0) {
         traceln("WARNING: indicator_width=%.1f < 0", indicator_width);
@@ -179,29 +189,25 @@ static void slider_draw(ui_t* self) {
         const float w = (float)(indicator_width * r);
         const float h = self->h - baseline - 3;
         dc.fill(&dc, s->color_slider, x, y, w, h);
-        dc.fill(&dc, s->expo->color_background, x + w, y, indicator_width - w, h);
+        dc.fill(&dc, s->theme->color_background, x + w, y, indicator_width - w, h);
     }
-    if (a->focused == self) {
-        // draw focus rectangles around buttons (TODO: make color customizable including tranfparent)
-//      dc.rect(&dc, &colors.red, pt.x, pt.y, dec_width, self->h, 1);
-//      dc.rect(&dc, &colors.red, pt.x + self->w - inc_width, pt.y, inc_width, self->h, 1);
-        // highlight +/= with mnemonics color:
+    if (a->focused == self) { // for focused slider highlight +/= with mnemonics color:
         x = pt.x;
         y = pt.y + (int)(baseline + (self->h - fh) / 2);
-        dc.text(&dc, s->expo->color_mnemonic, f, x + f->em, y, SLIDER_DEC_LABEL + 1, 1);
-        dc.text(&dc, s->expo->color_mnemonic, f, x + f->em + self->w - inc_width, y, SLIDER_INC_LABEL + 1, 1);
+        dc.text(&dc, s->theme->color_mnemonic, f, x + f->em, y, SLIDER_DEC_LABEL + 1, 1);
+        dc.text(&dc, s->theme->color_mnemonic, f, x + f->em + self->w - inc_width, y, SLIDER_INC_LABEL + 1, 1);
     }
 }
 
-slider_t* slider_create(ui_t* parent, void* that, ui_expo_t* expo,
+slider_t* slider_create(ui_t* parent, void* that, ui_expo_t* theme,
                         colorf_t* color_slider,
                         const char* label, float x, float y, float w, float h,
                         int* minimum, int* maximum, int* current) {
     slider_t* s = (slider_t*)allocate(sizeof(slider_t));
     if (s != null) {
-        const float em4 = expo->font->em / 4;
-        const float dec_width = font_text_width(expo->font, SLIDER_DEC_LABEL) + em4;
-        const float inc_width = font_text_width(expo->font, SLIDER_INC_LABEL) + em4;
+        const float em4 = theme->font->em / 4;
+        const float dec_width = font_text_width(theme->font, SLIDER_DEC_LABEL) + em4;
+        const float inc_width = font_text_width(theme->font, SLIDER_INC_LABEL) + em4;
         s->ui = *parent;
         s->ui.that = that;
         s->ui.parent = null;
@@ -214,7 +220,7 @@ slider_t* slider_create(ui_t* parent, void* that, ui_expo_t* expo,
         s->minimum = minimum;
         s->maximum = maximum;
         s->current = current;
-        s->expo = expo;
+        s->theme = theme;
         s->color_slider = color_slider;
         assert((void*)s == (void*)&s->ui);
         parent->add(parent, &s->ui, x, y, dec_width + w + inc_width, h);
