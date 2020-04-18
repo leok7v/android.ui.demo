@@ -224,9 +224,9 @@ void mat4x4_rotate_Y(mat4x4 Q, mat4x4 M, float angle) linmat_implements({
     float s = sinf(angle);
     float c = cosf(angle);
     mat4x4 R = linmath_curly_init(
-        { c, 0, s, 0},
+        { c, 0,-s, 0},
         { 0, 1, 0, 0},
-        {-s, 0, c, 0},
+        { s, 0, c, 0},
         { 0, 0, 0, 1}
     );
     mat4x4_mul(Q, M, R);
