@@ -19,9 +19,6 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\src\android\app_droid.c" />
-    <ClCompile Include="..\src\android\droid_jni.c" />
-    <ClCompile Include="..\src\android\droid_keys.c" />
     <ClCompile Include="..\src\common\bitmap.c" />
     <ClCompile Include="..\src\common\button.c" />
     <ClCompile Include="..\src\common\color.c" />
@@ -37,10 +34,11 @@
     <ClCompile Include="..\src\common\stb_image.c" />
     <ClCompile Include="..\src\common\ui.c" />
     <ClCompile Include="..\src\demo.c" />
+    <ClCompile Include="..\src\droid\app_droid.c" />
+    <ClCompile Include="..\src\droid\droid_jni.c" />
+    <ClCompile Include="..\src\droid\droid_keys.c" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\src\android\droid_jni.h" />
-    <ClInclude Include="..\src\android\droid_keys.h" />
     <ClInclude Include="..\src\common\app.h" />
     <ClInclude Include="..\src\common\bitmap.h" />
     <ClInclude Include="..\src\common\button.h" />
@@ -54,6 +52,8 @@
     <ClInclude Include="..\src\common\slider.h" />
     <ClInclude Include="..\src\common\stb_inc.h" />
     <ClInclude Include="..\src\common\ui.h" />
+    <ClInclude Include="..\src\droid\droid_jni.h" />
+    <ClInclude Include="..\src\droid\droid_keys.h" />
     <ClInclude Include="..\src\ext\linmath.h" />
     <ClInclude Include="..\src\ext\stb_image.h" />
     <ClInclude Include="..\src\ext\stb_rect_pack.h" />
