@@ -46,6 +46,7 @@
     <ClInclude Include="..\src\common\dc.h" />
     <ClInclude Include="..\src\common\font.h" />
     <ClInclude Include="..\src\common\glh.h" />
+    <ClInclude Include="..\src\common\gl_inc.h" />
     <ClInclude Include="..\src\common\rt.h" />
     <ClInclude Include="..\src\common\screen_writer.h" />
     <ClInclude Include="..\src\common\shaders.h" />

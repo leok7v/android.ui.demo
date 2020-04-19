@@ -29,24 +29,10 @@ BEGIN_C
 
 int gl_init(int w, int h, mat4x4 projection_matrix);
 
-int gl_init_texture(int ti);
+int gl_allocate_texture(int *ti);
+int gl_update_texture(int ti, int w, int h, int bpp, const void* data); // bpp - bytes per pixel
+int gl_delete_texture(int ti);
 
-/*
-// gl_color must be reset to gl_color_invalid on [e]glSwapBuffers by caller code
-extern const colorf_t gl_color_invalid;
-extern colorf_t gl_color;
-
-int gl_set_color(const colorf_t* c); // if c != null set global variable gl_color and calls glColor4f()
-
-int gl_texture_draw_quad(float x0, float y0, float x1, float y1, float s0, float t0, float s1, float t1);
-int gl_draw_texture_quads(const float* vertices, const float* texture_coordinates, int n);
-int gl_draw_texture(int texture, float x0, float y0, float x1, float y1, float s0, float t0, float s1, float t1); // no blend!
-int gl_blend_texture(int texture, float x0, float y0, float x1, float y1, float s0, float t0, float s1, float t1);
-int gl_draw_points(const colorf_t* c, const float* xy, int count);
-int gl_draw_line(const colorf_t* color, float x1, float y1, float x2, float y2, float width); // line "width" in pixels
-int gl_draw_rect(const colorf_t* c, float x, float y, float w, float h); // filled
-int gl_draw_rectangle(const colorf_t* c, float x0, float y0, float w, float h, float width); // outline, line "width" in pixels
-*/
 void gl_ortho2D(mat4x4 mx, float left, float right, float bottom, float top);
 
 const char* gl_strerror(int gle);

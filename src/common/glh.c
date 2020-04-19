@@ -9,8 +9,7 @@
    language governing permissions and limitations under the License.
 */
 #include "glh.h"
-#include <GLES/gl.h>
-#include <GLES2/gl2.h>
+#include "gl_inc.h"
 
 BEGIN_C
 
@@ -81,7 +80,7 @@ int gl_init(int w, int h, mat4x4 projection_matrix) {
     return r;
 }
 
-int gl_init_texture(int ti) {
+static int init_texture(int ti) {
     int r = 0;
     gl_if_no_error(r, glBindTexture(GL_TEXTURE_2D, ti));
     gl_if_no_error(r, glPixelStorei(GL_UNPACK_ALIGNMENT, 1));
@@ -90,6 +89,54 @@ int gl_init_texture(int ti) {
     gl_if_no_error(r, glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
     gl_if_no_error(r, glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
     gl_if_no_error(r, glBindTexture(GL_TEXTURE_2D, 0));
+    return r;
+}
+
+int gl_allocate_texture(int *ti) {
+    int r = 0;
+    assertion(*ti == 0, "is texture already allocated ti=%d?", *ti);
+    if (*ti != 0) {
+        r = EINVAL;
+    } else {
+        GLuint tex = 0;
+        glGenTextures(1, &tex);
+        // cannot call glGetError() here because it can be a) not in valid gl context, b) has accumulated previous errors
+        if (tex == 0) {
+            r = ENOMEM;
+        } else {
+            assertion(tex > 0, "negative ti=0x%08X (should texture be uint32_t?)", *ti);
+            r = init_texture(tex);
+            if (r == 0) { *ti = tex; } else { gl_delete_texture(tex); }
+        }
+    }
+    return r;
+}
+
+int gl_update_texture(int ti, int w, int h, int bpp, const void* data) {
+    int r = 0;
+    int c = bpp - 1;
+    static const int formats[] = { GL_ALPHA, GL_LUMINANCE_ALPHA, GL_RGB, GL_RGBA };
+    assertion(0 <= c && c < countof(formats), "invalid number of byte per pixel components: %d", bpp);
+    if (0 <= c && c < countof(formats)) {
+        int format = formats[c];
+        gl_if_no_error(r, glBindTexture(GL_TEXTURE_2D, ti));
+        gl_if_no_error(r, glTexImage2D(GL_TEXTURE_2D, 0, format, w, h, 0, format, GL_UNSIGNED_BYTE, data));
+        gl_if_no_error(r, glBindTexture(GL_TEXTURE_2D, 0));
+    } else {
+        r = EINVAL;
+    }
+    return r;
+}
+
+int gl_delete_texture(int ti) {
+    int r = 0;
+    assertion(ti > 0, "texture was not allocated ti=%d", ti);
+    GLuint tex = ti;
+    if (tex != 0) {
+        gl_if_no_error(r, glDeleteTextures(1, &tex));
+    } else {
+        r = EINVAL;
+    }
     return r;
 }
 

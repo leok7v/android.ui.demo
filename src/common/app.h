@@ -46,10 +46,10 @@ typedef struct app_s {
     int last_mouse_y;
     int trace_flags;
     uint64_t time_in_nanoseconds; // since application start update on each event or animation
-    // app callbacks:
-    void (*init)(app_t* a); // called on application/activity start up but before window has been shown
-    void (*shown)(app_t* a);
-    void (*idle)(app_t* a);
+    // app callbacks (modeled after Android activity lifecycle):
+    void (*init)(app_t* a);    // called on application/activity start up
+    void (*shown)(app_t* a);   // called on when window has been shown (attached)
+    void (*idle)(app_t* a);    // called once when there is no input events
     void (*hidden)(app_t* a);  // called when application is hidden (loses window attachment)
     void (*pause)(app_t* a);   // e.g. when "adb shell input keyevent KEYCODE_SLEEP|KEYCODE_POWER"
     void (*stop)(app_t* a);    // usually after pause()

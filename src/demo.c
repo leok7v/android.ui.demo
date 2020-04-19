@@ -14,9 +14,6 @@
 #include "slider.h"
 #include "screen_writer.h"
 #include "stb_image.h"
-#include <GLES/gl.h>
-#include <GLES2/gl2.h>
-#include <GLES2/gl2ext.h>
 #include "shaders.h"
 
 BEGIN_C
@@ -240,26 +237,21 @@ static void init_ui(application_t* app) {
     app->slider1_current = 240;
     snprintf(app->slider1_label, countof(app->slider1_label), SLIDER1_LABEL, app->slider1_current);
     app->slider1 = create_slider(app, x, y, app->slider1_label, &app->slider1_minimum, &app->slider1_maximum, &app->slider1_current);
-
     y += bh + vgap;
     app->slider2_minimum = 0;
     app->slider2_maximum = 1023;
     app->slider2_current = 512;
     snprintf(app->slider2_label, countof(app->slider2_label), SLIDER2_LABEL, app->slider2_current);
     app->slider2 = create_slider(app, x, y, app->slider2_label, &app->slider2_minimum, &app->slider2_maximum, &app->slider2_current);
-
     y += bh + vgap;
     app->view_glyphs = app->a->root->create(app->a->root, app, x, y, app->font.atlas.w, app->font.atlas.h);
     app->view_glyphs->draw = glyphs_draw;
     app->view_glyphs->hidden = true;
     app->glyphs->flip = &app->view_glyphs->hidden;
-
     y += app->font.atlas.h;
     app->view_ascii = app->a->root->create(app->a->root, app, 0, y, app->font.em * 26, app->font.em * 4);
     app->view_ascii->draw = ascii_draw;
-
     app->a->root->draw = root_draw;
-
     app->view_textures = app->a->root->create(app->a->root, app, 0, 0, 320 * 3 + 4, 240 + 2);
     app->view_textures->mouse = textures_mouse;
     app->view_textures->draw = textures_draw;

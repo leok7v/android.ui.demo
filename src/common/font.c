@@ -11,7 +11,6 @@
 */
 #include "app.h"
 #include "stb_rect_pack.h"
-#include <GLES/gl.h>
 
 BEGIN_C
 

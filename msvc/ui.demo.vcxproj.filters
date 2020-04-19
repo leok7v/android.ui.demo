@@ -123,5 +123,8 @@
     <ClInclude Include="..\src\droid\droid_keys.h">
       <Filter>droid</Filter>
     </ClInclude>
+    <ClInclude Include="..\src\common\gl_inc.h">
+      <Filter>common</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

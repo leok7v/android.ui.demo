@@ -12,13 +12,7 @@
 #include "glh.h"
 #include "shaders.h"
 #include "font.h"
-#ifndef  MAKE_USE_OF_GLES3
-#include <GLES/gl.h>
-#include <GLES2/gl2.h>
-#else
-#include <GLES/gl.h>
-#include <GLES3/gl3.h>
-#endif
+#include "gl_inc.h"
 
 BEGIN_C
 

@@ -13,7 +13,7 @@
 #include "dc.h"
 #include "stb_inc.h"
 #include "stb_image.h"
-#include <GLES/gl.h>
+#include "glh.h"
 
 BEGIN_C
 
@@ -62,47 +62,19 @@ int bitmap_load_asset(bitmap_t* b, app_t* a, const char* name) {
 }
 
 int bitmap_allocate_texture(bitmap_t* b) {
-    int r = 0;
     assertion(b->ti == 0, "texture already attached to bitmap ti=%d", b->ti);
-    if (b->ti != 0) {
-        r = EINVAL;
-    } else {
-        GLuint ti = 0;
-        glGenTextures(1, &ti);
-        // cannot call glGetError() here because it can be a) not in valid gl context, b) has accumulated previous errors
-        if (ti == 0) {
-            r = ENOMEM;
-        } else {
-            b->ti = ti;
-            assertion(b->ti > 0, "need to change bitmap.ti type to uint32_t ti=0x%08X", ti);
-            gl_init_texture(ti);
-        }
-    }
-    return r;
+    return b->ti != 0 ? EINVAL : gl_allocate_texture(&b->ti);
 }
 
 int bitmap_deallocate_texture(bitmap_t* b) {
-    int r = 0;
     assertion(b->ti != 0, "texture was not attached to bitmap");
-    GLuint ti = b->ti;
-    if (b->ti != 0) { glDeleteTextures(1, &ti); b->ti = 0; } else { r = EINVAL; }
+    int r = b->ti != 0 ? gl_delete_texture(b->ti) : EINVAL;
+    b->ti = 0;
     return r;
 }
 
 int bitmap_update_texture(bitmap_t* b) {
-    int r = 0;
-    int c = b->comp - 1;
-    static const int formats[] = { GL_ALPHA, GL_LUMINANCE_ALPHA, GL_RGB, GL_RGBA };
-    assertion(0 <= c && c < countof(formats), "invalid number of components: %d", b->comp);
-    if (0 <= c && c < countof(formats)) {
-        int format = formats[c];
-        gl_if_no_error(r, glBindTexture(GL_TEXTURE_2D, b->ti));
-        gl_if_no_error(r, glTexImage2D(GL_TEXTURE_2D, 0, format, b->w, b->h, 0, format, GL_UNSIGNED_BYTE, b->data));
-        gl_if_no_error(r, glBindTexture(GL_TEXTURE_2D, 0));
-    } else {
-        r = EINVAL;
-    }
-    return r;
+    return gl_update_texture(b->ti, b->w, b->h, b->comp, b->data);
 }
 
 int bitmap_allocate_and_update_texture(bitmap_t* b) {
