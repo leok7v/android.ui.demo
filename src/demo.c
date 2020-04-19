@@ -1,3 +1,13 @@
+/* Copyright 2020 "Leo" Dmitry Kuznetsov
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+       http://www.apache.org/licenses/LICENSE-2.0
+   Unless required by applicable law or agreed to in writing, software distributed
+   under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+   CONDITIONS OF ANY KIND, either express or implied. See the License for the specific
+   language governing permissions and limitations under the License.
+*/
 #include "app.h"
 #include "dc.h"
 #include "button.h"
@@ -33,8 +43,7 @@ typedef struct application_s {
     bitmap_t  bitmaps[3];
     button_t* quit;
     button_t* exit;
-    button_t* checkbox;
-    bool flip;
+    button_t* glyphs;
     slider_t* slider1;
     slider_t* slider2;
     ui_t* view_textures;
@@ -211,16 +220,20 @@ static void on_exit(button_t* b) {
     app->a->exit(app->a, 153); // gdb shows octal 0o231 exit status for some reason...
 }
 
+static void on_glyphs(button_t* b) {
+    application_t* app = (application_t*)b->ui.a->that;
+    b->ui.a->show_keyboard(b->ui.a, !app->view_glyphs->hidden);
+}
+
 static void init_ui(application_t* app) {
     float vgap = pt2px(app->a, VERTICAL_GAP_PT);
     float hgap = pt2px(app->a, HORIZONTAL_GAP_PT);
     float bh = app->font.height * 3 / 2; // button height
     float y = 240 + vgap;
-    app->quit     = create_button(app, 10, y, 0, 'q', "Q", "Quit", on_quit);        y += bh + vgap;
-    app->exit     = create_button(app, 10, y, 0, 'e', "E", "Exit(153)", on_exit);   y += bh + vgap;
-    app->checkbox = create_button(app, 10, y, 0, 'x', "X", "Checkbox", null);       y += bh + vgap;
-
-    int x = app->checkbox->ui.w + hgap * 4;
+    app->quit   = create_button(app, 10, y, 0, 'q', "Q", "Quit", on_quit);      y += bh + vgap;
+    app->exit   = create_button(app, 10, y, 0, 'e', "E", "Exit(153)", on_exit); y += bh + vgap;
+    app->glyphs = create_button(app, 10, y, 0, 'x', "X", "Glyphs", on_glyphs);  y += bh + vgap;
+    int x = app->glyphs->ui.w + hgap * 4;
     y = 240 + vgap;
     app->slider1_minimum = 0;
     app->slider1_maximum = 255;
@@ -239,7 +252,7 @@ static void init_ui(application_t* app) {
     app->view_glyphs = app->a->root->create(app->a->root, app, x, y, app->font.atlas.w, app->font.atlas.h);
     app->view_glyphs->draw = glyphs_draw;
     app->view_glyphs->hidden = true;
-    app->checkbox->flip = &app->view_glyphs->hidden;
+    app->glyphs->flip = &app->view_glyphs->hidden;
 
     y += app->font.atlas.h;
     app->view_ascii = app->a->root->create(app->a->root, app, 0, y, app->font.em * 26, app->font.em * 4);
@@ -334,11 +347,11 @@ static void hidden(app_t* a) {
     app->view_textures->dispose(app->view_textures); app->view_textures = null;
     app->view_glyphs->dispose(app->view_glyphs);     app->view_glyphs = null;
     app->view_ascii->dispose(app->view_ascii);       app->view_ascii = null;
-    button_dispose(app->quit);          app->quit = null;
-    button_dispose(app->exit);          app->exit = null;
-    button_dispose(app->checkbox);      app->checkbox = null;
-    slider_dispose(app->slider1);       app->slider1 = null;
-    slider_dispose(app->slider2);       app->slider2 = null;
+    button_dispose(app->quit);    app->quit = null;
+    button_dispose(app->exit);    app->exit = null;
+    button_dispose(app->glyphs);  app->glyphs = null;
+    slider_dispose(app->slider1); app->slider1 = null;
+    slider_dispose(app->slider2); app->slider2 = null;
     bitmap_deallocate_texture(&app->font.atlas);
     for (int i = 0; i < countof(app->bitmaps); i++) { bitmap_deallocate_texture(&app->bitmaps[i]); }
 //  shader_program_dispose(app->program_main);   app->program_main = 0;

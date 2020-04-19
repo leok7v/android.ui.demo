@@ -19,7 +19,7 @@ static int logln(const char* filename, int line, const char* function, const cha
         if (file == null) { file = strrchr(filename, '\\'); }
         if (file == null) { file = filename; } else { file++; }
         char location[1024];
-        snprintf(location, countof(location), "%s(%d) %s ", file, line, function);
+        snprintf(location, countof(location), "%s(%d) \t%s ", file, line, function);
         r = app_log(LOG_INFO, "@!@", location, format, vl);
     }
     return r;

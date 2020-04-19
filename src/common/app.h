@@ -69,6 +69,7 @@ typedef struct app_s {
     void* (*asset_map)(app_t* a, const char* name, const void* *data, int *bytes);
     void  (*asset_unmap)(app_t* a, void* asset, const void* data, int bytes);
     void  (*vibrate)(app_t* a, int vibration_effect);
+    void  (*show_keyboard)(app_t* a, bool on); // shows/hides soft keyboard
     mat4x4 projection;
     mat4x4 view;
 } app_t;

@@ -1,3 +1,13 @@
+/* Copyright 2020 "Leo" Dmitry Kuznetsov
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+       http://www.apache.org/licenses/LICENSE-2.0
+   Unless required by applicable law or agreed to in writing, software distributed
+   under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+   CONDITIONS OF ANY KIND, either express or implied. See the License for the specific
+   language governing permissions and limitations under the License.
+*/
 #include "app.h"
 #include "ui.h"
 #include "button.h"
@@ -25,6 +35,7 @@ static void  timer_remove(app_t* app, timer_callback_t* tcb);
 static void* asset_map(app_t* a, const char* name, const void* *data, int* bytes);
 static void  asset_unmap(app_t* a, void* asset, const void* data, int bytes);
 static void  vibrate(app_t* a, int vibration_effect);
+static void  show_keyboard(app_t* app, bool on);
 static void  enqueue_command(glue_t* glue, int8_t command);
 
 static app_t app = {
@@ -57,7 +68,8 @@ static app_t app = {
     timer_remove,
     asset_map,
     asset_unmap,
-    vibrate
+    vibrate,
+    show_keyboard
 };
 
 enum {
@@ -604,12 +616,15 @@ static int32_t handle_input(glue_t* glue, AInputEvent* event) {
 }
 
 static void on_start(ANativeActivity* na) {
+    traceln("");
 }
 
 static void on_stop(ANativeActivity* na) {
+    traceln("");
 }
 
 static void on_pause(ANativeActivity* na) {
+    traceln("");
     glue_t* glue = (glue_t*)na->instance;
     assert(glue->running == 1);
     glue->running = 0;
@@ -620,6 +635,7 @@ static void on_pause(ANativeActivity* na) {
 }
 
 static void on_resume(ANativeActivity* na) {
+    traceln("");
     glue_t* glue = (glue_t*)na->instance;
     assert(glue->running == 0);
     glue->running = 1;
@@ -635,12 +651,14 @@ static void on_resume(ANativeActivity* na) {
 }
 
 static void* on_save_instance_state(ANativeActivity* na, size_t* bytes) {
+    traceln("");
     static const char* state = "This is saved state which will come back on_create";
     *bytes = sizeof(state); // including zero terminating char
     return (void*)state;
 }
 
 static void on_native_window_created(ANativeActivity* na, ANativeWindow* window) {
+    traceln("");
     glue_t* glue = (glue_t*)na->instance;
     // The window is being shown, get it ready.
     assert(glue->window == null && window != null);
@@ -651,6 +669,7 @@ static void on_native_window_created(ANativeActivity* na, ANativeWindow* window)
 }
 
 static void on_native_window_destroyed(ANativeActivity* na, ANativeWindow* window) {
+    traceln("");
     glue_t* glue = (glue_t*)na->instance;
     assert(glue->window == window);
     term_display(glue);
@@ -659,20 +678,25 @@ static void on_native_window_destroyed(ANativeActivity* na, ANativeWindow* windo
 }
 
 static void on_window_focus_changed(ANativeActivity* na, int gained) {
+    traceln("");
 }
 
 static void on_configuration_changed(ANativeActivity* na) {
+    traceln("");
 }
 
 static void on_low_memory(ANativeActivity* na) {
+    traceln("");
 }
 
 static void on_native_window_resized(ANativeActivity* na, ANativeWindow* window) {
+    traceln("");
     glue_t* glue = (glue_t*)na->instance;
     assert(glue->window == window); // otherwise need to go thru window destroyed/created hoops
 }
 
 static void on_native_window_redraw_needed(ANativeActivity* na, ANativeWindow* window) {
+    traceln("");
     glue_t* glue = (glue_t*)na->instance;
     assert(glue->window == window); // otherwise need to go thru window destroyed/created hoops
 }
@@ -687,6 +711,7 @@ static int looper_callback(int fd, int events, void* data) {
 }
 
 static void on_input_queue_created(ANativeActivity* na, AInputQueue* queue) {
+    traceln("");
     glue_t* glue = (glue_t*)na->instance;
     assert(glue->input_queue == null);
     if (glue->input_queue != null) { AInputQueue_detachLooper(glue->input_queue); }
@@ -697,6 +722,7 @@ static void on_input_queue_created(ANativeActivity* na, AInputQueue* queue) {
 }
 
 static void on_input_queued_destroyed(ANativeActivity* na, AInputQueue* queue) {
+    traceln("");
     glue_t* glue = (glue_t*)na->instance;
     assert(glue->input_queue == queue);
     if (glue->input_queue != null) { AInputQueue_detachLooper(glue->input_queue); }
@@ -706,6 +732,7 @@ static void on_input_queued_destroyed(ANativeActivity* na, AInputQueue* queue) {
 static void on_content_rect_changed(ANativeActivity* na, const ARect* rc) {
     glue_t* glue = (glue_t*)na->instance;
     glue->content_rect = *rc;
+    traceln("%d %d %d %d", rc->left, rc->top, rc->right, rc->bottom);
     app_invalidate(glue->a);
 }
 
@@ -859,6 +886,17 @@ static void vibrate(app_t* app, int effect) {
     }
 }
 
+static void show_keyboard(app_t* app, bool on) {
+    glue_t* glue = (glue_t*)app->glue;
+    if (on) { // ANATIVEACTIVITY_SHOW_SOFT_INPUT_FORCED means "even if physical keyboard is present"
+//      ANativeActivity_showSoftInput(glue->na, 0); // broken
+        android_jni_show_keyboard(glue->na, true, ANATIVEACTIVITY_SHOW_SOFT_INPUT_FORCED);
+    } else {
+//      ANativeActivity_hideSoftInput(glue->na, 0); // 0 means always
+        android_jni_show_keyboard(glue->na, false, 0);
+    }
+}
+
 static const char* screen_size(int i) {
     switch (i) {
         case ACONFIGURATION_SCREENSIZE_ANY   : return "ANY";
@@ -1008,11 +1046,13 @@ static void process_accel(glue_t* glue, android_poll_source_t* source) {
 }
 
 static void on_create(ANativeActivity* na, void* saved_state_data, size_t saved_state_bytes) {
+    traceln("");
     glue_t* glue = (glue_t*)na->instance;
     if (glue->a->init != null) { glue->a->init(glue->a); }
 }
 
 static void on_destroy(ANativeActivity* na) {
+    traceln("");
     glue_t* glue = (glue_t*)na->instance;
     assert(glue->sensor_event_queue != null);
     if (glue->sensor_event_queue != null) {
@@ -1108,3 +1148,23 @@ static_init(app_android) {
 }
 
 END_C
+
+/* typical sequence of events inside same process:
+
+on_create
+  on_start
+    on_resume
+      on_input_queue_created
+      on_native_window_created
+      on_native_window_resized
+      on_content_rect_changed
+      on_native_window_redraw_needed
+      on_window_focus_changed
+      on_window_focus_changed
+    on_pause
+      on_native_window_destroyed
+  on_stop
+      on_input_queued_destroyed
+on_destroy // proess is not killed here it will continue
+
+*/
