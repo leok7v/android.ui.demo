@@ -8,7 +8,7 @@
    CONDITIONS OF ANY KIND, either express or implied. See the License for the specific
    language governing permissions and limitations under the License.
 */
-#include "android_jni.h"
+#include "droid_jni.h"
 #include <jni.h>
 
 BEGIN_C
@@ -42,7 +42,7 @@ static bool check_and_clear_exception(JNIEnv* env) {
 #define not_null(p) (!check_and_clear_exception(env) && (p) != null)
 #define check(p) do { supported = not_null(p); } while (0)
 
-jobject get_system_service(ANativeActivity* na, const char* label) {
+static jobject get_system_service(ANativeActivity* na, const char* label) {
     JNIEnv* env = na->env;
     bool supported = true;
     jclass context_class = findClass("android/content/Context");
@@ -58,7 +58,7 @@ jobject get_system_service(ANativeActivity* na, const char* label) {
     return !supported ? null : service;
 }
 
-bool android_jni_hide_navigation_bar(ANativeActivity* na) {
+bool droid_jni_hide_navigation_bar(ANativeActivity* na) {
     JNIEnv* env = na->env;
     bool supported = true;
     jclass    activity_class   = findClass("android/app/NativeActivity");
@@ -80,7 +80,7 @@ bool android_jni_hide_navigation_bar(ANativeActivity* na) {
     return !check_and_clear_exception(env);
 }
 
-bool android_jni_vibrate_with_effect(ANativeActivity* na, const char* effect) { // API 26+
+bool droid_jni_vibrate_with_effect(ANativeActivity* na, const char* effect) { // API 26+
     JNIEnv* env = na->env;
     jobject vibrator_service = get_system_service(na, "VIBRATOR_SERVICE");
     bool supported = vibrator_service != null;
@@ -98,7 +98,7 @@ bool android_jni_vibrate_with_effect(ANativeActivity* na, const char* effect) { 
     return !check_and_clear_exception(env) && supported;
 }
 
-bool android_jni_vibrate_milliseconds(ANativeActivity* na, int milliseconds) {
+bool droid_jni_vibrate_milliseconds(ANativeActivity* na, int milliseconds) {
     JNIEnv* env = na->env;
     jobject vibrator_service = get_system_service(na, "VIBRATOR_SERVICE");
     bool supported = vibrator_service != null;
@@ -111,28 +111,25 @@ bool android_jni_vibrate_milliseconds(ANativeActivity* na, int milliseconds) {
     return !check_and_clear_exception(env) && supported;
 }
 
-bool android_jni_show_keyboard(ANativeActivity* na, bool on, int flags) {
+bool droid_jni_show_keyboard(ANativeActivity* na, bool on, int flags) {
     // see: https://github.com/aosp-mirror/platform_frameworks_base/blob/master/core/java/android/app/NativeActivity.java
     JNIEnv* env = na->env;
     jobject activity = activity_this(na);
     bool supported = true;
     jclass nac = getObjectClass(activity);
-    jobject input_method_service = get_system_service(na, "INPUT_METHOD_SERVICE");
-    check(input_method_service);
-    jclass input_method_service_class = getObjectClass(input_method_service);
-    check(input_method_service_class);
-    jmethodID show_soft_input_mid = getMethod(input_method_service_class,
-                                    "showSoftInput", "(Landroid/view/View;I)Z");
+    jobject ims = get_system_service(na, "INPUT_METHOD_SERVICE");
+    check(ims);
+    jclass ims_class = getObjectClass(ims);
+    check(ims_class);
+    jmethodID show_soft_input_mid = getMethod(ims_class, "showSoftInput", "(Landroid/view/View;I)Z");
     check(show_soft_input_mid);
-    jmethodID hide_soft_input_mid = getMethod(input_method_service_class,
-                                    "hideSoftInputFromWindow", "(Landroid/os/IBinder;I)Z");
+    jmethodID hide_soft_input_mid = getMethod(ims_class, "hideSoftInputFromWindow", "(Landroid/os/IBinder;I)Z");
     check(hide_soft_input_mid);
     jmethodID get_window_mid = getMethod(nac, "getWindow", "()Landroid/view/Window;");
     check(get_window_mid);
     jclass window_class = findClass("android/view/Window");
     check(window_class);
-    jmethodID get_decor_view_mid = getMethod(window_class, "getDecorView",
-                                             "()Landroid/view/View;");
+    jmethodID get_decor_view_mid = getMethod(window_class, "getDecorView", "()Landroid/view/View;");
     check(get_decor_view_mid);
     jobject window = callObjectMethod(activity, get_window_mid);
     check(window);
@@ -141,7 +138,7 @@ bool android_jni_show_keyboard(ANativeActivity* na, bool on, int flags) {
     bool done = false;
     if (supported) {
         if (on) {
-            done = callBooleanMethod(input_method_service, show_soft_input_mid, decor_view, 0);
+            done = callBooleanMethod(ims, show_soft_input_mid, decor_view, 0);
         } else {
             jclass view_class = findClass("android/view/View");
             check(view_class);
@@ -149,11 +146,22 @@ bool android_jni_show_keyboard(ANativeActivity* na, bool on, int flags) {
             check(get_window_token_mid);
             jobject binder = callObjectMethod(decor_view, get_window_token_mid);
             check(binder);
-            done = callBooleanMethod(input_method_service, hide_soft_input_mid, binder, 0);
+            done = callBooleanMethod(ims, hide_soft_input_mid, binder, 0);
         }
         assertion(done, "done=%d", done);
     }
     return !check_and_clear_exception(env) && supported;
+}
+
+uint64_t droid_jni_get_unicode_char(ANativeActivity* na, AInputEvent* input_event) {
+    JNIEnv* env = na->env;
+    bool supported = true;
+    jobject activity = activity_this(na);
+    jobject ie = (jobject)input_event;
+    jclass nac = getObjectClass(activity);
+    jclass ie_class = getObjectClass(ie);
+    traceln("nac=%p ie_class=%p", nac, ie_class);
+    return 0;
 }
 
 END_C

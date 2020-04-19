@@ -14,13 +14,15 @@
 
 BEGIN_C // interfacce to unavoidable Android Java code via jni
 
-bool android_jni_hide_navigation_bar(ANativeActivity* na);
+bool droid_jni_hide_navigation_bar(ANativeActivity* na);
 
-bool android_jni_vibrate_milliseconds(ANativeActivity* na, int milliseconds);
+bool droid_jni_vibrate_milliseconds(ANativeActivity* na, int milliseconds);
 
 // "DEFAULT_AMPLITUDE", "EFFECT_CLICK", "EFFECT_DOUBLE_CLICK" "EFFECT_TICK", "EFFECT_HEAVY_TICK"
-bool android_jni_vibrate_with_effect(ANativeActivity* na, const char* effect);
+bool droid_jni_vibrate_with_effect(ANativeActivity* na, const char* effect);
 
-bool android_jni_show_keyboard(ANativeActivity* na, bool on, int flags);
+bool droid_jni_show_keyboard(ANativeActivity* na, bool on, int flags);
+
+uint64_t droid_jni_get_unicode_char(ANativeActivity* na, AInputEvent* input_event);
 
 END_C

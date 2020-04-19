@@ -11,7 +11,8 @@
 #include "app.h"
 #include "ui.h"
 #include "button.h"
-#include "android_jni.h" // interface to Java only code (going via binder is too involving)
+#include "droid_keys.h"
+#include "droid_jni.h" // interface to Java only code (going via binder is too involving)
 #include <EGL/egl.h>
 #include <EGL/eglext.h>
 #include <android/configuration.h>
@@ -330,65 +331,15 @@ static void term_display(glue_t* glue) {
 
 void app_trace_mouse(int mouse_flags, int mouse_action, int index, float x, float y) {
     char text[128] = {};
-    if (mouse_action & MOUSE_LBUTTON_DOWN) {  strncat(text, "LBUTTON_DOWN|", countof(text)); }
-    if (mouse_action & MOUSE_LBUTTON_UP)   {  strncat(text, "LBUTTON_UP|", countof(text)); }
-    if (mouse_action & MOUSE_MOVE)         {  strncat(text, "MOVE|", countof(text)); }
-    if (mouse_flags  & MOUSE_LBUTTON_FLAG) {  strncat(text, "MOUSE_LBUTTON_FLAG|", countof(text)); }
-    traceln("mouse_flags=0x%08X %.*s index=%d x,y=%.1f,%.1f", mouse_flags, strlen(text) - 1, text, index, x, y);
+    if (mouse_action & MOUSE_LBUTTON_DOWN) { strncat(text, "LBUTTON_DOWN|", countof(text)); }
+    if (mouse_action & MOUSE_LBUTTON_UP)   { strncat(text, "LBUTTON_UP|", countof(text)); }
+    if (mouse_action & MOUSE_MOVE)         { strncat(text, "MOVE|", countof(text)); }
+    if (mouse_flags  & MOUSE_LBUTTON_FLAG) { strncat(text, "MOUSE_LBUTTON_FLAG|", countof(text)); }
+//  traceln("mouse_flags=0x%08X %.*s index=%d x,y=%.1f,%.1f", mouse_flags, strlen(text) - 1, text, index, x, y);
 }
 
 void app_trace_key(int flags, int ch) {
-    char text[128] = {};
-    if (flags & KEYBOARD_KEY_PRESSED)  {  strncat(text, "PRESSED|", countof(text)); }
-    if (flags & KEYBOARD_KEY_RELEASED) {  strncat(text, "RELEASED|", countof(text)); }
-    if (flags & KEYBOARD_KEY_REPEAT)   {  strncat(text, "REPEAT|", countof(text)); }
-    if (flags & KEYBOARD_SHIFT)    { strncat(text, "SHIFT|", countof(text)); }
-    if (flags & KEYBOARD_ALT)      { strncat(text, "ALT|", countof(text)); }
-    if (flags & KEYBOARD_CTRL)     { strncat(text, "CTRL|", countof(text)); }
-    if (flags & KEYBOARD_SYM)      { strncat(text, "SYM|", countof(text)); }
-    if (flags & KEYBOARD_FN)       { strncat(text, "FN|", countof(text)); }
-    if (flags & KEYBOARD_NUMPAD)   { strncat(text, "NUMPAD|", countof(text)); }
-    if (flags & KEYBOARD_NUMLOCK)  { strncat(text, "NUMLOCK|", countof(text)); }
-    if (flags & KEYBOARD_CAPSLOCK) { strncat(text, "CAPSLOCK|", countof(text)); }
-    const char* mnemonic = null;
-    switch (ch) {
-        case KEY_CODE_ENTER    : mnemonic = "ENTER"; break;
-        case KEY_CODE_LEFT     : mnemonic = "LEFT"; break;
-        case KEY_CODE_RIGHT    : mnemonic = "RIGHT"; break;
-        case KEY_CODE_UP       : mnemonic = "UP"; break;
-        case KEY_CODE_DOWN     : mnemonic = "DOWN"; break;
-        case KEY_CODE_BACKSPACE: mnemonic = "BACKSPACE"; break;
-        case KEY_CODE_PAGE_UP  : mnemonic = "PAGE_UP"; break;
-        case KEY_CODE_PAGE_DOWN: mnemonic = "PAGE_DOWN"; break;
-        case KEY_CODE_HOME     : mnemonic = "HOME"; break;
-        case KEY_CODE_END      : mnemonic = "END"; break;
-        case KEY_CODE_BACK     : mnemonic = "BACK"; break;
-        case KEY_CODE_ESC      : mnemonic = "ESC"; break;
-        case KEY_CODE_DEL      : mnemonic = "DEL"; break;
-        case KEY_CODE_INS      : mnemonic = "INS"; break;
-        case KEY_CODE_CENTER   : mnemonic = "CENTER"; break;
-        case KEY_CODE_ALT      : mnemonic = "ALT"; break;
-        case KEY_CODE_CTRL     : mnemonic = "CTRL"; break;
-        case KEY_CODE_SHIFT    : mnemonic = "SHIFT"; break;
-        case KEY_CODE_F1       : mnemonic = "F1"; break;
-        case KEY_CODE_F2       : mnemonic = "F2"; break;
-        case KEY_CODE_F3       : mnemonic = "F3"; break;
-        case KEY_CODE_F4       : mnemonic = "F4"; break;
-        case KEY_CODE_F5       : mnemonic = "F5"; break;
-        case KEY_CODE_F6       : mnemonic = "F6"; break;
-        case KEY_CODE_F7       : mnemonic = "F7"; break;
-        case KEY_CODE_F8       : mnemonic = "F8"; break;
-        case KEY_CODE_F9       : mnemonic = "F9"; break;
-        case KEY_CODE_F10      : mnemonic = "F10"; break;
-        case KEY_CODE_F11      : mnemonic = "F11"; break;
-        case KEY_CODE_F12      : mnemonic = "F12"; break;
-        default: break;
-    }
-    if (mnemonic == null) {
-        traceln("flags=0x%08X %.*s ch=%d 0x%08X %c", flags, strlen(text) - 1, text, ch, ch, ch);
-    } else {
-        traceln("flags=0x%08X %.*s ch=%d 0x%08X %s", flags, strlen(text) - 1, text, ch, ch, mnemonic);
-    }
+    traceln("%s", droid_keys_text(flags, ch).text);
 }
 
 static bool set_focus(ui_t* ui, int x, int y) {
@@ -422,197 +373,91 @@ static void dispatch_keycode(glue_t* glue, int flags, int keycode) {
     }
 }
 
-static int32_t handle_input(glue_t* glue, AInputEvent* event) {
+static int32_t handle_motion(glue_t* glue, AInputEvent* me) {
+    assert(AInputEvent_getType(me) == AINPUT_EVENT_TYPE_MOTION);
 /*
     AMOTION_EVENT_TOOL_TYPE_FINGER = 1,
     AMOTION_EVENT_TOOL_TYPE_STYLUS = 2,
     AMOTION_EVENT_TOOL_TYPE_ERASER = 4,
 */
-    if (AInputEvent_getSource(event) == AINPUT_SOURCE_MOUSE) {
+    if (AInputEvent_getSource(me) == AINPUT_SOURCE_MOUSE) {
 //      traceln("AInputEvent_getSource AINPUT_SOURCE_MOUSE");
     }
-    if (AInputEvent_getType(event) == AINPUT_EVENT_TYPE_MOTION) {
-        int x = AMotionEvent_getX(event, 0);
-        int y = AMotionEvent_getY(event, 0);
-        int32_t action = AMotionEvent_getAction(event);
-        int32_t index = (action & AMOTION_EVENT_ACTION_POINTER_INDEX_MASK) >> 8; // fragile. >> 8 assumes AMOTION_EVENT_ACTION_POINTER_INDEX_MASK = 0xFF00
-        action = action & AMOTION_EVENT_ACTION_MASK;
-        if (index == 0) {
-            int mouse_action = 0;
-            int mouse_flags = glue->a->mouse_flags;
-            switch (action) {
-                case AMOTION_EVENT_ACTION_DOWN        : mouse_action = MOUSE_LBUTTON_DOWN; mouse_flags |=  MOUSE_LBUTTON_FLAG; break;
-                case AMOTION_EVENT_ACTION_UP          : mouse_action = MOUSE_LBUTTON_UP;   mouse_flags &= ~MOUSE_LBUTTON_FLAG; break;
-                case AMOTION_EVENT_ACTION_HOVER_MOVE  : mouse_action = MOUSE_MOVE; break;
-                case AMOTION_EVENT_ACTION_POINTER_DOWN: break; // touch event, "index" is "finger index"
-                case AMOTION_EVENT_ACTION_POINTER_UP  : break;
-                case AMOTION_EVENT_ACTION_SCROLL      : traceln("TODO: AMOTION_EVENT_ACTION_SCROLL"); break; // mouse wheel generates it
-                default: break;
-            }
-            glue->a->mouse_flags = mouse_flags;
-            glue->a->last_mouse_x = x;
-            glue->a->last_mouse_y = y;
-            if (glue->a->trace_flags & APP_TRACE_MOUSE) { app_trace_mouse(glue->a->mouse_flags, mouse_action, index, x, y); }
-            if (mouse_action & MOUSE_LBUTTON_DOWN) {
-                if (!set_focus(glue->a->root, x, y)) {
-                    glue->a->focus(glue->a, null); // kill focus if no focusable components were found
-                }
-            }
-            if (glue->a->root->mouse != null) { glue->a->root->mouse(glue->a->root, mouse_action, x, y); }
-            if (glue->a->root->screen_mouse != null) { glue->a->root->screen_mouse(glue->a->root, mouse_action, x, y); }
-        } else {
-            traceln("TODO: touch event [%d] x,y=%d,%d", index, x, y);
-        }
-        return 1;
-    }
-    if (AInputEvent_getType(event) == AINPUT_EVENT_TYPE_KEY) {
-        int32_t key_val = AKeyEvent_getKeyCode(event);
-//		int32_t key_flags = AKeyEvent_getFlags(event); // AKEY_EVENT_FLAG_WOKE_HERE, AKEY_EVENT_FLAG_LONG_PRESS ...
-        int32_t action = AKeyEvent_getAction(event);
-        int32_t times = 1;
+    int x = AMotionEvent_getX(me, 0);
+    int y = AMotionEvent_getY(me, 0);
+    int32_t action = AMotionEvent_getAction(me);
+    int32_t index = (action & AMOTION_EVENT_ACTION_POINTER_INDEX_MASK) >> 8; // fragile. >> 8 assumes AMOTION_EVENT_ACTION_POINTER_INDEX_MASK = 0xFF00
+    action = action & AMOTION_EVENT_ACTION_MASK;
+    if (index == 0) {
+        int mouse_action = 0;
+        int mouse_flags = glue->a->mouse_flags;
         switch (action) {
-            case AKEY_EVENT_ACTION_UP      : break;
-            case AKEY_EVENT_ACTION_DOWN    : break;
-            case AKEY_EVENT_ACTION_MULTIPLE: times = AKeyEvent_getRepeatCount(event); break;
-            default: traceln("unknown action: %d", action);
+            case AMOTION_EVENT_ACTION_DOWN        : mouse_action = MOUSE_LBUTTON_DOWN; mouse_flags |=  MOUSE_LBUTTON_FLAG; break;
+            case AMOTION_EVENT_ACTION_UP          : mouse_action = MOUSE_LBUTTON_UP;   mouse_flags &= ~MOUSE_LBUTTON_FLAG; break;
+            case AMOTION_EVENT_ACTION_HOVER_MOVE  : mouse_action = MOUSE_MOVE; break;
+            case AMOTION_EVENT_ACTION_POINTER_DOWN: break; // touch event, "index" is "finger index"
+            case AMOTION_EVENT_ACTION_POINTER_UP  : break;
+            case AMOTION_EVENT_ACTION_SCROLL      : traceln("TODO: AMOTION_EVENT_ACTION_SCROLL"); break; // mouse wheel generates it
+            default: break;
         }
-        (void)times; // unused
-//      traceln("Received key event: %d\n", key_val);
-        int meta_state = AKeyEvent_getMetaState(event);
-        int flags = KEYBOARD_KEY_PRESSED; // default because AKEY_EVENT_ACTION_DOWN is not happening...
-        int keycode = 0;
-        int numpad = 1;
-        int numlock = (meta_state & AMETA_NUM_LOCK_ON) != 0;
-        int capslock = (meta_state & AMETA_CAPS_LOCK_ON) != 0;
-        switch (key_val) {
-            case AKEYCODE_SHIFT_LEFT     : keycode = KEY_CODE_SHIFT; break; // seems to be bug in Android
-            case AKEYCODE_CTRL_LEFT      : keycode = KEY_CODE_CTRL; break;  // seems to be bug in Android
-            case AKEYCODE_ALT_LEFT       : keycode = KEY_CODE_ALT; break;   // seems to be bug in Android
-            case AKEYCODE_SOFT_LEFT:  case AKEYCODE_META_LEFT:
-            case AKEYCODE_DPAD_LEFT      : keycode = KEY_CODE_LEFT; traceln("keyval=%d", key_val); break;
-            case AKEYCODE_SOFT_RIGHT: case AKEYCODE_SHIFT_RIGHT:
-            case AKEYCODE_ALT_RIGHT:  case AKEYCODE_META_RIGHT: case AKEYCODE_CTRL_RIGHT:
-            case AKEYCODE_DPAD_RIGHT     : keycode = KEY_CODE_RIGHT;     break;
-            case AKEYCODE_DPAD_UP        : keycode = KEY_CODE_UP;        break;
-            case AKEYCODE_DPAD_DOWN      : keycode = KEY_CODE_DOWN;      break;
-            case AKEYCODE_PAGE_UP        : keycode = KEY_CODE_PAGE_UP;   break;
-            case AKEYCODE_PAGE_DOWN      : keycode = KEY_CODE_PAGE_DOWN; break;
-            case AKEYCODE_MOVE_HOME      : keycode = KEY_CODE_HOME;      break;
-            case AKEYCODE_MOVE_END       : keycode = KEY_CODE_END;       break;
-            case AKEYCODE_ENTER          : keycode = KEY_CODE_ENTER;     break;
-            case AKEYCODE_BACK           : keycode = KEY_CODE_BACK;      break;
-            case AKEYCODE_ESCAPE         : keycode = KEY_CODE_ESC;       break;
-            case AKEYCODE_FORWARD_DEL    : keycode = KEY_CODE_DEL;       break;
-            case AKEYCODE_DEL            : keycode = KEY_CODE_BACKSPACE; break;
-            case AKEYCODE_NUMPAD_0       : keycode = numlock ? '0' : KEY_CODE_INS;       break;
-            case AKEYCODE_NUMPAD_1       : keycode = numlock ? '1' : KEY_CODE_END;       break;
-            case AKEYCODE_NUMPAD_2       : keycode = numlock ? '2' : KEY_CODE_DOWN;      break;
-            case AKEYCODE_NUMPAD_3       : keycode = numlock ? '3' : KEY_CODE_PAGE_DOWN; break;
-            case AKEYCODE_NUMPAD_4       : keycode = numlock ? '4' : KEY_CODE_LEFT;      break;
-            case AKEYCODE_NUMPAD_5       : keycode = numlock ? '5' : KEY_CODE_CENTER;    break;
-            case AKEYCODE_NUMPAD_6       : keycode = numlock ? '6' : KEY_CODE_RIGHT;     break;
-            case AKEYCODE_NUMPAD_7       : keycode = numlock ? '7' : KEY_CODE_HOME;      break;
-            case AKEYCODE_NUMPAD_8       : keycode = numlock ? '8' : KEY_CODE_UP;        break;
-            case AKEYCODE_NUMPAD_9       : keycode = numlock ? '9' : KEY_CODE_PAGE_UP;   break;
-            case AKEYCODE_NUMPAD_DOT     : keycode = numlock ? '.' : KEY_CODE_DEL;       break;
-            case AKEYCODE_NUMPAD_ENTER   : keycode = KEY_CODE_ENTER; break;
-            case AKEYCODE_NUMPAD_DIVIDE  : keycode = '/'; break;
-            case AKEYCODE_NUMPAD_MULTIPLY: keycode = '*'; break;
-            case AKEYCODE_NUMPAD_SUBTRACT: keycode = '-'; break;
-            case AKEYCODE_NUMPAD_ADD     : keycode = '+'; break;
-            case AKEYCODE_NUMPAD_COMMA   : keycode = ','; break;
-            case AKEYCODE_NUMPAD_EQUALS  : keycode = '='; break;
-            default: numpad = 0; break;
-        }
-        if (numpad) { flags |= KEYBOARD_NUMPAD; }
-        if (meta_state & AMETA_SYM_ON)       { flags |= KEYBOARD_SYM; }
-        if (meta_state & AMETA_SHIFT_ON)     { flags |= KEYBOARD_SHIFT; }
-        if (meta_state & AMETA_ALT_ON)       { flags |= KEYBOARD_ALT; }
-        if (meta_state & AMETA_CTRL_ON)      { flags |= KEYBOARD_CTRL; }
-        if (meta_state & AMETA_FUNCTION_ON)  { flags |= KEYBOARD_FN; }
-        if (meta_state & AMETA_NUM_LOCK_ON)  { flags |= KEYBOARD_NUMLOCK; }
-        if (meta_state & AMETA_CAPS_LOCK_ON) { flags |= KEYBOARD_CAPSLOCK; }
-//	    traceln("mate_state 0x%08X flags=0x%08X\n", meta_state, flags);
-        if (keycode == 0) {
-            if (AKEYCODE_A <= key_val && key_val <= AKEYCODE_Z) {
-                int caps = ((flags & KEYBOARD_SHIFT) != 0) ^ capslock;
-                keycode = (key_val - AKEYCODE_A) + (caps ? 'A' : 'a');
-            } else if (AKEYCODE_0 <= key_val && key_val <= AKEYCODE_9) {
-                keycode = (key_val - AKEYCODE_0) + '0';
-            } else if (AKEYCODE_F1 <= key_val && key_val <= AKEYCODE_F12) {
-                keycode = (key_val - AKEYCODE_F1) * 0x01000000 + KEY_CODE_F1;
-            } else {
-                switch (key_val) {
-                    case AKEYCODE_SPACE:                keycode = 0x20; break;
-                    case AKEYCODE_MINUS:                keycode = '-';  break;
-                    case AKEYCODE_PLUS :                keycode = '+';  break;
-                    case AKEYCODE_EQUALS:               keycode = '=';  break;
-                    case AKEYCODE_COMMA:                keycode = ',';  break;
-                    case AKEYCODE_PERIOD:               keycode = '.';  break;
-                    case AKEYCODE_SEMICOLON:            keycode = ';';  break;
-                    case AKEYCODE_APOSTROPHE:           keycode = '\''; break;
-                    case AKEYCODE_GRAVE:                keycode = '`';  break;
-                    case AKEYCODE_TAB:                  keycode = '\t'; break;
-                    case AKEYCODE_LEFT_BRACKET:         keycode = '[';  break;
-                    case AKEYCODE_RIGHT_BRACKET:        keycode = ']';  break;
-                    case AKEYCODE_BACKSLASH:            keycode = '\\'; break;
-                    case AKEYCODE_SLASH:                keycode = '/';  break;
-                    case AKEYCODE_AT:                   keycode = '@';  break;
-                    case AKEYCODE_POUND:                keycode = '#';  break;
-                    case AKEYCODE_NUMPAD_LEFT_PAREN:    keycode = '(';  break;
-                    case AKEYCODE_NUMPAD_RIGHT_PAREN:   keycode = ')';  break;
-                    default: break;
-                }
+        glue->a->mouse_flags = mouse_flags;
+        glue->a->last_mouse_x = x;
+        glue->a->last_mouse_y = y;
+        if (glue->a->trace_flags & APP_TRACE_MOUSE) { app_trace_mouse(glue->a->mouse_flags, mouse_action, index, x, y); }
+        if (mouse_action & MOUSE_LBUTTON_DOWN) {
+            if (!set_focus(glue->a->root, x, y)) {
+                glue->a->focus(glue->a, null); // kill focus if no focusable components were found
             }
         }
-        if (flags & KEYBOARD_SHIFT) {
-            if ((flags & KEYBOARD_NUMPAD) == 0) {
-                switch (keycode) { // US keyboard specific
-                    case '1': keycode = '!'; break;
-                    case '3': keycode = '#'; break;
-                    case '4': keycode = '$'; break;
-                    case '5': keycode = '%'; break;
-                    case '6': keycode = '^'; break;
-                    case '7': keycode = '&'; break;
-                    case '8': keycode = '*'; break;
-                    case '9': keycode = '('; break;
-                    case '0': keycode = ')'; break;
-                    case ',': keycode = '<'; break;
-                    case '.': keycode = '>'; break;
-                    case '/': keycode = '?'; break;
-                    case '=': keycode = '+'; break;
-                    case '-': keycode = '_'; break;
-                    default: break;
-                }
-            }
-            switch (keycode) { // US keyboard specific
-                case '`': keycode = '~'; break;
-                case '[': keycode = '{'; break;
-                case ']': keycode = '}'; break;
-                case ';': keycode = ':'; break;
-                case '\\': keycode = '|'; break;
-                case '\'': keycode = '"'; break;
-                default: break;
-            }
-        }
-//      traceln("keycode=%d 0x%08X keyval=%d 0x%08X %c", keycode, keycode, key_val, key_val, key_val);
-        if (keycode != 0) {
-            switch (action) {
-                case AKEY_EVENT_ACTION_DOWN: flags |= KEYBOARD_KEY_PRESSED;  flags &= ~KEYBOARD_KEY_RELEASED; break;
-                case AKEY_EVENT_ACTION_UP:   flags |= KEYBOARD_KEY_RELEASED; flags &= ~KEYBOARD_KEY_PRESSED; break;
-                default: break;
-            }
-            if (action == AKEY_EVENT_ACTION_MULTIPLE) {
-                int rc = AKeyEvent_getRepeatCount(event);
-                traceln("AKEY_EVENT_ACTION_MULTIPLE repeat=%d", rc);
-                for (int i = 0; i < rc; i++) { dispatch_keycode(glue, flags | KEYBOARD_KEY_REPEAT, keycode); }
-            } else {
-                dispatch_keycode(glue, flags, keycode);
-            }
-        }
-        return 1;
+        if (glue->a->root->mouse != null) { glue->a->root->mouse(glue->a->root, mouse_action, x, y); }
+        if (glue->a->root->screen_mouse != null) { glue->a->root->screen_mouse(glue->a->root, mouse_action, x, y); }
+    } else {
+        traceln("TODO: touch event [%d] x,y=%d,%d", index, x, y);
     }
-    return 0;
+    return 1;
+}
+
+static int32_t handle_key(glue_t* glue, AInputEvent* ke) {
+    assert(AInputEvent_getType(ke) == AINPUT_EVENT_TYPE_KEY);
+    int32_t key_code = AKeyEvent_getKeyCode(ke);
+    int32_t action = AKeyEvent_getAction(ke);
+    int32_t rc = 1;
+    switch (action) {
+        case AKEY_EVENT_ACTION_UP      : break;
+        case AKEY_EVENT_ACTION_DOWN    : break;
+        case AKEY_EVENT_ACTION_MULTIPLE: rc = AKeyEvent_getRepeatCount(ke); break;
+        default: traceln("unknown action: %d", action);
+    }
+//  traceln("Received key event: %d\n", key_code);
+    int meta_state = AKeyEvent_getMetaState(ke);
+    int flags = KEYBOARD_KEY_PRESSED;
+    int kc = droid_keys_translate(key_code, meta_state, flags);
+    traceln("kc=%d 0x%08X %c", kc, kc, kc);
+    if (kc != 0) {
+        switch (action) {
+            case AKEY_EVENT_ACTION_DOWN: flags |= KEYBOARD_KEY_PRESSED;  flags &= ~KEYBOARD_KEY_RELEASED; break;
+            case AKEY_EVENT_ACTION_UP:   flags |= KEYBOARD_KEY_RELEASED; flags &= ~KEYBOARD_KEY_PRESSED; break;
+            default: break;
+        }
+        if (action == AKEY_EVENT_ACTION_MULTIPLE) {
+            traceln("AKEY_EVENT_ACTION_MULTIPLE repeat_count=%d", rc);
+            for (int i = 0; i < rc; i++) { dispatch_keycode(glue, flags | KEYBOARD_KEY_REPEAT, kc); }
+        } else {
+            dispatch_keycode(glue, flags, kc);
+        }
+    }
+    return 1;
+}
+
+static int32_t handle_input(glue_t* glue, AInputEvent* ie) {
+    if (AInputEvent_getType(ie) == AINPUT_EVENT_TYPE_MOTION) {
+        return handle_motion(glue, ie);
+    } else if (AInputEvent_getType(ie) == AINPUT_EVENT_TYPE_KEY) {
+        return handle_key(glue, ie);
+    } else {
+        traceln("getType()=%d", AInputEvent_getType(ie));
+        return 0;
+    }
 }
 
 static void on_start(ANativeActivity* na) {
@@ -881,8 +726,8 @@ static const char* vibration_effect_to_string(int effect) {
 
 static void vibrate(app_t* app, int effect) {
     glue_t* glue = (glue_t*)app->glue;
-    if (!android_jni_vibrate_with_effect(glue->na, vibration_effect_to_string(effect))) {
-        android_jni_vibrate_milliseconds(glue->na, vibration_effect_to_milliseconds(effect));
+    if (!droid_jni_vibrate_with_effect(glue->na, vibration_effect_to_string(effect))) {
+        droid_jni_vibrate_milliseconds(glue->na, vibration_effect_to_milliseconds(effect));
     }
 }
 
@@ -890,10 +735,10 @@ static void show_keyboard(app_t* app, bool on) {
     glue_t* glue = (glue_t*)app->glue;
     if (on) { // ANATIVEACTIVITY_SHOW_SOFT_INPUT_FORCED means "even if physical keyboard is present"
 //      ANativeActivity_showSoftInput(glue->na, 0); // broken
-        android_jni_show_keyboard(glue->na, true, ANATIVEACTIVITY_SHOW_SOFT_INPUT_FORCED);
+        droid_jni_show_keyboard(glue->na, true, ANATIVEACTIVITY_SHOW_SOFT_INPUT_FORCED);
     } else {
 //      ANativeActivity_hideSoftInput(glue->na, 0); // 0 means always
-        android_jni_show_keyboard(glue->na, false, 0);
+        droid_jni_show_keyboard(glue->na, false, 0);
     }
 }
 
@@ -990,9 +835,9 @@ static void process_configuration(glue_t* glue) {
 }
 
 static void process_input(glue_t* glue, android_poll_source_t* source) {
-    AInputEvent* event = null;
-    while (AInputQueue_getEvent(glue->input_queue, &event) >= 0) {
-//      int i = AInputEvent_getType(event);
+    AInputEvent* ie = null;
+    while (AInputQueue_getEvent(glue->input_queue, &ie) >= 0) {
+//      int i = AInputEvent_getType(ie);
 //      const char* s = "???";
 //      switch (i) {
 //          case AINPUT_EVENT_TYPE_KEY   : s = "KEY";    break;
@@ -1000,12 +845,12 @@ static void process_input(glue_t* glue, android_poll_source_t* source) {
 //          default: assertion(false, "i=%d", i); break;
 //      }
 //      traceln("input event: type=%s %d", s, i);
-        if (AInputQueue_preDispatchEvent(glue->input_queue, event)) {
+        if (AInputQueue_preDispatchEvent(glue->input_queue, ie)) {
             continue;
         }
         glue->a->time_in_nanoseconds = time_monotonic_ns() - glue->start_time_in_ns;
-        int32_t handled = handle_input(glue, event);
-        AInputQueue_finishEvent(glue->input_queue, event, handled);
+        int32_t handled = handle_input(glue, ie);
+        AInputQueue_finishEvent(glue->input_queue, ie, handled);
     }
 }
 
