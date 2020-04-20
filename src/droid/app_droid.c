@@ -54,7 +54,6 @@ static app_t app = {
     /* trace_flags */ 0,
     /* init:    */ null,
     /* shown:   */ null,
-    /* idle:    */ null,
     /* hidden:  */ null,
     /* pause:   */ null,
     /* stop:    */ null,
@@ -220,6 +219,27 @@ static void asset_unmap(app_t* a, void* asset, const void* data, int bytes) {
     AAsset_close(asset);
 }
 
+static int trace_config = true;
+
+static void trace_current_configuration(glue_t* glue);
+
+static void process_configuration(glue_t* glue) {
+    trace_current_configuration(glue);
+    // I do not know a way to distuinguish between Androids with build in QWERTY keyboars
+    // and external connected keyboards:
+    glue->keyboad_present = AConfiguration_getKeyboard(glue->config) == ACONFIGURATION_KEYBOARD_QWERTY;
+    // AConfiguration_getSmallestScreenWidthDp() is actually the real width in DP
+    // the name is of the function is very confusing (prehaps Android G1 landscape legacy)...
+    int32_t dp_w_min = AConfiguration_getSmallestScreenWidthDp(glue->config);
+    int dp_w = AConfiguration_getScreenWidthDp(glue->config);
+    int dp_h = max(AConfiguration_getScreenHeightDp(glue->config), dp_w_min);
+    traceln("%dx%ddp SmallestScreenWidth %d", dp_w, dp_h, dp_w_min);
+    glue->inches_wide = dp_w / 120.0f; // legacy but still true up to Android Pixel 3a
+    glue->inches_high = dp_h / 120.0f;
+    glue->density = AConfiguration_getDensity(glue->config); // obscure and not true DPI
+    traceln("keyboard=%d density=%d %.2fx%.2f inches", glue->keyboad_present, AConfiguration_getDensity(glue->config), glue->inches_wide, glue->inches_high);
+}
+
 static int init_display(glue_t* glue) {
     // Unfortunately glDebugMessageCallback is only available in OpenGL ES 3.2 :(
     // https://www.khronos.org/registry/OpenGL-Refpages/es3/html/glDebugMessageCallback.xhtml
@@ -323,7 +343,6 @@ static void term_display(glue_t* glue) {
         }
         eglTerminate(glue->display);
     }
-    assert(glue->running == 0);
     glue->display = EGL_NO_DISPLAY;
     glue->context = EGL_NO_CONTEXT;
     glue->surface = EGL_NO_SURFACE;
@@ -335,7 +354,7 @@ void app_trace_mouse(int mouse_flags, int mouse_action, int index, float x, floa
     if (mouse_action & MOUSE_LBUTTON_UP)   { strncat(text, "LBUTTON_UP|", countof(text)); }
     if (mouse_action & MOUSE_MOVE)         { strncat(text, "MOVE|", countof(text)); }
     if (mouse_flags  & MOUSE_LBUTTON_FLAG) { strncat(text, "MOUSE_LBUTTON_FLAG|", countof(text)); }
-//  traceln("mouse_flags=0x%08X %.*s index=%d x,y=%.1f,%.1f", mouse_flags, strlen(text) - 1, text, index, x, y);
+    traceln("mouse_flags=0x%08X %.*s index=%d x,y=%.1f,%.1f", mouse_flags, strlen(text) - 1, text, index, x, y);
 }
 
 void app_trace_key(int flags, int ch) {
@@ -493,13 +512,16 @@ static void on_resume(ANativeActivity* na) {
     glue->a->resume(glue->a); // it is up to application code to resume animation if necessary
     // Leo - added draw frame on ANDROID_NA_COMMAND_GAINED_FOCUS and ANDROID_NA_COMMAND_RESUME
     draw_frame(glue);
+    enqueue_command(glue, COMMAND_TIMER); // timers were stopped on pause, wake them up
 }
 
 static void* on_save_instance_state(ANativeActivity* na, size_t* bytes) {
     traceln("");
     static const char* state = "This is saved state which will come back on_create";
     *bytes = sizeof(state); // including zero terminating char
-    return (void*)state;
+    return (void*)strdup(state);
+    // strdup() or malloc() because free() call here:
+    // https://github.com/aosp-mirror/platform_frameworks_base/blob/d0ebaa9e30cb6f359bb14c52cdf7f474b1816af5/core/jni/android_app_NativeActivity.cpp#L460
 }
 
 static void on_native_window_created(ANativeActivity* na, ANativeWindow* window) {
@@ -528,6 +550,8 @@ static void on_window_focus_changed(ANativeActivity* na, int gained) {
 
 static void on_configuration_changed(ANativeActivity* na) {
     traceln("");
+    glue_t* glue = (glue_t*)na->instance;
+    process_configuration(glue);
 }
 
 static void on_low_memory(ANativeActivity* na) {
@@ -537,13 +561,15 @@ static void on_low_memory(ANativeActivity* na) {
 static void on_native_window_resized(ANativeActivity* na, ANativeWindow* window) {
     traceln("");
     glue_t* glue = (glue_t*)na->instance;
-    assert(glue->window == window); // otherwise need to go thru window destroyed/created hoops
+    assert(glue->window == window);
+    app_invalidate(glue->a); // enqueue redraw command
 }
 
 static void on_native_window_redraw_needed(ANativeActivity* na, ANativeWindow* window) {
     traceln("");
     glue_t* glue = (glue_t*)na->instance;
-    assert(glue->window == window); // otherwise need to go thru window destroyed/created hoops
+    assert(glue->window == window);
+    app_invalidate(glue->a); // enqueue redraw command
 }
 
 static int looper_callback(int fd, int events, void* data) {
@@ -654,7 +680,7 @@ static void on_timer(glue_t* glue) {
             }
         }
     }
-    if (earliest < 0) { earliest = FOREVER; } // wait `forever' or until next wakeup
+    if (earliest < 0 || !glue->running) { earliest = FOREVER; } // wait `forever' or until next wakeup
     if (earliest != glue->timer_next_ns) {
 //      traceln("WAKEUP: earliest = %.6fms", earliest / (double)NS_IN_MS);
         synchronized_signal(glue->mutex, glue->cond, glue->timer_next_ns = earliest);
@@ -782,8 +808,6 @@ static const char* mode_type(int i) {
     }
 }
 
-static int trace_config;
-
 static void trace_current_configuration(glue_t* glue) {
     char lang[2], country[2];
     AConfiguration_getLanguage(glue->config, lang);
@@ -815,23 +839,6 @@ static void trace_current_configuration(glue_t* glue) {
                 mode_type(AConfiguration_getUiModeType(glue->config)),
                 AConfiguration_getUiModeNight(glue->config));
     }
-}
-
-static void process_configuration(glue_t* glue) {
-    trace_current_configuration(glue);
-    // I do not know a way to distuinguish between Androids with build in QWERTY keyboars
-    // and external connected keyboards:
-    glue->keyboad_present = AConfiguration_getKeyboard(glue->config) == ACONFIGURATION_KEYBOARD_QWERTY;
-    // AConfiguration_getSmallestScreenWidthDp() is actually the real width in DP
-    // the name is of the function is very confusing (prehaps Android G1 landscape legacy)...
-    int32_t dp_w_min = AConfiguration_getSmallestScreenWidthDp(glue->config);
-    int dp_w = AConfiguration_getScreenWidthDp(glue->config);
-    int dp_h = max(AConfiguration_getScreenHeightDp(glue->config), dp_w_min);
-//  traceln("%dx%ddp SmallestScreenWidth %d", dp_w, dp_h, dp_w_min);
-    glue->inches_wide = dp_w / 120.0f; // legacy but still true up to Android Pixel 3a
-    glue->inches_high = dp_h / 120.0f;
-    glue->density = AConfiguration_getDensity(glue->config); // obscure and not true DPI
-//  traceln("keyboard=%d density=%d %.2fx%.2f inches", glue->keyboad_present, AConfiguration_getDensity(glue->config), glue->inches_wide, glue->inches_high);
 }
 
 static void process_input(glue_t* glue, android_poll_source_t* source) {
@@ -916,7 +923,7 @@ static void on_destroy(ANativeActivity* na) {
 static glue_t glue;
 
 void ANativeActivity_onCreate(ANativeActivity* na, void* saved_state_data, size_t saved_state_bytes) {
-    traceln("pid/tid=%d/%d", getpid(), gettid());
+    traceln("pid/tid=%d/%d saved_state_data=%p[%d]", getpid(), gettid(), saved_state_data, saved_state_bytes);
     glue.na = na;
     glue.a = &app;
     na->instance = &glue;

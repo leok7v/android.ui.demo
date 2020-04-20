@@ -248,6 +248,7 @@ static void init_ui(application_t* app) {
     app->view_glyphs->draw = glyphs_draw;
     app->view_glyphs->hidden = true;
     app->glyphs->flip = &app->view_glyphs->hidden;
+    app->glyphs->negate = true; // because flip point to hidden not to `shown` in the absence of that bit
     y += app->font.atlas.h;
     app->view_ascii = app->a->root->create(app->a->root, app, 0, y, app->font.em * 26, app->font.em * 4);
     app->view_ascii->draw = ascii_draw;
@@ -351,34 +352,34 @@ static void hidden(app_t* a) {
     dc.dispose(&dc);
 }
 
-static void idle(app_t* a) {
-    application_t* app = (application_t*)a->that;
-    snprintf(app->slider1_label, countof(app->slider1_label), SLIDER1_LABEL, app->slider1_current);
-    snprintf(app->slider2_label, countof(app->slider2_label), SLIDER2_LABEL, app->slider2_current);
-}
-
 static void stop(app_t* a) {
 //  application_t* app = (application_t*)a->that;
+    traceln("");
 }
 
 static void paused(app_t* a) { // pause() defined in unistd.h
 //  application_t* app = (application_t*)a->that;
+    traceln("");
 }
 
 static void resume(app_t* a) {
+    traceln("");
 //  application_t* app = (application_t*)a->that;
 }
 
 static void init(app_t* a) { // init application
+    traceln("");
     application_t* app = (application_t*)a->that;
     if (app->bitmaps[0].data == null) {
         bitmap_load_asset(&app->bitmaps[0], a, "cube-320x240.png");
         bitmap_load_asset(&app->bitmaps[1], a, "geometry-320x240.png");
         bitmap_load_asset(&app->bitmaps[2], a, "machine-320x240.png");
     }
+
 }
 
 static void destroy(app_t* a) {
+    traceln("");
     application_t* app = (application_t*)a->that;
     for (int i = 0; i < countof(app->bitmaps); i++) {
         bitmap_dispose(&app->bitmaps[i]);
@@ -393,7 +394,6 @@ void app_create(app_t* a) {
     app.a = a;
     app.a->init    = init;
     app.a->shown   = shown;
-    app.a->idle    = idle;
     app.a->hidden  = hidden;
     app.a->pause   = paused;
     app.a->stop    = stop;

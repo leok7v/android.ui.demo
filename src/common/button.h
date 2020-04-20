@@ -30,7 +30,8 @@ typedef struct button_s {
     const char* mnemonic; /* e.g. "Alt+F5" can be null */
     const char* label;
     int bitset; // button state
-    bool* flip; /* checkbox button *flip = !*flip; on each click */
+    bool* flip;  /* checkbox button *flip = !*flip; on each click */
+    bool negate; /* negate *flip value drawing UI */
 } button_t;
 
 button_t* button_create(ui_t* parent, void* that, ui_expo_t* theme,

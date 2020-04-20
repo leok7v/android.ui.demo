@@ -37,7 +37,7 @@ typedef struct app_s {
     void*  that; // pointer to the application specific data
     void*  glue; // pointer to the platform glue data
     ui_t*  root;
-    ui_t*  focused;  // ui that has keyboard focus or null
+    ui_t*  focused; // ui that has keyboard focus or null
     float xdpi;
     float ydpi;
     int keyboard_flags; // last keyboard flags (CTRL, SHIFT, ALT, SYM, FN, NUMLOCK, CAPSLOCK)
@@ -49,12 +49,11 @@ typedef struct app_s {
     // app callbacks (modeled after Android activity lifecycle):
     void (*init)(app_t* a);    // called on application/activity start up
     void (*shown)(app_t* a);   // called on when window has been shown (attached)
-    void (*idle)(app_t* a);    // called once when there is no input events
     void (*hidden)(app_t* a);  // called when application is hidden (loses window attachment)
     void (*pause)(app_t* a);   // e.g. when "adb shell input keyevent KEYCODE_SLEEP|KEYCODE_POWER"
     void (*stop)(app_t* a);    // usually after pause()
     void (*resume)(app_t* a);  // e.g. when "adb shell input keyevent KEYCODE_WAKE"
-    void (*destroy)(app_t* a); // after hidden() and stop()
+    void (*destroy)(app_t* a); // after pause() hidden() and stop()
     // actions that application code can call:
     void (*quit)(app_t* app);           // quit application/activity (on Android it will now exit process)
     void (*exit)(app_t* app, int code); // trying to exit application gracefully with specified return code
