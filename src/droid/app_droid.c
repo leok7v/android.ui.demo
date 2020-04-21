@@ -549,12 +549,8 @@ static void on_native_window_created(ANativeActivity* na, ANativeWindow* window)
     assert(glue->window == null && window != null);
     glue->window = window;
     init_display(glue);
-    if (glue->a->root->w == 0 || glue->a->root->h == 0) {
-        // TODO: this is bad. Actual size is only known at on_content_rect_changed()
-        // need to rethink GL initialization
-        glue->a->root->w = glue->a->sw;
-        glue->a->root->h = glue->a->sh;
-    }
+    glue->a->root->w = ANativeWindow_getWidth(window);
+    glue->a->root->h = ANativeWindow_getHeight(window);
     gl_init();
     if (glue->a->shown != null) { glue->a->shown(glue->a); }
     glue->a->invalidate(glue->a);
@@ -933,6 +929,7 @@ static void on_destroy(ANativeActivity* na) {
     pthread_mutex_destroy(&glue->mutex);
     pthread_cond_destroy(&glue->cond);
     if (glue->a->done != null) { glue->a->done(glue->a); }
+    glue->a->focused = null;
 }
 
 static glue_t glue;
@@ -970,6 +967,7 @@ void ANativeActivity_onCreate(ANativeActivity* na, void* saved_state_data, size_
     glue.a = &app;
     na->instance = &glue;
     app.glue = &glue;
+    app.focused = null;
     glue.start_time_in_ns = time_monotonic_ns();
     display_real_size(na);
     ANativeActivityCallbacks* cb = na->callbacks;
