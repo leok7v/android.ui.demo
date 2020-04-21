@@ -33,10 +33,6 @@
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 #include <arpa/inet.h>
-#ifdef __MACH__
-# include <mach/mach.h>
-# include <mach/task.h> /* defines PAGE_SIZE to 4096 */
-#endif
 
 #if defined(__GNUC__) || defined(__clang__)
 #pragma GCC diagnostic error "-Wall"
@@ -44,22 +40,23 @@
 #pragma GCC diagnostic ignored "-Wenum-compare"
 #pragma GCC diagnostic warning "-Wunused-function"
 #pragma GCC diagnostic error   "-Wuninitialized"
-#pragma GCC diagnostic ignored "-Wmultichar"
 #endif /* defined(__GNUC__) || defined(__clang__) */
-
-#if defined(__GNUC__) || defined(__clang__)
-#define attribute_packed __attribute__((packed))
-#else
-#define attribute_packed
-#endif
 
 #define null NULL
 typedef uint8_t byte;
 #define inline_c inline
-#define packed __attribute__((packed))
 
-#define max(a, b) ((a) > (b) ? (a) : (b))
+#if defined(__GNUC__) || defined(__clang__)
+#define packed __attribute__((packed))
+#else
+#define packed // TODO: grep packed on Windows and surround with pragmas
+#endif
+
+#undef min
+#undef max
+#undef countof
 #define min(a, b) ((a) < (b) ? (a) : (b))
+#define max(a, b) ((a) > (b) ? (a) : (b))
 #define countof(a) ((int)(sizeof(a) / sizeof((a)[0])))
 
 // allocated guarantees that memore is zeroed out:

@@ -20,7 +20,14 @@
 #include <android/asset_manager.h>
 #include <android/window.h>
 #include <android/native_activity.h>
+#include <android/native_window.h>
 #include <android/log.h>
+#include <android/hardware_buffer.h>
+#include <android/hardware_buffer_jni.h>
+
+// see:
+// https://github.com/aosp-mirror/platform_frameworks_base/blob/master/core/java/android/app/NativeActivity.java
+// https://github.com/aosp-mirror/platform_frameworks_base/blob/master/core/jni/android_app_NativeActivity.cpp
 
 BEGIN_C
 
@@ -28,7 +35,6 @@ typedef struct glue_s glue_t;
 
 static void  app_quit(app_t* app);
 static void  app_exit(app_t* app, int code);
-static void  app_animate(app_t* app, int animating);
 static void  app_invalidate(app_t* app);
 static void  focus(app_t* app, ui_t * ui);
 static int   timer_add(app_t* app, timer_callback_t* tcb);
@@ -50,19 +56,21 @@ static app_t app = {
     /* mouse_flags:    */ 0,
     /* last_mouse_x:   */ 0,
     /* last_mouse_y:   */ 0,
-    /* time_in_nanoseconds */ 0ULL,
-    /* trace_flags */ 0,
+    /* time_in_nanoseconds: */ 0ULL,
+    /* trace_flags: */ 0,
+    /* sw: */ 0,
+    /* sh: */ 0,
     /* init:    */ null,
     /* shown:   */ null,
+    /* resized: */ null,
     /* hidden:  */ null,
     /* pause:   */ null,
     /* stop:    */ null,
     /* resume:  */ null,
-    /* destroy: */ null,
+    /* done:    */ null,
     app_quit,
     app_exit,
     app_invalidate,
-    app_animate,
     focus,
     timer_add,
     timer_remove,
@@ -95,6 +103,12 @@ enum {
     COMMAND_QUIT   = 3
 };
 
+enum { APP_STATE_MAGIC = 'APPS' };
+
+typedef struct app_state_s {
+    byte data[4 * 1024]; // state data here. TODO: expose to app.h in more flexible manner
+} packed app_state_t;
+
 typedef struct android_poll_source_s android_poll_source_t;
 
 typedef struct android_poll_source_s {
@@ -107,10 +121,9 @@ typedef struct android_poll_source_s {
 typedef struct glue_s {
     ANativeActivity* na;
     app_t* a;
-    ASensorManager*  sensor_manager;
-    const ASensor* accelerometer_sensor;
+    ASensorManager* sensor_manager;
+    const ASensor*  accelerometer_sensor;
     ASensorEventQueue* sensor_event_queue;
-    int animating;
     int running; // == 1 between on_resume() and on_pause()
     volatile int destroy_requested;
     uint64_t start_time_in_ns;
@@ -127,6 +140,8 @@ typedef struct glue_s {
     float inches_wide; // best guess for screen physical size
     float inches_high;
     float density; // do not use - Android dpi `bining` dpi
+    EGLint max_tex_w;
+    EGLint max_tex_h;
     bool  keyboad_present; // is keyboard connected?
     ALooper* looper; // The ALooper associated with the app's main event dispatch thread.
     AInputQueue* input_queue; // When non-NULL, this is the input queue from which the app will receive user input events.
@@ -140,6 +155,8 @@ typedef struct glue_s {
     android_poll_source_t command_poll_source;
     android_poll_source_t input_poll_source;
     android_poll_source_t accel_poll_source;
+    droid_display_metrics_t dm;
+    app_state_t state; // TODO: this is stub for testing on_save_state() on_create() state passing
 } glue_t;
 
 #define synchronized_wait(mutex, cond, timespec, code)      \
@@ -219,7 +236,7 @@ static void asset_unmap(app_t* a, void* asset, const void* data, int bytes) {
     AAsset_close(asset);
 }
 
-static int trace_config = true;
+static bool trace_config;
 
 static void trace_current_configuration(glue_t* glue);
 
@@ -233,21 +250,19 @@ static void process_configuration(glue_t* glue) {
     int32_t dp_w_min = AConfiguration_getSmallestScreenWidthDp(glue->config);
     int dp_w = AConfiguration_getScreenWidthDp(glue->config);
     int dp_h = max(AConfiguration_getScreenHeightDp(glue->config), dp_w_min);
-    traceln("%dx%ddp SmallestScreenWidth %d", dp_w, dp_h, dp_w_min);
-    glue->inches_wide = dp_w / 120.0f; // legacy but still true up to Android Pixel 3a
-    glue->inches_high = dp_h / 120.0f;
-    glue->density = AConfiguration_getDensity(glue->config); // obscure and not true DPI
-    traceln("keyboard=%d density=%d %.2fx%.2f inches", glue->keyboad_present, AConfiguration_getDensity(glue->config), glue->inches_wide, glue->inches_high);
+//  traceln("%dx%ddp SmallestScreenWidth %d", dp_w, dp_h, dp_w_min);
+    float inches_wide = dp_w / 120.0f; // 120dpi vs 150dpi is legacy but still true up to Android Pixel 3a
+    float inches_high = dp_h / 120.0f;
+    uint32_t density = AConfiguration_getDensity(glue->config); // obscure and not true DPI
+    traceln("keyboard=%d density=%d %.2fx%.2f inches", glue->keyboad_present, density, inches_wide, inches_high);
 }
 
 static int init_display(glue_t* glue) {
-    // Unfortunately glDebugMessageCallback is only available in OpenGL ES 3.2 :(
-    // https://www.khronos.org/registry/OpenGL-Refpages/es3/html/glDebugMessageCallback.xhtml
     const EGLint attribs[] = {
         EGL_SURFACE_TYPE, EGL_WINDOW_BIT,
-        EGL_BLUE_SIZE, 8,
+        EGL_BLUE_SIZE,  8,
         EGL_GREEN_SIZE, 8,
-        EGL_RED_SIZE, 8,
+        EGL_RED_SIZE,   8,
         EGL_NONE
     };
     EGLDisplay display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
@@ -255,8 +270,12 @@ static int init_display(glue_t* glue) {
     EGLint configs_count = 0;
     EGLConfig config = 0;
     eglChooseConfig(display, attribs, &config, 1, &configs_count);
-    EGLint format = 0;
-    eglGetConfigAttrib(display, config, EGL_NATIVE_VISUAL_ID, &format);
+    EGLint id = 0;
+    eglGetConfigAttrib(display, config, EGL_NATIVE_VISUAL_ID, &id);
+    eglGetConfigAttrib(display, config, EGL_MAX_PBUFFER_WIDTH, &glue->max_tex_w);
+    eglGetConfigAttrib(display, config, EGL_MAX_PBUFFER_HEIGHT, &glue->max_tex_h);
+//  traceln("max texture size %dx%d", glue->max_tex_w, glue->max_tex_h);
+    uint32_t format = AHARDWAREBUFFER_FORMAT_R8G8B8A8_UNORM;
     ANativeWindow_setBuffersGeometry(glue->window, 0, 0, format);
     EGLSurface surface = eglCreateWindowSurface(display, config, glue->window, null);
     const EGLint context_attributes[] = { EGL_CONTEXT_CLIENT_VERSION, 2, EGL_NONE };
@@ -272,12 +291,7 @@ static int init_display(glue_t* glue) {
     glue->display = display;
     glue->context = context;
     glue->surface = surface;
-    glue->a->root->w = w;
-    glue->a->root->h = h;
-    glue->a->xdpi = w / glue->inches_wide;
-    glue->a->ydpi = h / glue->inches_high;
-    gl_init(glue->a->root->w, glue->a->root->h, glue->a->projection);
-    mat4x4_identity(glue->a->view);
+//  traceln("screen %dx%d dpi %.1fx%.1f", w, h, glue->a->xdpi, glue->a->ydpi);
     return 0;
 }
 
@@ -290,6 +304,7 @@ static void focus(app_t* app, ui_t* ui) {
             app->focused->focus(app->focused, false);
         }
         app->focused = ui;
+        traceln("app->focused := %p", ui);
         if (ui != null && ui->focus != null) {
             ui->focus(ui, true);
         }
@@ -326,10 +341,9 @@ static void draw_frame(glue_t* glue) {
             // eglSwapBuffers performs an implicit flush operation on the context (glFlush for an OpenGL ES)
             bool swapped = eglSwapBuffers(glue->display, glue->surface);
             assertion(swapped, "eglSwapBuffers() failed"); (void)swapped;
-//          traceln("eglSwapBuffers()=%d", swapped);
+            traceln("eglSwapBuffers()=%d", swapped);
         }
     }
-    if (glue->animating && glue->running) { glue->a->invalidate(glue->a); }
 }
 
 static void term_display(glue_t* glue) {
@@ -480,18 +494,16 @@ static int32_t handle_input(glue_t* glue, AInputEvent* ie) {
 }
 
 static void on_start(ANativeActivity* na) {
-    traceln("");
 }
 
 static void on_stop(ANativeActivity* na) {
-    traceln("");
 }
 
 static void on_pause(ANativeActivity* na) {
-    traceln("");
     glue_t* glue = (glue_t*)na->instance;
     assert(glue->running == 1);
     glue->running = 0;
+    traceln("glue->running=%d", glue->running);
     if (glue->accelerometer_sensor != null) {
         ASensorEventQueue_disableSensor(glue->sensor_event_queue, glue->accelerometer_sensor);
     }
@@ -499,10 +511,10 @@ static void on_pause(ANativeActivity* na) {
 }
 
 static void on_resume(ANativeActivity* na) {
-    traceln("");
     glue_t* glue = (glue_t*)na->instance;
     assert(glue->running == 0);
     glue->running = 1;
+    traceln("glue->running=%d", glue->running);
     if (glue->accelerometer_sensor != null) {
         ASensorEventQueue_enableSensor(glue->sensor_event_queue, glue->accelerometer_sensor);
         int us = ASensor_getMinDelay(glue->accelerometer_sensor); // microseconds
@@ -515,28 +527,40 @@ static void on_resume(ANativeActivity* na) {
     enqueue_command(glue, COMMAND_TIMER); // timers were stopped on pause, wake them up
 }
 
-static void* on_save_instance_state(ANativeActivity* na, size_t* bytes) {
-    traceln("");
-    static const char* state = "This is saved state which will come back on_create";
-    *bytes = sizeof(state); // including zero terminating char
-    return (void*)strdup(state);
-    // strdup() or malloc() because free() call here:
+// It is unclear *when* Android Activity Manager actually calls on_save_state().
+// Definetely not always but for sure on split screen rotation.
+
+static void* on_save_state(ANativeActivity* na, size_t* bytes) {
+    static const char test[] = "This is test of saved state which will come back on_create()";
+    glue_t* glue = (glue_t*)na->instance;
+    strncpy((char*)glue->state.data, test, countof(glue->state.data) - 1);
+    glue->state.data[countof(glue->state.data) - 1] = 0; // always zero terminated even when truncated
+    // code below calls free() on returned pointer:
     // https://github.com/aosp-mirror/platform_frameworks_base/blob/d0ebaa9e30cb6f359bb14c52cdf7f474b1816af5/core/jni/android_app_NativeActivity.cpp#L460
+    app_state_t* s = (app_state_t*)malloc(sizeof(glue->state));
+    *bytes = strlen(test) + 1;
+    *s = glue->state;
+    return s;
 }
 
 static void on_native_window_created(ANativeActivity* na, ANativeWindow* window) {
-    traceln("");
     glue_t* glue = (glue_t*)na->instance;
     // The window is being shown, get it ready.
     assert(glue->window == null && window != null);
     glue->window = window;
     init_display(glue);
+    if (glue->a->root->w == 0 || glue->a->root->h == 0) {
+        // TODO: this is bad. Actual size is only known at on_content_rect_changed()
+        // need to rethink GL initialization
+        glue->a->root->w = glue->a->sw;
+        glue->a->root->h = glue->a->sh;
+    }
+    gl_init();
     if (glue->a->shown != null) { glue->a->shown(glue->a); }
     glue->a->invalidate(glue->a);
 }
 
 static void on_native_window_destroyed(ANativeActivity* na, ANativeWindow* window) {
-    traceln("");
     glue_t* glue = (glue_t*)na->instance;
     assert(glue->window == window);
     term_display(glue);
@@ -545,28 +569,23 @@ static void on_native_window_destroyed(ANativeActivity* na, ANativeWindow* windo
 }
 
 static void on_window_focus_changed(ANativeActivity* na, int gained) {
-    traceln("");
 }
 
 static void on_configuration_changed(ANativeActivity* na) {
-    traceln("");
     glue_t* glue = (glue_t*)na->instance;
     process_configuration(glue);
 }
 
 static void on_low_memory(ANativeActivity* na) {
-    traceln("");
 }
 
 static void on_native_window_resized(ANativeActivity* na, ANativeWindow* window) {
-    traceln("");
     glue_t* glue = (glue_t*)na->instance;
     assert(glue->window == window);
     app_invalidate(glue->a); // enqueue redraw command
 }
 
 static void on_native_window_redraw_needed(ANativeActivity* na, ANativeWindow* window) {
-    traceln("");
     glue_t* glue = (glue_t*)na->instance;
     assert(glue->window == window);
     app_invalidate(glue->a); // enqueue redraw command
@@ -582,7 +601,6 @@ static int looper_callback(int fd, int events, void* data) {
 }
 
 static void on_input_queue_created(ANativeActivity* na, AInputQueue* queue) {
-    traceln("");
     glue_t* glue = (glue_t*)na->instance;
     assert(glue->input_queue == null);
     if (glue->input_queue != null) { AInputQueue_detachLooper(glue->input_queue); }
@@ -593,7 +611,6 @@ static void on_input_queue_created(ANativeActivity* na, AInputQueue* queue) {
 }
 
 static void on_input_queued_destroyed(ANativeActivity* na, AInputQueue* queue) {
-    traceln("");
     glue_t* glue = (glue_t*)na->instance;
     assert(glue->input_queue == queue);
     if (glue->input_queue != null) { AInputQueue_detachLooper(glue->input_queue); }
@@ -603,14 +620,13 @@ static void on_input_queued_destroyed(ANativeActivity* na, AInputQueue* queue) {
 static void on_content_rect_changed(ANativeActivity* na, const ARect* rc) {
     glue_t* glue = (glue_t*)na->instance;
     glue->content_rect = *rc;
-    traceln("%d %d %d %d", rc->left, rc->top, rc->right, rc->bottom);
+//  traceln("%d %d %d %d", rc->left, rc->top, rc->right, rc->bottom);
+    assertion(rc->left == 0 && rc->top == 0, "if this false need to re-think projection in mvp");
+    glue->a->root->w = rc->right - rc->left;
+    glue->a->root->h = rc->bottom - rc->top;
+    gl_viewport(glue->a->root->w, glue->a->root->h);
+    if (glue->a->resized != null) { glue->a->resized(glue->a); }
     app_invalidate(glue->a);
-}
-
-static void app_animate(app_t* app, int animating) {
-    glue_t* glue = (glue_t*)app->glue;
-    glue->animating = animating;
-    if (animating) { app_invalidate(glue->a); }
 }
 
 static void app_invalidate(app_t* app) {
@@ -897,14 +913,12 @@ static void process_command(glue_t* glue, android_poll_source_t* source) {
 static void process_accel(glue_t* glue, android_poll_source_t* source) {
 }
 
-static void on_create(ANativeActivity* na, void* saved_state_data, size_t saved_state_bytes) {
-    traceln("");
+static void on_create(ANativeActivity* na) {
     glue_t* glue = (glue_t*)na->instance;
     if (glue->a->init != null) { glue->a->init(glue->a); }
 }
 
 static void on_destroy(ANativeActivity* na) {
-    traceln("");
     glue_t* glue = (glue_t*)na->instance;
     assert(glue->sensor_event_queue != null);
     if (glue->sensor_event_queue != null) {
@@ -918,22 +932,51 @@ static void on_destroy(ANativeActivity* na) {
     }
     pthread_mutex_destroy(&glue->mutex);
     pthread_cond_destroy(&glue->cond);
+    if (glue->a->done != null) { glue->a->done(glue->a); }
 }
 
 static glue_t glue;
 
+static void display_real_size(ANativeActivity* na) {
+    droid_jni_get_display_real_size(na, &glue.dm);
+    glue.density = glue.dm.scaled_density;
+    glue.a->xdpi = glue.dm.xdpi;
+    glue.a->ydpi = glue.dm.ydpi;
+    glue.a->sw = glue.dm.w;
+    glue.a->sh = glue.dm.h;
+    glue.inches_wide = glue.dm.w / glue.dm.xdpi;
+    glue.inches_high = glue.dm.h / glue.dm.ydpi;
+    traceln("DISPLAY REAL SIZE: %dx%d dpi: %d %.1fx%.1f density: %.1f scaled %.1f physical: %.3fx%.3f inches",
+            glue.dm.w, glue.dm.h, glue.dm.dpi, glue.dm.xdpi, glue.dm.ydpi,
+            glue.dm.density, glue.dm.scaled_density, glue.inches_wide, glue.inches_high);
+}
+
+static void set_window_flags(ANativeActivity* na) {
+    static const int add    = AWINDOW_FLAG_KEEP_SCREEN_ON|
+                              AWINDOW_FLAG_TURN_SCREEN_ON|
+                              AWINDOW_FLAG_FULLSCREEN|
+                              AWINDOW_FLAG_LAYOUT_IN_SCREEN|
+                              AWINDOW_FLAG_LAYOUT_INSET_DECOR;
+    static const int remove = AWINDOW_FLAG_SCALED|
+                              AWINDOW_FLAG_DITHER|
+                              AWINDOW_FLAG_FORCE_NOT_FULLSCREEN|
+                              AWINDOW_FLAG_LAYOUT_NO_LIMITS;
+    ANativeActivity_setWindowFlags(na, add, remove);
+}
+
 void ANativeActivity_onCreate(ANativeActivity* na, void* saved_state_data, size_t saved_state_bytes) {
-    traceln("pid/tid=%d/%d saved_state_data=%p[%d]", getpid(), gettid(), saved_state_data, saved_state_bytes);
+    traceln("pid/tid=%d/%d saved_state=%p[%d]", getpid(), gettid(), saved_state_data, saved_state_bytes);
     glue.na = na;
     glue.a = &app;
     na->instance = &glue;
     app.glue = &glue;
     glue.start_time_in_ns = time_monotonic_ns();
+    display_real_size(na);
     ANativeActivityCallbacks* cb = na->callbacks;
     cb->onDestroy                  = on_destroy;
     cb->onStart                    = on_start;
     cb->onResume                   = on_resume;
-    cb->onSaveInstanceState        = on_save_instance_state;
+    cb->onSaveInstanceState        = on_save_state;
     cb->onPause                    = on_pause;
     cb->onStop                     = on_stop;
     cb->onConfigurationChanged     = on_configuration_changed;
@@ -946,16 +989,7 @@ void ANativeActivity_onCreate(ANativeActivity* na, void* saved_state_data, size_
     cb->onInputQueueCreated        = on_input_queue_created;
     cb->onInputQueueDestroyed      = on_input_queued_destroyed;
     cb->onContentRectChanged       = on_content_rect_changed;
-    static const int add    = AWINDOW_FLAG_KEEP_SCREEN_ON|
-                              AWINDOW_FLAG_TURN_SCREEN_ON|
-                              AWINDOW_FLAG_FULLSCREEN|
-                              AWINDOW_FLAG_LAYOUT_IN_SCREEN|
-                              AWINDOW_FLAG_LAYOUT_INSET_DECOR;
-    static const int remove = AWINDOW_FLAG_SCALED|
-                              AWINDOW_FLAG_DITHER|
-                              AWINDOW_FLAG_FORCE_NOT_FULLSCREEN|
-                              AWINDOW_FLAG_LAYOUT_NO_LIMITS;
-    ANativeActivity_setWindowFlags(na, add, remove);
+    set_window_flags(na);
     int pipe_ends[2];
     if (pipe(pipe_ends)) {
         traceln("could not create pipe: %s", strerror(errno));
@@ -965,7 +999,7 @@ void ANativeActivity_onCreate(ANativeActivity* na, void* saved_state_data, size_
     }
     glue.read_pipe  = pipe_ends[0];
     glue.write_pipe = pipe_ends[1];
-    glue.animating = 0;
+    glue.running = false;
     glue.config = AConfiguration_new();
     AConfiguration_fromAssetManager(glue.config, na->assetManager);
     process_configuration(&glue);
@@ -980,9 +1014,12 @@ void ANativeActivity_onCreate(ANativeActivity* na, void* saved_state_data, size_
     glue.accel_poll_source.process = process_accel;
     glue.looper = ALooper_forThread(); // ALooper_prepare(0);
     ALooper_addFd(glue.looper, glue.read_pipe, LOOPER_ID_MAIN, ALOOPER_EVENT_INPUT, looper_callback, &glue.command_poll_source);
-    glue.sensor_manager = ASensorManager_getInstance();
+    glue.sensor_manager = ASensorManager_getInstanceForPackage("ndk-glue");
     glue.accelerometer_sensor = ASensorManager_getDefaultSensor(glue.sensor_manager, ASENSOR_TYPE_ACCELEROMETER);
     glue.sensor_event_queue = ASensorManager_createEventQueue(glue.sensor_manager, glue.looper, LOOPER_ID_ACCEL, looper_callback, &glue.accel_poll_source);
+    int us = ASensor_getMinDelay(glue.accelerometer_sensor); // microseconds
+//  traceln("accel microseconds=%d", us); // 10,000us = 100Hz
+    ASensorEventQueue_registerSensor(glue.sensor_event_queue, glue.accelerometer_sensor, us, 0); // 0 means "streaming"
     pthread_condattr_t cond_attr;
     pthread_condattr_init(&cond_attr);
     pthread_condattr_setclock(&cond_attr, CLOCK_MONOTONIC);
@@ -991,7 +1028,14 @@ void ANativeActivity_onCreate(ANativeActivity* na, void* saved_state_data, size_
     assert(glue.timer_thread == 0);
     int r = pthread_create(&glue.timer_thread, null, timer_thread, &glue);
     assert(r == 0);
-    on_create(na, saved_state_data, saved_state_bytes);
+    // https://github.com/aosp-mirror/platform_frameworks_base/blob/d9b11b058c6a50fa25b75d6534a2deaf0e62d4b3/core/java/android/app/NativeActivity.java#L170
+    memset(&glue.state, 0, sizeof(glue.state));
+    if (saved_state_data != null && saved_state_bytes > 0) {
+        assert(saved_state_bytes <= sizeof(glue.state.data));
+        app_state_t* s = (app_state_t*)saved_state_data;
+        memcpy(glue.state.data, s->data, min(saved_state_bytes, sizeof(glue.state.data)));
+    }
+    on_create(na);
 }
 
 static_init(app_android) {
@@ -1018,5 +1062,22 @@ on_create
   on_stop
       on_input_queued_destroyed
 on_destroy // proess is not killed here it will continue
+
+This only works on rooted devices:
+
+#include <linux/fb.h>
+
+    struct fb_var_screeninfo fbsi = {};
+    int fb0 = open("/dev/graphics/fb0", O_RDONLY);
+    if (fb0 < 0) {
+        traceln("failed to open /dev/graphics/fb0");
+    } else {
+        if (ioctl(fb0, FBIOGET_VSCREENINFO, &fbsi) < 0) {
+            traceln("failed to open ioctl");
+        } else {
+            traceln("%d x %d", fbsi.xres, fbsi.yres);
+        }
+        close(fb0);
+    }
 
 */

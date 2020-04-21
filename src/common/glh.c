@@ -19,7 +19,7 @@ BEGIN_C
 #define gl_error() 0
 #endif
 
-void gl_ortho2D(mat4x4 m, float left, float right, float bottom, float top) {
+void gl_ortho_2d(mat4x4 m, float left, float top, float right, float bottom) {
     // this is basically from
     // http://en.wikipedia.org/wiki/Orthographic_projection_(geometry)
     const float znear = -1;
@@ -49,9 +49,7 @@ void gl_ortho2D(mat4x4 m, float left, float right, float bottom, float top) {
     m[3][3] = 1;
 }
 
-static mat4x4 m4x4_zero;
-
-int gl_init(int w, int h, mat4x4 projection_matrix) {
+int gl_init() {
     int r = 0;
     const char* version = (const char*)glGetString(GL_VERSION); (void)version;
     int major = 0;
@@ -70,13 +68,17 @@ int gl_init(int w, int h, mat4x4 projection_matrix) {
         while (*p != 0 && !isdigit(*p)) { p++; }
         if (p != 0) { sscanf(p, "%d.%d", &major, &minor); }
     }
-    traceln("GL_VERSION=%d.%d %s", major, minor, version);
-    memcpy(projection_matrix, m4x4_zero, sizeof(m4x4_zero));
-    gl_if_no_error(r, glViewport(0, 0, w, h));
+//  traceln("GL_VERSION=%d.%d %s", major, minor, version);
     gl_if_no_error(r, glEnable(GL_BLEND));
     gl_if_no_error(r, glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
     gl_if_no_error(r, glDisable(GL_DEPTH_TEST));
     gl_if_no_error(r, glDisable(GL_CULL_FACE));
+    return r;
+}
+
+int gl_viewport(int w, int h) {
+    int r = 0;
+    gl_if_no_error(r, glViewport(0, 0, w, h));
     return r;
 }
 

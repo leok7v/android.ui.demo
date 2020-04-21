@@ -54,7 +54,6 @@ typedef struct application_s {
     int  slider2_maximum;
     int  slider2_current;
     char slider2_label[64];
-    mat4x4 mvp; // model * view * projection
 } application_t;
 
 static inline_c float pt2px(app_t* a, float pt) { return pt * a->xdpi / 72.0f; }
@@ -317,10 +316,11 @@ static int create_gl_program(app_t* a, const char* name, int *program) {
 }
 
 static void shown(app_t* a) {
+    dc.init(&dc);
+    // both model and view matricies are identity:
+    gl_ortho_2d(dc.mvp, 0, 0, a->root->w, a->root->h);
+    traceln("root %.0fx%.0f", a->root->w, a->root->h);
     application_t* app = (application_t*)a->that;
-    // both model and view matricies are identity
-    gl_ortho2D(app->mvp, 0, a->root->w, a->root->h, 0);
-    dc.init(&dc, app->mvp);
     load_font(app);
     (void)create_gl_program;
 //  int r = create_gl_program(a, "main", &app->program_main);
@@ -332,6 +332,12 @@ static void shown(app_t* a) {
     }
     init_ui(app);
     snprintf(app->toast, countof(app->toast), "resolution %.0fx%.0fpx", a->root->w, a->root->h);
+}
+
+static void resized(app_t* a) {
+    traceln("root %.0fx%.0f", a->root->w, a->root->h);
+    gl_ortho_2d(dc.mvp, 0, 0, a->root->w, a->root->h);
+    a->invalidate(a);
 }
 
 static void hidden(app_t* a) {
@@ -353,32 +359,24 @@ static void hidden(app_t* a) {
 }
 
 static void stop(app_t* a) {
-//  application_t* app = (application_t*)a->that;
-    traceln("");
 }
 
-static void paused(app_t* a) { // pause() defined in unistd.h
-//  application_t* app = (application_t*)a->that;
-    traceln("");
+static void paused(app_t* a) {
 }
 
 static void resume(app_t* a) {
-    traceln("");
-//  application_t* app = (application_t*)a->that;
 }
 
 static void init(app_t* a) { // init application
-    traceln("");
     application_t* app = (application_t*)a->that;
     if (app->bitmaps[0].data == null) {
         bitmap_load_asset(&app->bitmaps[0], a, "cube-320x240.png");
         bitmap_load_asset(&app->bitmaps[1], a, "geometry-320x240.png");
         bitmap_load_asset(&app->bitmaps[2], a, "machine-320x240.png");
     }
-
 }
 
-static void destroy(app_t* a) {
+static void done(app_t* a) {
     traceln("");
     application_t* app = (application_t*)a->that;
     for (int i = 0; i < countof(app->bitmaps); i++) {
@@ -394,11 +392,12 @@ void app_create(app_t* a) {
     app.a = a;
     app.a->init    = init;
     app.a->shown   = shown;
+    app.a->resized = resized;
     app.a->hidden  = hidden;
     app.a->pause   = paused;
     app.a->stop    = stop;
     app.a->resume  = resume;
-    app.a->destroy = destroy;
+    app.a->done    = done;
     app.a->root->that = &app;
 }
 

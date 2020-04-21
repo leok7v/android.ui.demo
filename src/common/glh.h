@@ -27,13 +27,13 @@ BEGIN_C
 
 // all functions 0 in success or last glGetError() if failed
 
-int gl_init(int w, int h, mat4x4 projection_matrix);
-
+int gl_init();
+int gl_viewport(int w, int h);
 int gl_allocate_texture(int *ti);
 int gl_update_texture(int ti, int w, int h, int bpp, const void* data); // bpp - bytes per pixel
 int gl_delete_texture(int ti);
 
-void gl_ortho2D(mat4x4 mx, float left, float right, float bottom, float top);
+void gl_ortho_2d(mat4x4 m, float left, float top, float right, float bottom);
 
 const char* gl_strerror(int gle);
 int gl_trace_errors_(const char* file, int line, const char* func, const char* call, int gle); // returns last glGetError()

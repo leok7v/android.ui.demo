@@ -23,7 +23,7 @@ typedef struct quadf_s  { float x; float y; float s; float t; } packed quadf_t;
 typedef struct dc_s dc_t;
 
 typedef struct dc_s { // draw commands/context
-    void (*init)(dc_t* dc, mat4x4 mvp, ...);
+    void (*init)(dc_t* dc, ...);
     void (*dispose)(dc_t* dc);
     void (*clear)(dc_t* dc, const colorf_t* color);
     void (*fill)(dc_t* dc, const colorf_t* color, float x, float y, float w, float h);
@@ -35,7 +35,7 @@ typedef struct dc_s { // draw commands/context
     void (*poly)(dc_t* dc, const colorf_t* color, const pointf_t* vertices, int count); // filled with TRIANGLE_FAN
     void (*line)(dc_t* dc, const colorf_t* c, float x0, float y0, float x1, float y1, float thickness);
     float(*text)(dc_t* dc, const colorf_t* color, font_t* font, float x, float y, const char* text, int count);
-    mat4x4 mvp;
+    mat4x4 mvp; // model * view * projection
 } dc_t;
 
 dc_t dc;

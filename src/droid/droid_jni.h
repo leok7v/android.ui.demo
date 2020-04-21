@@ -14,6 +14,18 @@
 
 BEGIN_C // interfacce to unavoidable Android Java code via jni
 
+typedef struct droid_display_metrics_s {
+     int w; // pixels
+     int h; // pixels
+     int dpi;
+     float xdpi;
+     float ydpi;
+     float density;
+     float scaled_density;
+} droid_display_metrics_t;
+
+void droid_jni_get_display_real_size(ANativeActivity* na, droid_display_metrics_t* m);
+
 bool droid_jni_hide_navigation_bar(ANativeActivity* na);
 
 bool droid_jni_vibrate_milliseconds(ANativeActivity* na, int milliseconds);
@@ -22,7 +34,5 @@ bool droid_jni_vibrate_milliseconds(ANativeActivity* na, int milliseconds);
 bool droid_jni_vibrate_with_effect(ANativeActivity* na, const char* effect);
 
 bool droid_jni_show_keyboard(ANativeActivity* na, bool on, int flags);
-
-uint64_t droid_jni_get_unicode_char(ANativeActivity* na, AInputEvent* input_event);
 
 END_C

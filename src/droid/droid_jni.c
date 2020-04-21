@@ -30,10 +30,15 @@ static bool check_and_clear_exception(JNIEnv* env) {
 }
 
 #define getMethod(...)            (!supported ? null : (*env)->GetMethodID(env, __VA_ARGS__))
+#define getStaticMethod(...)      (!supported ? null : (*env)->GetStaticMethodID(env, __VA_ARGS__))
 #define findClass(...)            (!supported ? null : (*env)->FindClass(env, __VA_ARGS__))
+#define newObject(...)            (!supported ? null : (*env)->NewObject(env, __VA_ARGS__))
 #define getObjectClass(...)       (!supported ? null : (*env)->GetObjectClass(env, __VA_ARGS__))
+#define getFieldId(...)           (!supported ? null : (*env)->GetFieldID(env, __VA_ARGS__))
 #define getStaticFieldId(...)     (!supported ? null : (*env)->GetStaticFieldID(env, __VA_ARGS__))
 #define getStaticObjectField(...) (!supported ? null : (*env)->GetStaticObjectField(env, __VA_ARGS__))
+#define getIntField(...)          (!supported ? 0    : (*env)->GetIntField(env, __VA_ARGS__))
+#define getFloatField(...)        (!supported ? 0    : (*env)->GetFloatField(env, __VA_ARGS__))
 #define getStaticIntField(...)    (!supported ? 0    : (*env)->GetStaticIntField(env, __VA_ARGS__))
 #define callObjectMethod(...)     (!supported ? null : (*env)->CallObjectMethod(env, __VA_ARGS__))
 #define callBooleanMethod(...)    (!supported ? false : (*env)->CallBooleanMethod(env, __VA_ARGS__))
@@ -148,20 +153,61 @@ bool droid_jni_show_keyboard(ANativeActivity* na, bool on, int flags) {
             check(binder);
             done = callBooleanMethod(ims, hide_soft_input_mid, binder, 0);
         }
-        assertion(done, "done=%d", done);
+        if (!done) { traceln("done=%d happens on back button", done); }
     }
     return !check_and_clear_exception(env) && supported;
 }
 
-uint64_t droid_jni_get_unicode_char(ANativeActivity* na, AInputEvent* input_event) {
+jobject new_object(JNIEnv* env, const char* class_name) {
+    bool supported = true;
+    jobject cls = findClass(class_name);
+    check(cls);
+    jmethodID ctor_mid = getMethod(cls, "<init>", "()V");
+    check(ctor_mid);
+    jobject object = newObject(cls, ctor_mid);
+    check(object);
+    return supported ? object : null;
+}
+
+void droid_jni_get_display_real_size(ANativeActivity* na, droid_display_metrics_t* m) {
     JNIEnv* env = na->env;
     bool supported = true;
-    jobject activity = activity_this(na);
-    jobject ie = (jobject)input_event;
-    jclass nac = getObjectClass(activity);
-    jclass ie_class = getObjectClass(ie);
-    traceln("nac=%p ie_class=%p", nac, ie_class);
-    return 0;
+    jobject ws = get_system_service(na, "WINDOW_SERVICE");
+    check(ws);
+    jclass ws_class = getObjectClass(ws);
+    check(ws_class);
+    jobject display_metrics = new_object(env, "android/util/DisplayMetrics");
+    check(display_metrics);
+    jmethodID get_default_display_mid = getMethod(ws_class, "getDefaultDisplay", "()Landroid/view/Display;");
+    check(get_default_display_mid);
+    jobject display = callObjectMethod(ws, get_default_display_mid);
+    check(display);
+    jobject display_class = getObjectClass(display);
+    check(display_class);
+    jmethodID get_real_metrics_mid = getMethod(display_class, "getRealMetrics", "(Landroid/util/DisplayMetrics;)V");
+    check(get_real_metrics_mid);
+    jobject dm = new_object(env, "android/util/DisplayMetrics");
+    check(dm);
+    callVoidMethod(display, get_real_metrics_mid, dm);
+    if (supported) {
+        jclass dm_class = getObjectClass(dm); check(dm_class);
+        jfieldID xdpi_fid = getFieldId(dm_class, "xdpi", "F"); check(xdpi_fid);
+        jfieldID ydpi_fid = getFieldId(dm_class, "ydpi", "F"); check(ydpi_fid);
+        jfieldID width_pixels_fid   = getFieldId(dm_class, "widthPixels", "I");   check(width_pixels_fid);
+        jfieldID height_pixels_fid  = getFieldId(dm_class, "heightPixels", "I");  check(height_pixels_fid);
+        jfieldID density_fid        = getFieldId(dm_class, "density", "F");       check(density_fid);
+        jfieldID density_dpi_fid    = getFieldId(dm_class, "densityDpi", "I");    check(density_dpi_fid);
+        jfieldID scaled_density_fid = getFieldId(dm_class, "scaledDensity", "F"); check(scaled_density_fid);
+        m->w       = getIntField(dm, width_pixels_fid);
+        m->h       = getIntField(dm, height_pixels_fid);
+        m->xdpi    = getFloatField(dm, xdpi_fid);
+        m->ydpi    = getFloatField(dm, ydpi_fid);
+        m->dpi     = getIntField(dm, density_dpi_fid);
+        m->density = getFloatField(dm, density_fid);
+        m->scaled_density = getFloatField(dm, scaled_density_fid);
+    } else {
+        memset(m, 0, sizeof(*m));
+    }
 }
 
 END_C

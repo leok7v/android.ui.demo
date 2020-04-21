@@ -34,10 +34,10 @@ enum { // vibration_effect
 typedef struct app_s app_t;
 
 typedef struct app_s {
-    void*  that; // pointer to the application specific data
-    void*  glue; // pointer to the platform glue data
-    ui_t*  root;
-    ui_t*  focused; // ui that has keyboard focus or null
+    void* that; // pointer to the application specific data
+    void* glue; // pointer to the platform glue data
+    ui_t* root;
+    ui_t* focused; // ui that has keyboard focus or null
     float xdpi;
     float ydpi;
     int keyboard_flags; // last keyboard flags (CTRL, SHIFT, ALT, SYM, FN, NUMLOCK, CAPSLOCK)
@@ -45,20 +45,22 @@ typedef struct app_s {
     int last_mouse_x;   // last mouse screen coordinates
     int last_mouse_y;
     int trace_flags;
+    int sw; // screen width pixels
+    int sh; // screen height
     uint64_t time_in_nanoseconds; // since application start update on each event or animation
     // app callbacks (modeled after Android activity lifecycle):
     void (*init)(app_t* a);    // called on application/activity start up
     void (*shown)(app_t* a);   // called on when window has been shown (attached)
+    void (*resized)(app_t* a); // window has been resized or rotated need new projection matrix
     void (*hidden)(app_t* a);  // called when application is hidden (loses window attachment)
     void (*pause)(app_t* a);   // e.g. when "adb shell input keyevent KEYCODE_SLEEP|KEYCODE_POWER"
-    void (*stop)(app_t* a);    // usually after pause()
+    void (*stop)(app_t* a);    // after pause() -> stop() or resume()
     void (*resume)(app_t* a);  // e.g. when "adb shell input keyevent KEYCODE_WAKE"
-    void (*destroy)(app_t* a); // after pause() hidden() and stop()
+    void (*done)(app_t* a);    // after pause() hidden() and stop()
     // actions that application code can call:
     void (*quit)(app_t* app);           // quit application/activity (on Android it will now exit process)
     void (*exit)(app_t* app, int code); // trying to exit application gracefully with specified return code
     void (*invalidate)(app_t* app);     // make application redraw once
-    void (*animate)(app_t* app, int animating); // animating !=0 make application continuosly redraw
     // ui:
     void (*focus)(app_t* app, ui_t* ui); // set application keyboard focus on particular ui element or null
     // timers:
@@ -69,8 +71,6 @@ typedef struct app_s {
     void  (*asset_unmap)(app_t* a, void* asset, const void* data, int bytes);
     void  (*vibrate)(app_t* a, int vibration_effect);
     void  (*show_keyboard)(app_t* a, bool on); // shows/hides soft keyboard
-    mat4x4 projection;
-    mat4x4 view;
 } app_t;
 
 // app_create() MUST be implemented by application. It is called before main()
