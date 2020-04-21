@@ -319,7 +319,7 @@ static void shown(app_t* a) {
     dc.init(&dc);
     // both model and view matricies are identity:
     gl_ortho_2d(dc.mvp, 0, 0, a->root->w, a->root->h);
-    traceln("root %.0fx%.0f", a->root->w, a->root->h);
+//  traceln("root %.0fx%.0f", a->root->w, a->root->h);
     application_t* app = (application_t*)a->that;
     load_font(app);
     (void)create_gl_program;
@@ -335,7 +335,7 @@ static void shown(app_t* a) {
 }
 
 static void resized(app_t* a) {
-    traceln("root %.0fx%.0f", a->root->w, a->root->h);
+//  traceln("root %.0fx%.0f", a->root->w, a->root->h);
     gl_ortho_2d(dc.mvp, 0, 0, a->root->w, a->root->h);
     a->invalidate(a);
 }
@@ -377,7 +377,6 @@ static void init(app_t* a) { // init application
 }
 
 static void done(app_t* a) {
-    traceln("");
     application_t* app = (application_t*)a->that;
     for (int i = 0; i < countof(app->bitmaps); i++) {
         bitmap_dispose(&app->bitmaps[i]);

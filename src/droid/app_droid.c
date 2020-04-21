@@ -245,16 +245,7 @@ static void process_configuration(glue_t* glue) {
     // I do not know a way to distuinguish between Androids with build in QWERTY keyboars
     // and external connected keyboards:
     glue->keyboad_present = AConfiguration_getKeyboard(glue->config) == ACONFIGURATION_KEYBOARD_QWERTY;
-    // AConfiguration_getSmallestScreenWidthDp() is actually the real width in DP
-    // the name is of the function is very confusing (prehaps Android G1 landscape legacy)...
-    int32_t dp_w_min = AConfiguration_getSmallestScreenWidthDp(glue->config);
-    int dp_w = AConfiguration_getScreenWidthDp(glue->config);
-    int dp_h = max(AConfiguration_getScreenHeightDp(glue->config), dp_w_min);
-//  traceln("%dx%ddp SmallestScreenWidth %d", dp_w, dp_h, dp_w_min);
-    float inches_wide = dp_w / 120.0f; // 120dpi vs 150dpi is legacy but still true up to Android Pixel 3a
-    float inches_high = dp_h / 120.0f;
-    uint32_t density = AConfiguration_getDensity(glue->config); // obscure and not true DPI
-    traceln("keyboard=%d density=%d %.2fx%.2f inches", glue->keyboad_present, density, inches_wide, inches_high);
+//  traceln("physical keyboard present=%d", glue->keyboad_present);
 }
 
 static int init_display(glue_t* glue) {
@@ -304,7 +295,6 @@ static void focus(app_t* app, ui_t* ui) {
             app->focused->focus(app->focused, false);
         }
         app->focused = ui;
-        traceln("app->focused := %p", ui);
         if (ui != null && ui->focus != null) {
             ui->focus(ui, true);
         }
@@ -341,7 +331,7 @@ static void draw_frame(glue_t* glue) {
             // eglSwapBuffers performs an implicit flush operation on the context (glFlush for an OpenGL ES)
             bool swapped = eglSwapBuffers(glue->display, glue->surface);
             assertion(swapped, "eglSwapBuffers() failed"); (void)swapped;
-            traceln("eglSwapBuffers()=%d", swapped);
+//          traceln("eglSwapBuffers()=%d", swapped);
         }
     }
 }
@@ -503,7 +493,7 @@ static void on_pause(ANativeActivity* na) {
     glue_t* glue = (glue_t*)na->instance;
     assert(glue->running == 1);
     glue->running = 0;
-    traceln("glue->running=%d", glue->running);
+//  traceln("glue->running=%d", glue->running);
     if (glue->accelerometer_sensor != null) {
         ASensorEventQueue_disableSensor(glue->sensor_event_queue, glue->accelerometer_sensor);
     }
@@ -514,7 +504,7 @@ static void on_resume(ANativeActivity* na) {
     glue_t* glue = (glue_t*)na->instance;
     assert(glue->running == 0);
     glue->running = 1;
-    traceln("glue->running=%d", glue->running);
+//  traceln("glue->running=%d", glue->running);
     if (glue->accelerometer_sensor != null) {
         ASensorEventQueue_enableSensor(glue->sensor_event_queue, glue->accelerometer_sensor);
         int us = ASensor_getMinDelay(glue->accelerometer_sensor); // microseconds
