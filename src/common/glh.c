@@ -19,36 +19,6 @@ BEGIN_C
 #define gl_error() 0
 #endif
 
-void gl_ortho_2d(mat4x4 m, float x, float y, float w, float h) {
-    // this is basically from
-    // http://en.wikipedia.org/wiki/Orthographic_projection_(geometry)
-    const float znear = -1;
-    const float zfar  = 1;
-    const float inv_z = 1 / (zfar - znear);
-    const float inv_x =  1 / w;
-    const float inv_y = -1 / h;
-    // first column:
-    m[0][0] = 2 * inv_x;
-    m[1][0] = 0;
-    m[2][0] = 0;
-    m[3][0] = 0;
-    // second column:
-    m[0][1] = 0;
-    m[1][1] = inv_y * 2;
-    m[2][1] = 0;
-    m[3][1] = 0;
-    // third column:
-    m[0][2] = 0;
-    m[1][2] = 0;
-    m[2][2] = inv_z * -2;
-    m[3][2] = 0;
-    // forth column:
-    m[0][3] = -(x + x + w) * inv_x;
-    m[1][3] = -(y + y + h) * inv_y;
-    m[2][3] = -(zfar + znear) * inv_z;
-    m[3][3] = 1;
-}
-
 int gl_init() {
     int r = 0;
     const char* version = (const char*)glGetString(GL_VERSION); (void)version;
@@ -78,8 +48,40 @@ int gl_init() {
 
 int gl_viewport(int x, int y, int w, int h) {
     int r = 0;
+//  traceln("%d,%d %dx%d", x, y, w, h);
     gl_if_no_error(r, glViewport(x, y, w, h));
     return r;
+}
+
+void gl_ortho_2d(mat4x4 m, float x, float y, float w, float h) {
+//  traceln("%.0f,%.0f %.0fx%.0f", x, y, w, h);
+    // this is basically from
+    // http://en.wikipedia.org/wiki/Orthographic_projection_(geometry)
+    const float znear = -1;
+    const float zfar  =  1;
+    const float inv_z =  1 / (zfar - znear);
+    const float inv_x =  1 / w;
+    const float inv_y = -1 / h;
+    // first column:
+    m[0][0] = 2 * inv_x;
+    m[1][0] = 0;
+    m[2][0] = 0;
+    m[3][0] = 0;
+    // second column:
+    m[0][1] = 0;
+    m[1][1] = inv_y * 2;
+    m[2][1] = 0;
+    m[3][1] = 0;
+    // third column:
+    m[0][2] = 0;
+    m[1][2] = 0;
+    m[2][2] = inv_z * -2;
+    m[3][2] = 0;
+    // forth column:
+    m[0][3] = -(x + x + w) * inv_x;
+    m[1][3] = -(y + y + h) * inv_y;
+    m[2][3] = -(zfar + znear) * inv_z;
+    m[3][3] = 1;
 }
 
 static int init_texture(int ti) {

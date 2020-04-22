@@ -63,6 +63,7 @@ static jobject get_system_service(ANativeActivity* na, const char* label) {
     return !supported ? null : service;
 }
 
+
 bool droid_jni_hide_navigation_bar(ANativeActivity* na) {
     JNIEnv* env = na->env;
     bool supported = true;
@@ -74,13 +75,22 @@ bool droid_jni_hide_navigation_bar(ANativeActivity* na) {
     jmethodID set_system_ui_visibility = getMethod(viewClass, "setSystemUiVisibility", "(I)V");
     jobject   window           = callObjectMethod(activity_this(na), getWindow_mid);
     jobject   decorView        = callObjectMethod(window, getDecorView_mid);
-    jfieldID  flagFullscreen_fid      = getStaticFieldId(viewClass, "SYSTEM_UI_FLAG_FULLSCREEN", "I");
-    jfieldID  flagHideNavigation_fid  = getStaticFieldId(viewClass, "SYSTEM_UI_FLAG_HIDE_NAVIGATION", "I");
-    jfieldID  flagImmersiveSticky_fid = getStaticFieldId(viewClass, "SYSTEM_UI_FLAG_IMMERSIVE_STICKY", "I");
-    const int flagFullscreen      = getStaticIntField(viewClass, flagFullscreen_fid);
-    const int flagHideNavigation  = getStaticIntField(viewClass, flagHideNavigation_fid);
-    const int flagImmersiveSticky = getStaticIntField(viewClass, flagImmersiveSticky_fid);
-    const int flag = flagFullscreen | flagHideNavigation | flagImmersiveSticky;
+    jfieldID  flag_fullscreen_fid       = getStaticFieldId(viewClass, "SYSTEM_UI_FLAG_FULLSCREEN", "I");
+    jfieldID  flag_hide_navigation_fid  = getStaticFieldId(viewClass, "SYSTEM_UI_FLAG_HIDE_NAVIGATION", "I");
+    jfieldID  flag_immersive_fid        = getStaticFieldId(viewClass, "SYSTEM_UI_FLAG_IMMERSIVE", "I");
+    jfieldID  flag_immersive_sticky_fid = getStaticFieldId(viewClass, "SYSTEM_UI_FLAG_IMMERSIVE_STICKY", "I");
+    jfieldID  flag_layout_stable_fid    = getStaticFieldId(viewClass, "SYSTEM_UI_FLAG_LAYOUT_STABLE", "I");
+    jfieldID  flag_layout_fulscreen_fid = getStaticFieldId(viewClass, "SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN", "I");
+    jfieldID  flag_layout_hide_navigation_fid = getStaticFieldId(viewClass, "SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION", "I");
+    const int flag_fullscreen       = getStaticIntField(viewClass, flag_fullscreen_fid);
+    const int flag_hide_navigation  = getStaticIntField(viewClass, flag_hide_navigation_fid);
+    const int flag_immersive        = getStaticIntField(viewClass, flag_immersive_fid);
+    const int flag_immersive_sticky = getStaticIntField(viewClass, flag_immersive_sticky_fid);
+    const int flag_layout_stable    = getStaticIntField(viewClass, flag_layout_stable_fid);
+    const int flag_layout_fulscreen = getStaticIntField(viewClass, flag_layout_fulscreen_fid);
+    const int flag_layout_hide_navigation = getStaticIntField(viewClass, flag_layout_hide_navigation_fid);
+    const int flag = flag_fullscreen | flag_hide_navigation | flag_immersive | flag_immersive_sticky |
+                     flag_layout_fulscreen | flag_layout_hide_navigation| flag_layout_stable;
     callVoidMethod(decorView, set_system_ui_visibility, flag);
     return !check_and_clear_exception(env);
 }

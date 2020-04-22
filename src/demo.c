@@ -22,7 +22,7 @@ static const char* SLIDER1_LABEL = "Slider1: %-3d";
 static const char* SLIDER2_LABEL = "Slider2: %-3d";
 
 enum {
-    FONT_HEIGHT_PT      =  12, // pt = point = 1/72 inch
+    FONT_HEIGHT_PT      =  10, // pt = point = 1/72 inch
     MIN_BUTTON_WIDTH_PT =  90,
     VERTICAL_GAP_PT     =   8,
     HORIZONTAL_GAP_PT   =   8

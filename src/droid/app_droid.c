@@ -146,7 +146,6 @@ typedef struct glue_s {
     ALooper* looper; // The ALooper associated with the app's main event dispatch thread.
     AInputQueue* input_queue; // When non-NULL, this is the input queue from which the app will receive user input events.
     ANativeWindow* window; // When non-NULL, this is the window surface that the app can draw in.
-    ARect content_rect;    // this is the area where the window's content should be placed to be seen by the user.
     // This is non-zero when the application's activity is destroyed process should exit.
     int exit_requested;
     int exit_code; // status to exit() with
@@ -605,8 +604,7 @@ static void on_input_queued_destroyed(ANativeActivity* na, AInputQueue* queue) {
 
 static void on_content_rect_changed(ANativeActivity* na, const ARect* rc) {
     glue_t* glue = (glue_t*)na->instance;
-    glue->content_rect = *rc;
-//  traceln("%d %d %d %d", rc->left, rc->top, rc->right, rc->bottom);
+    traceln("%d %d %d %d", rc->left, rc->top, rc->right, rc->bottom);
     if (rc->left != 0 || rc->top != 0) {
         traceln("%d %d %d %d", rc->left, rc->top, rc->right, rc->bottom);
     }
@@ -951,11 +949,11 @@ static void set_window_flags(ANativeActivity* na) {
     static const int add    = AWINDOW_FLAG_KEEP_SCREEN_ON|
                               AWINDOW_FLAG_TURN_SCREEN_ON|
                               AWINDOW_FLAG_FULLSCREEN|
-                              AWINDOW_FLAG_LAYOUT_NO_LIMITS|
                               AWINDOW_FLAG_LAYOUT_IN_SCREEN|
                               AWINDOW_FLAG_LAYOUT_INSET_DECOR;
     static const int remove = AWINDOW_FLAG_SCALED|
                               AWINDOW_FLAG_DITHER|
+                              AWINDOW_FLAG_LAYOUT_NO_LIMITS|
                               AWINDOW_FLAG_FORCE_NOT_FULLSCREEN;
     ANativeActivity_setWindowFlags(na, add, remove);
 }
@@ -1057,6 +1055,7 @@ static void create_activitiy(glue_t* glue, ANativeActivity* na, void* data, size
     glue->destroy_requested = false;
     glue->na = na;
     glue->start_time_in_ns = time_monotonic_ns();
+    droid_jni_hide_navigation_bar(na);
     display_real_size(glue, na);
     init_state(glue, data, bytes);
     glue->config = AConfiguration_new();
