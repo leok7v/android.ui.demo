@@ -48,7 +48,7 @@ static void  enqueue_command(glue_t* glue, int8_t command);
 static app_t app = {
     /* that:    */ null,
     /* glue:    */ null,
-    /* root:    */ &root,
+    /* root:    */ null,
     /* focused: */ null,
     /* xdpi: */ 0,
     /* ydpi: */ 0,
@@ -364,26 +364,6 @@ void app_trace_key(int flags, int ch) {
     traceln("%s", droid_keys_text(flags, ch).text);
 }
 
-static bool set_focus(ui_t* ui, int x, int y) {
-    assert(ui != null);
-    ui_t* child = ui->children;
-    bool focus_was_set = false;
-    while (child != null && !focus_was_set) {
-        assert(child != ui);
-        focus_was_set = set_focus(child, x, y);
-        child = child->next;
-    }
-//  traceln("focus_was_set=%d on children of %p", focus_was_set, ui);
-    if (!focus_was_set && ui->focusable) {
-        const pointf_t pt = ui->screen_xy(ui);
-//      traceln("%p %.1f,%.1f %.1fx%.1f focusable=%d mouse %d,%d  pt %.1f,%.1f", ui, ui->x, ui->y, ui->w, ui->h, ui->focusable, x, y, pt.x, pt.y);
-        focus_was_set = pt.x <= x && x < pt.x + ui->w && pt.y <= y && y < pt.y + ui->h;
-        if (focus_was_set) { ui->a->focus(ui->a, ui); }
-    }
-//  traceln("focus_was_set=%d on %p", focus_was_set, ui);
-    return focus_was_set;
-}
-
 static void dispatch_keycode(glue_t* glue, int flags, int keycode) {
     glue->a->keyboard_flags = flags;
     if (glue->a->focused != null && glue->a->focused->keyboard != null) {
@@ -427,7 +407,7 @@ static int32_t handle_motion(glue_t* glue, AInputEvent* me) {
         glue->a->last_mouse_y = y;
         if (glue->a->trace_flags & APP_TRACE_MOUSE) { app_trace_mouse(glue->a->mouse_flags, mouse_action, index, x, y); }
         if (mouse_action & MOUSE_LBUTTON_DOWN) {
-            if (!set_focus(glue->a->root, x, y)) {
+            if (!ui_set_focus(glue->a->root, x, y)) {
                 glue->a->focus(glue->a, null); // kill focus if no focusable components were found
             }
         }
@@ -1051,6 +1031,8 @@ static void create_activitiy(glue_t* glue, ANativeActivity* na, void* data, size
     assert(glue->a = &app);
     assert(app.glue == glue);
     assert(app.focused == null);
+    app.root = ui_root;
+    ui_root->a = &app;
     na->instance = glue;
     glue->destroy_requested = false;
     glue->na = na;
@@ -1084,7 +1066,6 @@ void ANativeActivity_onCreate(ANativeActivity* na, void* data, size_t bytes) {
 static_init(app_android) {
     app_create(&app);
     app.glue = &glue;
-    root.a = &app;
     glue.a = &app;
 }
 

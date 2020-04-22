@@ -94,7 +94,7 @@ static int load_asset(font_t* f, app_t* a, const char* name, int hpx, int from, 
         } else {
             f->chars = chars;
             r = pack_font_to_texture(f, data, chars, hpx, from, count);
-            if (r == 0) { f->em = font_text_width(f, "M"); }
+            if (r == 0) { f->em = font_text_width(f, "M", 1); }
         }
         a->asset_unmap(a, asset, data, bytes);
     }
@@ -140,16 +140,16 @@ void font_dispose(font_t* f) {
     memset(f, 0, sizeof(*f));
 }
 
-float font_text_width(font_t* f, const char* text) {
+float font_text_width(font_t* f, const char* text, int count) {
+    if (count < 0) { count = strlen(text); }
     float x = 0;
     float y = 0;
     const int w = f->atlas.w;
     const int h = f->atlas.h;
     stbtt_packedchar* chars = (stbtt_packedchar*)f->chars;
-    while (*text != 0) {
+    for (int i = 0; i < count; i++) {
         stbtt_aligned_quad q;
-        stbtt_GetPackedQuad(chars, w, h, *text - f->from, &x, &y, &q, 0);
-        text++;
+        stbtt_GetPackedQuad(chars, w, h, text[i] - f->from, &x, &y, &q, 0);
     }
     return x;
 }

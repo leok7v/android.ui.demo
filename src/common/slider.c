@@ -32,8 +32,8 @@ static int slider_scale(slider_t* s) {
 
 static int slider_dec_inc(slider_t* s, float x, float y) {
     const float em4 = s->theme->font->em / 4;
-    const float dec_width = font_text_width(s->theme->font, SLIDER_DEC_LABEL) + em4;
-    const float inc_width = font_text_width(s->theme->font, SLIDER_INC_LABEL) + em4;
+    const float dec_width = font_text_width(s->theme->font, SLIDER_DEC_LABEL, -1) + em4;
+    const float inc_width = font_text_width(s->theme->font, SLIDER_INC_LABEL, -1) + em4;
     if (0 <= x && x <= dec_width) {
         if (s->minimum != null && s->maximum != null && s->current != null && *s->minimum < *s->current) {
             return -1;
@@ -99,8 +99,8 @@ static void slider_mouse(ui_t* self, int mouse_action, float x, float y) {
         }
     } else if (s->ui.focusable && (a->mouse_flags & MOUSE_LBUTTON_FLAG)) { // drag with mouse button down
         const float em4 = s->theme->font->em / 4;
-        const float dec_width = font_text_width(s->theme->font, SLIDER_DEC_LABEL) + em4;
-        const float inc_width = font_text_width(s->theme->font, SLIDER_INC_LABEL) + em4;
+        const float dec_width = font_text_width(s->theme->font, SLIDER_DEC_LABEL, -1) + em4;
+        const float inc_width = font_text_width(s->theme->font, SLIDER_INC_LABEL, -1) + em4;
         if (dec_width <= x && x <= self->w - inc_width) {
             if (s->minimum != null && s->maximum != null && s->current != null) {
                 int range = *s->maximum - *s->minimum + 1;
@@ -169,8 +169,8 @@ static void slider_draw(ui_t* self) {
     const float baseline = f->baseline;
     float x = pt.x;
     float y = pt.y + (int)(baseline + (self->h - fh) / 2);
-    const float dec_width = s->ui.focusable ? font_text_width(f, SLIDER_DEC_LABEL) + em4 : 0;
-    const float inc_width = s->ui.focusable ? font_text_width(f, SLIDER_INC_LABEL) + em4 : 0;
+    const float dec_width = s->ui.focusable ? font_text_width(f, SLIDER_DEC_LABEL, -1) + em4 : 0;
+    const float inc_width = s->ui.focusable ? font_text_width(f, SLIDER_INC_LABEL, -1) + em4 : 0;
     const float indicator_width = self->w - dec_width - inc_width;
     if (s->label != null) {
         dc.text(&dc, s->theme->color_text, f, x + dec_width, y, s->label, (int)strlen(s->label));
@@ -199,15 +199,15 @@ static void slider_draw(ui_t* self) {
     }
 }
 
-slider_t* slider_create(ui_t* parent, void* that, ui_expo_t* theme,
+slider_t* slider_create(ui_t* parent, void* that, ui_theme_t* theme,
                         colorf_t* color_slider,
                         const char* label, float x, float y, float w, float h,
                         int* minimum, int* maximum, int* current) {
     slider_t* s = (slider_t*)allocate(sizeof(slider_t));
     if (s != null) {
         const float em4 = theme->font->em / 4;
-        const float dec_width = font_text_width(theme->font, SLIDER_DEC_LABEL) + em4;
-        const float inc_width = font_text_width(theme->font, SLIDER_INC_LABEL) + em4;
+        const float dec_width = font_text_width(theme->font, SLIDER_DEC_LABEL, -1) + em4;
+        const float inc_width = font_text_width(theme->font, SLIDER_INC_LABEL, -1) + em4;
         s->ui = *parent;
         s->ui.that = that;
         s->ui.parent = null;

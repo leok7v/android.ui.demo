@@ -39,6 +39,7 @@ static void ui_remove(ui_t* self, ui_t* child) {
         if (c == child) {
             *prev = child->next;
             child->next = null;
+            child->parent = null;
             return;
         }
         prev = &c->next;
@@ -71,12 +72,17 @@ static void ui_dispose(ui_t* ui) {
     }
 }
 
-static void ui_draw_children(ui_t* self) {
+static void ui_draw_childs(ui_t* self, bool decor) {
     ui_t* c = self->children;
     while (c != null) {
-        if (!c->hidden) { c->draw(c); }
+        if (!c->hidden && !c->decor == !decor) { c->draw(c); }
         c = c->next;
     }
+}
+
+static void ui_draw_children(ui_t* self) {
+    ui_draw_childs(self, false);
+    ui_draw_childs(self, true);
 }
 
 static void ui_draw(ui_t* self) {
@@ -116,16 +122,37 @@ static pointf_t ui_screen_xy(ui_t* ui) {
     return pt;
 }
 
-ui_t root = {
+bool ui_set_focus(ui_t* ui, int x, int y) {
+    assert(ui != null);
+    ui_t* child = ui->children;
+    bool focus_was_set = false;
+    while (child != null && !focus_was_set) {
+        assert(child != ui);
+        focus_was_set = ui_set_focus(child, x, y);
+        child = child->next;
+    }
+//  traceln("focus_was_set=%d on children of %p", focus_was_set, ui);
+    if (!focus_was_set && ui->focusable) {
+        const pointf_t pt = ui->screen_xy(ui);
+//      traceln("%p %.1f,%.1f %.1fx%.1f focusable=%d mouse %d,%d  pt %.1f,%.1f", ui, ui->x, ui->y, ui->w, ui->h, ui->focusable, x, y, pt.x, pt.y);
+        focus_was_set = pt.x <= x && x < pt.x + ui->w && pt.y <= y && y < pt.y + ui->h;
+        if (focus_was_set) { ui->a->focus(ui->a, ui); }
+    }
+//  traceln("focus_was_set=%d on %p", focus_was_set, ui);
+    return focus_was_set;
+}
+
+static ui_t root = {
     /* that: */ null,
     /* kind: */ UI_KIND_CONTAINER,
     /* x, y, w, h */ 0, 0, 0, 0,
-    /* hidden: */ false,
+    /* hidden:    */ false,
     /* focusable: */ false,
-    /* parent: */ null,
-    /* ui: */ null,
-    /* next: */ null,
-    /* children: */ null,
+    /* decor:     */ false,
+    /* parent:    */ null,
+    /* ui:        */ null,
+    /* next:      */ null,
+    /* children:  */ null,
     ui_screen_xy,
     ui_add,
     ui_remove,
@@ -138,5 +165,7 @@ ui_t root = {
     ui_keyboard,
     ui_focus
 };
+
+ui_t* ui_root = &root;
 
 END_C

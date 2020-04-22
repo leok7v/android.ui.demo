@@ -39,7 +39,7 @@ int font_find_glyph_index(font_t* f, int unicode_codepoint); // returns -1 if gl
 
 int font_load_asset(font_t* f, app_t* a, const char* name, int height_in_pixels, int from, int count);
 
-float font_text_width(font_t* f, const char* text);
+float font_text_width(font_t* f, const char* text, int count); // count == -1, use strlen(text)
 
 void font_dispose(font_t* font);
 

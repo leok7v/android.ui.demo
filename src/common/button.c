@@ -64,7 +64,7 @@ static void button_draw(ui_t* ui) {
     dc.text(&dc, b->theme->color_text, f, pt.x, pt.y, b->label, (int)strlen(b->label));
     if (m >= 0) { // draw highlighted mnemonic
         copy[m] = 0;
-        float mx = pt.x + font_text_width(f, copy);
+        float mx = pt.x + font_text_width(f, copy, m);
         dc.text(&dc, b->theme->color_mnemonic, f, mx, pt.y, mn, (int)strlen(mn));
     }
 }
@@ -95,7 +95,7 @@ static void button_screen_mouse(ui_t* self, int mouse_action, float x, float y) 
     }
 }
 
-button_t* button_create(ui_t* parent, void* that, ui_expo_t* theme,
+button_t* button_create(ui_t* parent, void* that, ui_theme_t* theme,
                         int key_flags, int key, const char* mnemonic,
                         const char* label,
                         float x, float y, float w, float h) {

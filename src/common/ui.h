@@ -113,6 +113,7 @@ typedef struct ui_s {
     float x, y, w, h;
     bool hidden;
     bool focusable;
+    bool decor; // draw this ui element on top of children
     ui_t* parent;
     app_t* a;
     ui_t* next; // next sibling
@@ -130,7 +131,7 @@ typedef struct ui_s {
     void (*focus)(ui_t* self, bool gain);
 } ui_t;
 
-typedef struct ui_expo_s { // UI exposition appearance attributes
+typedef struct ui_theme_s { // UI theme attributes
     font_t*   font;
     float     ui_height; // 1.75 means 175% of font height in pixels for button, labels and other UI elements
     colorf_t* color_text;
@@ -142,8 +143,10 @@ typedef struct ui_expo_s { // UI exposition appearance attributes
     colorf_t* color_background_armed;
     colorf_t* color_pressed;
     colorf_t* color_background_pressed;
-} ui_expo_t;
+} ui_theme_t;
 
-extern ui_t root;
+extern ui_t* ui_root;
+
+bool ui_set_focus(ui_t* ui, int x, int y); // returns true if focus was set
 
 END_C

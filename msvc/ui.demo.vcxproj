@@ -32,6 +32,7 @@
     <ClCompile Include="..\src\common\slider.c" />
     <ClCompile Include="..\src\common\stb_font.c" />
     <ClCompile Include="..\src\common\stb_image.c" />
+    <ClCompile Include="..\src\common\toast.c" />
     <ClCompile Include="..\src\common\ui.c" />
     <ClCompile Include="..\src\demo.c" />
     <ClCompile Include="..\src\droid\app_droid.c" />
@@ -52,6 +53,7 @@
     <ClInclude Include="..\src\common\shaders.h" />
     <ClInclude Include="..\src\common\slider.h" />
     <ClInclude Include="..\src\common\stb_inc.h" />
+    <ClInclude Include="..\src\common\toast.h" />
     <ClInclude Include="..\src\common\ui.h" />
     <ClInclude Include="..\src\droid\droid_jni.h" />
     <ClInclude Include="..\src\droid\droid_keys.h" />

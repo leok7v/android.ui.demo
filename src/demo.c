@@ -12,8 +12,8 @@
 #include "dc.h"
 #include "button.h"
 #include "slider.h"
+#include "toast.h"
 #include "screen_writer.h"
-#include "stb_image.h"
 #include "shaders.h"
 
 BEGIN_C
@@ -32,11 +32,9 @@ typedef struct application_s {
     app_t* a;
     int font_height_px;
     font_t font;    // default UI font
-    ui_expo_t theme;
+    ui_theme_t theme;
 //  int program_main;
-    char toast[256];
-    int64_t toast_start_time;
-    timer_callback_t toast_timer_callback;
+    toast_t*  toast;
     bitmap_t  bitmaps[3];
     button_t* quit;
     button_t* exit;
@@ -58,54 +56,10 @@ typedef struct application_s {
 
 static inline_c float pt2px(app_t* a, float pt) { return pt * a->xdpi / 72.0f; }
 
-static const uint64_t TOAST_TIME_IN_MS = 2750; // 2.75s
-
-static void toast_timer_callback(timer_callback_t* timer_callback) {
-    application_t* app = (application_t*)timer_callback->that;
-    app->a->invalidate(app->a);
-}
-
-static void toast_add(application_t* app) {
-    assert(app->toast_timer_callback.id == 0);
-    app->toast_start_time = app->a->time_in_nanoseconds;
-    app->toast_timer_callback.id = 0;
-    app->toast_timer_callback.that = app;
-    app->toast_timer_callback.ns = TOAST_TIME_IN_MS * NS_IN_MS / 10;
-    app->toast_timer_callback.callback = toast_timer_callback;
-    app->toast_timer_callback.last_fired = 0;
-    app->a->timer_add(app->a, &app->toast_timer_callback);
-}
-
-static void toast_remove(application_t* app) {
-    app->a->timer_remove(app->a, &app->toast_timer_callback);
-    memset(&app->toast_timer_callback, 0, sizeof(app->toast_timer_callback));
-    app->toast[0] = 0; // toast OFF
-    app->toast_start_time = 0;
-}
-
-static void toast_draw(application_t* app) {
-    app_t* a = app->a;
-    if (app->toast[0] != 0) {
-        if (app->toast_start_time == 0) {
-            toast_add(app);
-        }
-        int64_t time_on_screen = a->time_in_nanoseconds - app->toast_start_time;
-        if (time_on_screen / 1000 > TOAST_TIME_IN_MS * 1000) { // nanoseconds
-            toast_remove(app);
-        } else {
-            float fh = app->font.height;
-            float w = (int)font_text_width(&app->font, app->toast);
-            int x = (a->root->w - w) / 2;
-            int y = (int)((a->root->h - fh) / 2);
-            dc.text(&dc, &colors.red, &app->font, x, y, app->toast, (int)strlen(app->toast));
-        }
-    }
-}
-
 static button_t* create_button(application_t* app, float x, float y, int key_flags, int key,
                                const char* mnemonic, const char* label, void (*click)(button_t* self)) {
     app_t* a = app->a;
-    const float lw = font_text_width(&app->font, label) + app->font.em;
+    const float lw = font_text_width(&app->font, label, -1) + app->font.em;
     const float bw = max(lw, pt2px(a, MIN_BUTTON_WIDTH_PT));
     const float bh = app->font.height * app->theme.ui_height;
     button_t* b = button_create(a->root, app, &app->theme, key_flags, key, mnemonic, label, x, y, bw, bh);
@@ -117,15 +71,15 @@ static button_t* create_button(application_t* app, float x, float y, int key_fla
 static void slider_notify(slider_t* s) {
     application_t* app = (application_t*)s->ui.a->that;
     if (s == app->slider1) {
-        snprintf(app->slider1_label, countof(app->slider1_label), SLIDER1_LABEL, app->slider1_current);
+        snprintf0(app->slider1_label, SLIDER1_LABEL, app->slider1_current);
     } else if (s == app->slider2) {
-        snprintf(app->slider2_label, countof(app->slider2_label), SLIDER2_LABEL, app->slider2_current);
+        snprintf0(app->slider2_label, SLIDER2_LABEL, app->slider2_current);
     }
 }
 
 static slider_t* create_slider(application_t* app, float x, float y, const char* label, int* minimum, int* maximum, int* current) {
     float fh = app->font.height;
-    float w = font_text_width(&app->font, label) + app->font.em * 2;
+    float w = font_text_width(&app->font, label, -1) + app->font.em * 2;
     slider_t* s = slider_create(app->a->root, app, &app->theme, &colors.orange, label, x, y, w, fh, minimum, maximum, current);
     s->ui.that = app;
     s->notify = slider_notify;
@@ -159,14 +113,13 @@ static void test(ui_t* view) {
 }
 
 static void root_draw(ui_t* view) {
-    application_t* app = (application_t*)view->a->that;
+//  application_t* app = (application_t*)view->a->that;
     dc.clear(&dc, &colors.nc_dark_blue);
     const bool simple_test = false;
     if (simple_test) {
         test(view);
     } else {
         view->draw_children(view);
-        toast_draw(app);
     }
 }
 
@@ -234,13 +187,13 @@ static void init_ui(application_t* app) {
     app->slider1_minimum = 0;
     app->slider1_maximum = 255;
     app->slider1_current = 240;
-    snprintf(app->slider1_label, countof(app->slider1_label), SLIDER1_LABEL, app->slider1_current);
+    snprintf0(app->slider1_label, SLIDER1_LABEL, app->slider1_current);
     app->slider1 = create_slider(app, x, y, app->slider1_label, &app->slider1_minimum, &app->slider1_maximum, &app->slider1_current);
     y += bh + vgap;
     app->slider2_minimum = 0;
     app->slider2_maximum = 1023;
     app->slider2_current = 512;
-    snprintf(app->slider2_label, countof(app->slider2_label), SLIDER2_LABEL, app->slider2_current);
+    snprintf0(app->slider2_label, SLIDER2_LABEL, app->slider2_current);
     app->slider2 = create_slider(app, x, y, app->slider2_label, &app->slider2_minimum, &app->slider2_maximum, &app->slider2_current);
     y += bh + vgap;
     app->view_glyphs = app->a->root->create(app->a->root, app, x, y, app->font.atlas.w, app->font.atlas.h);
@@ -274,19 +227,19 @@ static void load_font(application_t* app) {
     if (r != 0) { exit(r); } // fatal
 }
 
-static void init_expo(application_t* app) {
-    ui_expo_t* ex = &app->theme;
-    ex->font = &app->font;
-    ex->ui_height = 1.5; // 150% of font height in pixels for UI elements height
-    ex->color_text = &colors.nc_light_blue;
-    ex->color_background =&colors.nc_teal;
-    ex->color_mnemonic = &colors.nc_dirty_gold;
-    ex->color_focused = ex->color_text; // TODO: lighter
-    ex->color_background_focused = &colors.nc_light_gray;
-    ex->color_armed = ex->color_text; // TODO: different
-    ex->color_background_armed = &colors.orange;
-    ex->color_pressed = ex->color_text; // TODO: different
-    ex->color_background_pressed = &colors.green;
+static void init_theme(application_t* app) {
+    ui_theme_t* th = &app->theme;
+    th->font = &app->font;
+    th->ui_height = 1.5; // 150% of font height in pixels for UI elements height
+    th->color_text = &colors.nc_light_blue;
+    th->color_background =&colors.nc_teal;
+    th->color_mnemonic = &colors.nc_dirty_gold;
+    th->color_focused = th->color_text; // TODO: lighter
+    th->color_background_focused = &colors.nc_light_gray;
+    th->color_armed = th->color_text; // TODO: different
+    th->color_background_armed = &colors.orange;
+    th->color_pressed = th->color_text; // TODO: different
+    th->color_background_pressed = &colors.green;
 }
 
 static int create_gl_program(app_t* a, const char* name, int *program) {
@@ -296,7 +249,7 @@ static int create_gl_program(app_t* a, const char* name, int *program) {
     static const char* suffix[] = { "vertex", "fragment" };
     char names[2][128];
     for (int i = 0; i < countof(names); i++) {
-        snprintf(names[i], countof(names[i]), "%s_%s.glsl", name, suffix[i]);
+        snprintf0(names[i], "%s_%s.glsl", name, suffix[i]);
     };
     gl_shader_source_t sources[] = {
         {GL_SHADER_VERTEX, names[0], null, 0},
@@ -326,12 +279,14 @@ static void shown(app_t* a) {
 //  int r = create_gl_program(a, "main", &app->program_main);
     int r = shaders_init();
     assert(r == 0);
-    init_expo(app);
+    init_theme(app);
     for (int i = 0; i < countof(app->bitmaps); i++) {
         bitmap_allocate_and_update_texture(&app->bitmaps[i]);
     }
     init_ui(app);
-    snprintf(app->toast, countof(app->toast), "resolution %.0fx%.0fpx", a->root->w, a->root->h);
+    toast(a)->theme = &app->theme;
+    a->root->add(a->root, &toast(a)->ui, 0, 0, 0, 0);
+    toast(a)->print(toast(a), "resolution\n%.0fx%.0fpx", a->root->w, a->root->h);
 }
 
 static void resized(app_t* a) {
@@ -344,6 +299,8 @@ static void hidden(app_t* a) {
     // application/activity is detached from its window. On Android application will NOT exit
     application_t* app = (application_t*)a->that;
     a->focus(a, null);
+    toast(a)->cancel(toast(a));
+    a->root->remove(a->root, &toast(a)->ui);
     app->view_textures->dispose(app->view_textures); app->view_textures = null;
     app->view_glyphs->dispose(app->view_glyphs);     app->view_glyphs = null;
     app->view_ascii->dispose(app->view_ascii);       app->view_ascii = null;
@@ -370,6 +327,7 @@ static void resume(app_t* a) {
 
 static void init(app_t* a) { // init application
     application_t* app = (application_t*)a->that;
+    a->root->that = &app;
     if (app->bitmaps[0].data == null) {
         bitmap_load_asset(&app->bitmaps[0], a, "cube-320x240.png");
         bitmap_load_asset(&app->bitmaps[1], a, "geometry-320x240.png");
@@ -398,7 +356,6 @@ void app_create(app_t* a) {
     app.a->stop    = stop;
     app.a->resume  = resume;
     app.a->done    = done;
-    app.a->root->that = &app;
 }
 
 END_C

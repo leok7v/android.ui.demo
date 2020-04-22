@@ -53,6 +53,9 @@
     <ClCompile Include="..\src\droid\droid_keys.c">
       <Filter>droid</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\common\toast.c">
+      <Filter>common</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="common">
@@ -64,46 +67,16 @@
     <Filter Include="droid">
       <UniqueIdentifier>{938debf5-db12-4b42-a90d-7703557ff702}</UniqueIdentifier>
     </Filter>
+    <Filter Include="inc">
+      <UniqueIdentifier>{058b27ef-af7b-457d-bb80-7bdd5459bcdb}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\src\common\app.h">
-      <Filter>common</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\common\rt.h">
-      <Filter>common</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\ext\stb_rect_pack.h">
       <Filter>ext</Filter>
     </ClInclude>
     <ClInclude Include="..\src\ext\stb_truetype.h">
       <Filter>ext</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\common\ui.h">
-      <Filter>common</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\common\button.h">
-      <Filter>common</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\common\slider.h">
-      <Filter>common</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\common\bitmap.h">
-      <Filter>common</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\common\font.h">
-      <Filter>common</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\common\stb_inc.h">
-      <Filter>common</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\common\glh.h">
-      <Filter>common</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\common\color.h">
-      <Filter>common</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\common\screen_writer.h">
-      <Filter>common</Filter>
     </ClInclude>
     <ClInclude Include="..\src\ext\linmath.h">
       <Filter>ext</Filter>
@@ -111,20 +84,56 @@
     <ClInclude Include="..\src\ext\stb_image.h">
       <Filter>ext</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\common\shaders.h">
-      <Filter>common</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\common\dc.h">
-      <Filter>common</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\droid\droid_jni.h">
       <Filter>droid</Filter>
     </ClInclude>
     <ClInclude Include="..\src\droid\droid_keys.h">
       <Filter>droid</Filter>
     </ClInclude>
+    <ClInclude Include="..\src\common\ui.h">
+      <Filter>inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\common\stb_inc.h">
+      <Filter>inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\common\slider.h">
+      <Filter>inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\common\shaders.h">
+      <Filter>inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\common\screen_writer.h">
+      <Filter>inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\common\rt.h">
+      <Filter>inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\common\glh.h">
+      <Filter>inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\common\font.h">
+      <Filter>inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\common\dc.h">
+      <Filter>inc</Filter>
+    </ClInclude>
     <ClInclude Include="..\src\common\gl_inc.h">
-      <Filter>common</Filter>
+      <Filter>inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\common\color.h">
+      <Filter>inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\common\button.h">
+      <Filter>inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\common\bitmap.h">
+      <Filter>inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\common\app.h">
+      <Filter>inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\common\toast.h">
+      <Filter>inc</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

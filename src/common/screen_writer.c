@@ -20,7 +20,7 @@ BEGIN_C
 static void screen_writer_draw_text(screen_writer_t* sw, const char* format, va_list vl, bool line_feed) {
     assert(sw != null && format != null);
     char text[1024];
-    int r = vsnprintf(text, countof(text), format, vl);
+    int r = vsnprintf0(text, format, vl);
     (void)r; // unused - can be used for stack_alloc() resize of text
     float x = dc.text(&dc, sw->color, sw->font, sw->x, sw->y, text, (int)strlen(text));
     if (line_feed) {

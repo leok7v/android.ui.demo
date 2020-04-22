@@ -19,7 +19,7 @@ static int logln(const char* filename, int line, const char* function, const cha
         if (file == null) { file = strrchr(filename, '\\'); }
         if (file == null) { file = filename; } else { file++; }
         char location[1024];
-        snprintf(location, countof(location), "%s(%d) \t%s ", file, line, function);
+        snprintf0(location, "%s(%d) \t%s ", file, line, function);
         r = app_log(LOG_INFO, "@!@", location, format, vl);
     }
     return r;
@@ -37,7 +37,7 @@ int _assertion_(const char* filename, int line, const char* function, const char
     va_list vl;
     va_start(vl, format);
     char text[1024];
-    vsnprintf(text, countof(text) - 1, format, vl); text[countof(text) - 1] = 0;
+    vsnprintf0(text, format, vl);
     va_end(vl);
     int r = _traceln_(filename, line, function, "assert(%s) failed %s", a, text);
     raise(SIGTRAP);
@@ -48,6 +48,12 @@ int _assert_(const char* filename, int line, const char* function, const char* a
     int r = _traceln_(filename, line, function, "assert(%s) failed", a);
     raise(SIGTRAP);
     return r;
+}
+
+int strzt(char* text, int count, int call) {
+    // [v]snprintf() does NOT zero terminate result on overflow/truncate
+    text[count - 1] = 0; // make sure it is zero terminated
+    return call;
 }
 
 END_C

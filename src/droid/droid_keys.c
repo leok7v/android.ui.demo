@@ -69,11 +69,10 @@ droid_key_text_string_t  droid_keys_text(int flags, int ch) {
     if (state[0] == 0) { state[0] = 0x20; } // (int)strlen(state) - 1 below
     droid_key_text_string_t r = {};
     if (mnemonic == null) {
-        snprintf(r.text, countof(r.text), "flags=0x%08X %.*s ch=%d 0x%08X %c", flags, (int)strlen(state) - 1, state, ch, ch, ch);
+        snprintf0(r.text, "flags=0x%08X %.*s ch=%d 0x%08X %c", flags, (int)strlen(state) - 1, state, ch, ch, ch);
     } else {
-        snprintf(r.text, countof(r.text), "flags=0x%08X %.*s ch=%d 0x%08X %s", flags, (int)strlen(state) - 1, state, ch, ch, mnemonic);
+        snprintf0(r.text, "flags=0x%08X %.*s ch=%d 0x%08X %s", flags, (int)strlen(state) - 1, state, ch, ch, mnemonic);
     }
-    r.text[countof(r.text) - 1] = 0;
     return r;
 }
 

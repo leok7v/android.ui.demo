@@ -168,7 +168,7 @@ int gl_trace_errors_(const char* file, int line, const char* func, const char* c
         const char* f = strrchr(file, '/');
         if (f == null) { f = strrchr(file, '\\'); }
         if (f != null) { f++; } else { f = file; }
-        #define text_append(...) k = snprintf(s, n, __VA_ARGS__); s += k; n -= k
+        #define text_append(...) k = snprintf0(s, __VA_ARGS__); s += k; n -= k
         text_append("0x%04X=%s", gle, gl_strerror(gle));
         // old and buggy Windows opengl is capable of returning error on glGetError() (e.g. when context is not current)
         for (int i = 0; i < 8; i++) {
