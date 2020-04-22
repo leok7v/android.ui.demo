@@ -16,7 +16,7 @@
 
 BEGIN_C
 
-static void init(dc_t* dc, mat4x4 mvp, ...);
+static void init(dc_t* dc, ...);
 static void dispose(dc_t* dc);
 static void clear(dc_t* dc, const colorf_t* color);
 static void fill(dc_t* dc, const colorf_t* color, float x, float y, float w, float h);
@@ -44,7 +44,7 @@ dc_t dc = {
     text
 };
 
-static void init(dc_t* dc, mat4x4 mvp, ...) {
+static void init(dc_t* dc, ...) {
     assert(sizeof(GLuint) == sizeof(uint32_t));
     assert(sizeof(GLint) == sizeof(int32_t));
     assert(sizeof(GLushort) == sizeof(uint16_t));
@@ -60,8 +60,6 @@ static void init(dc_t* dc, mat4x4 mvp, ...) {
     gl_check(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
     gl_check(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
     gl_check(glEnableVertexAttribArray(0));
-    assert(sizeof(dc->mvp) == 16 * sizeof(float));
-    memcpy(dc->mvp, mvp, sizeof(dc->mvp));
 }
 
 static void dispose(dc_t* dc) {
