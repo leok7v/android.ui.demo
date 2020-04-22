@@ -1080,8 +1080,6 @@ static_init(app_android) {
 
 END_C
 
-
-
 /* typical sequence of events inside same process:
 
 on_create
@@ -1098,23 +1096,5 @@ on_create
       on_native_window_destroyed
   on_stop
       on_input_queued_destroyed
-on_destroy // proess is not killed here it will continue
-
-This only works on rooted devices:
-
-#include <linux/fb.h>
-
-    struct fb_var_screeninfo fbsi = {};
-    int fb0 = open("/dev/graphics/fb0", O_RDONLY);
-    if (fb0 < 0) {
-        traceln("failed to open /dev/graphics/fb0");
-    } else {
-        if (ioctl(fb0, FBIOGET_VSCREENINFO, &fbsi) < 0) {
-            traceln("failed to open ioctl");
-        } else {
-            traceln("%d x %d", fbsi.xres, fbsi.yres);
-        }
-        close(fb0);
-    }
-
+on_destroy // process is not killed after on_destriy it may continue
 */
