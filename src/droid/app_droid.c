@@ -607,11 +607,17 @@ static void on_content_rect_changed(ANativeActivity* na, const ARect* rc) {
     glue_t* glue = (glue_t*)na->instance;
     glue->content_rect = *rc;
 //  traceln("%d %d %d %d", rc->left, rc->top, rc->right, rc->bottom);
-    assertion(rc->left == 0 && rc->top == 0, "if this false need to re-think projection in mvp");
-    glue->a->root->w = rc->right - rc->left;
-    glue->a->root->h = rc->bottom - rc->top;
-    gl_viewport(glue->a->root->w, glue->a->root->h);
-    if (glue->a->resized != null) { glue->a->resized(glue->a); }
+    if (rc->left != 0 || rc->top != 0) {
+        traceln("%d %d %d %d", rc->left, rc->top, rc->right, rc->bottom);
+    }
+    app_t* a = glue->a;
+    ui_t* root = a->root;
+    root->x = rc->left;
+    root->y = rc->top;
+    root->w = rc->right - rc->left;
+    root->h = rc->bottom - rc->top;
+    gl_viewport(root->x, root->y, root->w, root->h);
+    if (a->resized != null) { a->resized(a); }
     app_invalidate(glue->a);
 }
 
@@ -899,12 +905,8 @@ static void process_command(glue_t* glue, android_poll_source_t* source) {
 static void process_accel(glue_t* glue, android_poll_source_t* source) {
 }
 
-static void on_create(ANativeActivity* na) {
-    glue_t* glue = (glue_t*)na->instance;
-    if (glue->a->init != null) { glue->a->init(glue->a); }
-}
-
 static void on_destroy(ANativeActivity* na) {
+    traceln("pid/tid=%d/%d na=%p", getpid(), gettid(), na);
     glue_t* glue = (glue_t*)na->instance;
     assert(glue->sensor_event_queue != null);
     if (glue->sensor_event_queue != null) {
@@ -949,12 +951,12 @@ static void set_window_flags(ANativeActivity* na) {
     static const int add    = AWINDOW_FLAG_KEEP_SCREEN_ON|
                               AWINDOW_FLAG_TURN_SCREEN_ON|
                               AWINDOW_FLAG_FULLSCREEN|
+                              AWINDOW_FLAG_LAYOUT_NO_LIMITS|
                               AWINDOW_FLAG_LAYOUT_IN_SCREEN|
                               AWINDOW_FLAG_LAYOUT_INSET_DECOR;
     static const int remove = AWINDOW_FLAG_SCALED|
                               AWINDOW_FLAG_DITHER|
-                              AWINDOW_FLAG_FORCE_NOT_FULLSCREEN|
-                              AWINDOW_FLAG_LAYOUT_NO_LIMITS;
+                              AWINDOW_FLAG_FORCE_NOT_FULLSCREEN;
     ANativeActivity_setWindowFlags(na, add, remove);
 }
 
@@ -1046,29 +1048,38 @@ static void init_callbacks(ANativeActivityCallbacks* cb) {
     cb->onContentRectChanged       = on_content_rect_changed;
 }
 
+static void create_activitiy(glue_t* glue, ANativeActivity* na, void* data, size_t bytes) {
+    assert(glue->na == null);
+    assert(glue->a = &app);
+    assert(app.glue == glue);
+    assert(app.focused == null);
+    na->instance = glue;
+    glue->destroy_requested = false;
+    glue->na = na;
+    glue->start_time_in_ns = time_monotonic_ns();
+    display_real_size(glue, na);
+    init_state(glue, data, bytes);
+    glue->config = AConfiguration_new();
+    AConfiguration_fromAssetManager(glue->config, na->assetManager);
+    process_configuration(glue);
+    init_callbacks(na->callbacks);
+    set_window_flags(na);
+    init_looper(glue, na);
+    init_accelerometer(glue);
+    init_timer_thread(glue);
+    if (glue->a->init != null) { glue->a->init(glue->a); }
+}
+
 static glue_t glue;
 
 void ANativeActivity_onCreate(ANativeActivity* na, void* data, size_t bytes) {
-    traceln("pid/tid=%d/%d saved_state=%p[%d]", getpid(), gettid(), data, bytes);
-    assert(glue.na == null);
-    assert(glue.a = &app);
-    assert(app.glue == &glue);
-    assert(app.focused == null);
-    glue.destroy_requested = false;
-    glue.na = na;
-    na->instance = &glue;
-    glue.start_time_in_ns = time_monotonic_ns();
-    display_real_size(&glue, na);
-    init_state(&glue, data, bytes);
-    init_callbacks(na->callbacks);
-    set_window_flags(na);
-    init_looper(&glue, na);
-    init_accelerometer(&glue);
-    init_timer_thread(&glue);
-    glue.config = AConfiguration_new();
-    AConfiguration_fromAssetManager(glue.config, na->assetManager);
-    process_configuration(&glue);
-    on_create(na);
+    traceln("pid/tid=%d/%d na=%p saved_state=%p[%d]", getpid(), gettid(), na, data, bytes);
+    if (glue.na != null) {
+        traceln("attempt to instantiate two activities - refused");
+        ANativeActivity_finish(na);
+    } else {
+        create_activitiy(&glue, na, data, bytes);
+    }
 }
 
 static_init(app_android) {

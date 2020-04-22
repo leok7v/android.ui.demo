@@ -318,7 +318,7 @@ static int create_gl_program(app_t* a, const char* name, int *program) {
 static void shown(app_t* a) {
     dc.init(&dc);
     // both model and view matricies are identity:
-    gl_ortho_2d(dc.mvp, 0, 0, a->root->w, a->root->h);
+    gl_ortho_2d(dc.mvp, a->root->x, a->root->y, a->root->w, a->root->h);
 //  traceln("root %.0fx%.0f", a->root->w, a->root->h);
     application_t* app = (application_t*)a->that;
     load_font(app);
@@ -336,13 +336,14 @@ static void shown(app_t* a) {
 
 static void resized(app_t* a) {
 //  traceln("root %.0fx%.0f", a->root->w, a->root->h);
-    gl_ortho_2d(dc.mvp, 0, 0, a->root->w, a->root->h);
+    gl_ortho_2d(dc.mvp, a->root->x, a->root->y, a->root->w, a->root->h);
     a->invalidate(a);
 }
 
 static void hidden(app_t* a) {
     // application/activity is detached from its window. On Android application will NOT exit
     application_t* app = (application_t*)a->that;
+    a->focus(a, null);
     app->view_textures->dispose(app->view_textures); app->view_textures = null;
     app->view_glyphs->dispose(app->view_glyphs);     app->view_glyphs = null;
     app->view_ascii->dispose(app->view_ascii);       app->view_ascii = null;

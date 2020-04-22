@@ -19,14 +19,14 @@ BEGIN_C
 #define gl_error() 0
 #endif
 
-void gl_ortho_2d(mat4x4 m, float left, float top, float right, float bottom) {
+void gl_ortho_2d(mat4x4 m, float x, float y, float w, float h) {
     // this is basically from
     // http://en.wikipedia.org/wiki/Orthographic_projection_(geometry)
     const float znear = -1;
     const float zfar  = 1;
     const float inv_z = 1 / (zfar - znear);
-    const float inv_y = 1 / (top - bottom);
-    const float inv_x = 1 / (right - left);
+    const float inv_x =  1 / w;
+    const float inv_y = -1 / h;
     // first column:
     m[0][0] = 2 * inv_x;
     m[1][0] = 0;
@@ -43,8 +43,8 @@ void gl_ortho_2d(mat4x4 m, float left, float top, float right, float bottom) {
     m[2][2] = inv_z * -2;
     m[3][2] = 0;
     // forth column:
-    m[0][3] = -(right + left) * inv_x;
-    m[1][3] = -(top + bottom) * inv_y;
+    m[0][3] = -(x + x + w) * inv_x;
+    m[1][3] = -(y + y + h) * inv_y;
     m[2][3] = -(zfar + znear) * inv_z;
     m[3][3] = 1;
 }
@@ -76,9 +76,9 @@ int gl_init() {
     return r;
 }
 
-int gl_viewport(int w, int h) {
+int gl_viewport(int x, int y, int w, int h) {
     int r = 0;
-    gl_if_no_error(r, glViewport(0, 0, w, h));
+    gl_if_no_error(r, glViewport(x, y, w, h));
     return r;
 }
 
