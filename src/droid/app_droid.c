@@ -918,24 +918,31 @@ static void on_destroy(ANativeActivity* na) {
     }
     pthread_mutex_destroy(&glue->mutex);
     pthread_cond_destroy(&glue->cond);
+    close(glue->read_pipe);  glue->read_pipe = 0;
+    close(glue->write_pipe); glue->write_pipe = 0;
+    AConfiguration_delete(glue->config); glue->config = 0;
+    glue->sensor_manager = null; // shared instance do not hold on to
+    glue->accelerometer_sensor = null;
     if (glue->a->done != null) { glue->a->done(glue->a); }
+    assert(glue->display == null);
+    assert(glue->surface == null);
+    assert(glue->context == null);
     glue->a->focused = null;
+    glue->na = null;
 }
 
-static glue_t glue;
-
-static void display_real_size(ANativeActivity* na) {
-    droid_jni_get_display_real_size(na, &glue.dm);
-    glue.density = glue.dm.scaled_density;
-    glue.a->xdpi = glue.dm.xdpi;
-    glue.a->ydpi = glue.dm.ydpi;
-    glue.a->sw = glue.dm.w;
-    glue.a->sh = glue.dm.h;
-    glue.inches_wide = glue.dm.w / glue.dm.xdpi;
-    glue.inches_high = glue.dm.h / glue.dm.ydpi;
+static void display_real_size(glue_t* glue, ANativeActivity* na) {
+    droid_jni_get_display_real_size(na, &glue->dm);
+    glue->density = glue->dm.scaled_density;
+    glue->a->xdpi = glue->dm.xdpi;
+    glue->a->ydpi = glue->dm.ydpi;
+    glue->a->sw = glue->dm.w;
+    glue->a->sh = glue->dm.h;
+    glue->inches_wide = glue->dm.w / glue->dm.xdpi;
+    glue->inches_high = glue->dm.h / glue->dm.ydpi;
     traceln("DISPLAY REAL SIZE: %dx%d dpi: %d %.1fx%.1f density: %.1f scaled %.1f physical: %.3fx%.3f inches",
-            glue.dm.w, glue.dm.h, glue.dm.dpi, glue.dm.xdpi, glue.dm.ydpi,
-            glue.dm.density, glue.dm.scaled_density, glue.inches_wide, glue.inches_high);
+            glue->dm.w, glue->dm.h, glue->dm.dpi, glue->dm.xdpi, glue->dm.ydpi,
+            glue->dm.density, glue->dm.scaled_density, glue->inches_wide, glue->inches_high);
 }
 
 static void set_window_flags(ANativeActivity* na) {
@@ -951,16 +958,76 @@ static void set_window_flags(ANativeActivity* na) {
     ANativeActivity_setWindowFlags(na, add, remove);
 }
 
-void ANativeActivity_onCreate(ANativeActivity* na, void* saved_state_data, size_t saved_state_bytes) {
-    traceln("pid/tid=%d/%d saved_state=%p[%d]", getpid(), gettid(), saved_state_data, saved_state_bytes);
-    glue.na = na;
-    glue.a = &app;
-    na->instance = &glue;
-    app.glue = &glue;
-    app.focused = null;
-    glue.start_time_in_ns = time_monotonic_ns();
-    display_real_size(na);
-    ANativeActivityCallbacks* cb = na->callbacks;
+static void init_timer_thread(glue_t* glue) {
+    pthread_condattr_t cond_attr;
+    pthread_condattr_init(&cond_attr);
+    pthread_condattr_setclock(&cond_attr, CLOCK_MONOTONIC);
+    pthread_cond_init(&glue->cond, &cond_attr);
+    pthread_mutex_init(&glue->mutex, null);
+    assert(glue->timer_thread == 0);
+    pthread_attr_t attr;
+    pthread_attr_init(&attr);
+    pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE); // PTHREAD_CREATE_DETACHED
+    int r = pthread_create(&glue->timer_thread, &attr, timer_thread, glue);
+    assert(r == 0);
+    pthread_attr_destroy(&attr);
+}
+
+static void init_looper(glue_t* glue, ANativeActivity* na) {
+    int pipe_ends[2] = {};
+    if (pipe(pipe_ends)) {
+        traceln("pipe() failed: %s", strerror(errno));
+        ANativeActivity_finish(na);
+        abort();
+    } else {
+        glue->read_pipe  = pipe_ends[0];
+        glue->write_pipe = pipe_ends[1];
+        glue->running = false;
+        glue->command_poll_source.id = LOOPER_ID_MAIN;
+        glue->command_poll_source.glue = glue;
+        glue->command_poll_source.process = process_command;
+        glue->input_poll_source.id = LOOPER_ID_INPUT;
+        glue->input_poll_source.glue = glue;
+        glue->input_poll_source.process = process_input;
+        glue->accel_poll_source.id = LOOPER_ID_ACCEL;
+        glue->accel_poll_source.glue = glue;
+        glue->accel_poll_source.process = process_accel;
+        glue->looper = ALooper_forThread(); // ALooper_prepare(0);
+        int r = ALooper_addFd(glue->looper, glue->read_pipe, LOOPER_ID_MAIN,
+            ALOOPER_EVENT_INPUT, looper_callback, &glue->command_poll_source);
+        assert(r == 1);
+        if (r != 1) {
+            traceln("ALooper_addFd() failed");
+        }
+    }
+}
+
+static void init_accelerometer(glue_t* glue) {
+    assert(glue->sensor_manager == null);
+    glue->sensor_manager = ASensorManager_getInstanceForPackage("app-droid");
+    assert(glue->accelerometer_sensor == null);
+    glue->accelerometer_sensor = ASensorManager_getDefaultSensor(glue->sensor_manager,
+        ASENSOR_TYPE_ACCELEROMETER);
+    assert(glue->sensor_event_queue == null);
+    glue->sensor_event_queue = ASensorManager_createEventQueue(glue->sensor_manager,
+        glue->looper, LOOPER_ID_ACCEL, looper_callback, &glue->accel_poll_source);
+    int us = ASensor_getMinDelay(glue->accelerometer_sensor); // microseconds
+//  traceln("accel microseconds=%d", us); // 10,000us = 100Hz
+    ASensorEventQueue_registerSensor(glue->sensor_event_queue,
+        glue->accelerometer_sensor, us, 0); // 0 means "streaming"
+}
+
+static void init_state(glue_t* glue, const void* data, int bytes) {
+    memset(&glue->state, 0, sizeof(glue->state));
+    if (data != null && bytes > 0) {
+        // https://github.com/aosp-mirror/platform_frameworks_base/blob/d9b11b058c6a50fa25b75d6534a2deaf0e62d4b3/core/java/android/app/NativeActivity.java#L170
+        assert(bytes <= sizeof(glue->state.data));
+        app_state_t* s = (app_state_t*)data;
+        memcpy(glue->state.data, s->data, min(bytes, sizeof(glue->state.data)));
+    }
+}
+
+static void init_callbacks(ANativeActivityCallbacks* cb) {
     cb->onDestroy                  = on_destroy;
     cb->onStart                    = on_start;
     cb->onResume                   = on_resume;
@@ -977,61 +1044,43 @@ void ANativeActivity_onCreate(ANativeActivity* na, void* saved_state_data, size_
     cb->onInputQueueCreated        = on_input_queue_created;
     cb->onInputQueueDestroyed      = on_input_queued_destroyed;
     cb->onContentRectChanged       = on_content_rect_changed;
+}
+
+static glue_t glue;
+
+void ANativeActivity_onCreate(ANativeActivity* na, void* data, size_t bytes) {
+    traceln("pid/tid=%d/%d saved_state=%p[%d]", getpid(), gettid(), data, bytes);
+    assert(glue.na == null);
+    assert(glue.a = &app);
+    assert(app.glue == &glue);
+    assert(app.focused == null);
+    glue.destroy_requested = false;
+    glue.na = na;
+    na->instance = &glue;
+    glue.start_time_in_ns = time_monotonic_ns();
+    display_real_size(&glue, na);
+    init_state(&glue, data, bytes);
+    init_callbacks(na->callbacks);
     set_window_flags(na);
-    int pipe_ends[2];
-    if (pipe(pipe_ends)) {
-        traceln("could not create pipe: %s", strerror(errno));
-        ANativeActivity_finish(na);
-        abort();
-        return;
-    }
-    glue.read_pipe  = pipe_ends[0];
-    glue.write_pipe = pipe_ends[1];
-    glue.running = false;
+    init_looper(&glue, na);
+    init_accelerometer(&glue);
+    init_timer_thread(&glue);
     glue.config = AConfiguration_new();
     AConfiguration_fromAssetManager(glue.config, na->assetManager);
     process_configuration(&glue);
-    glue.command_poll_source.id = LOOPER_ID_MAIN;
-    glue.command_poll_source.glue = &glue;
-    glue.command_poll_source.process = process_command;
-    glue.input_poll_source.id = LOOPER_ID_INPUT;
-    glue.input_poll_source.glue = &glue;
-    glue.input_poll_source.process = process_input;
-    glue.accel_poll_source.id = LOOPER_ID_ACCEL;
-    glue.accel_poll_source.glue = &glue;
-    glue.accel_poll_source.process = process_accel;
-    glue.looper = ALooper_forThread(); // ALooper_prepare(0);
-    ALooper_addFd(glue.looper, glue.read_pipe, LOOPER_ID_MAIN, ALOOPER_EVENT_INPUT, looper_callback, &glue.command_poll_source);
-    glue.sensor_manager = ASensorManager_getInstanceForPackage("ndk-glue");
-    glue.accelerometer_sensor = ASensorManager_getDefaultSensor(glue.sensor_manager, ASENSOR_TYPE_ACCELEROMETER);
-    glue.sensor_event_queue = ASensorManager_createEventQueue(glue.sensor_manager, glue.looper, LOOPER_ID_ACCEL, looper_callback, &glue.accel_poll_source);
-    int us = ASensor_getMinDelay(glue.accelerometer_sensor); // microseconds
-//  traceln("accel microseconds=%d", us); // 10,000us = 100Hz
-    ASensorEventQueue_registerSensor(glue.sensor_event_queue, glue.accelerometer_sensor, us, 0); // 0 means "streaming"
-    pthread_condattr_t cond_attr;
-    pthread_condattr_init(&cond_attr);
-    pthread_condattr_setclock(&cond_attr, CLOCK_MONOTONIC);
-    pthread_cond_init(&glue.cond, &cond_attr);
-    pthread_mutex_init(&glue.mutex, null);
-    assert(glue.timer_thread == 0);
-    int r = pthread_create(&glue.timer_thread, null, timer_thread, &glue);
-    assert(r == 0);
-    // https://github.com/aosp-mirror/platform_frameworks_base/blob/d9b11b058c6a50fa25b75d6534a2deaf0e62d4b3/core/java/android/app/NativeActivity.java#L170
-    memset(&glue.state, 0, sizeof(glue.state));
-    if (saved_state_data != null && saved_state_bytes > 0) {
-        assert(saved_state_bytes <= sizeof(glue.state.data));
-        app_state_t* s = (app_state_t*)saved_state_data;
-        memcpy(glue.state.data, s->data, min(saved_state_bytes, sizeof(glue.state.data)));
-    }
     on_create(na);
 }
 
 static_init(app_android) {
     app_create(&app);
+    app.glue = &glue;
     root.a = &app;
+    glue.a = &app;
 }
 
 END_C
+
+
 
 /* typical sequence of events inside same process:
 
