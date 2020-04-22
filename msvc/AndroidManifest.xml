@@ -32,7 +32,7 @@
                   android:icon="@drawable/ui"
                   android:configChanges="orientation|keyboardHidden|screenSize"
                   android:hardwareAccelerated="true"
-                  android:launchMode="singleTop"
+                  android:launchMode="singleTask"
                   android:alwaysRetainTaskState="true"
                   android:windowSoftInputMode="stateAlwaysHidden"
                   android:resizeableActivity="true"
