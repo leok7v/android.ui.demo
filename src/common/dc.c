@@ -162,6 +162,10 @@ static void stadium(dc_t* dc, const colorf_t* c, float x, float y, float w, floa
     for (int q = 0; q < 4; q++) {
         dc->quadrant(dc, c, qs[q].x, qs[q].y, r, q);
     }
+    float r2 = r * 2;
+    dc->fill(dc, c, x0, y, w - r2, r);
+    dc->fill(dc, c, x0, y1, w - r2, r);
+    dc->fill(dc, c, x, y0, w, h - r2);
 }
 
 static void bblt(dc_t* dc, const bitmap_t* bitmap, float x, float y) {

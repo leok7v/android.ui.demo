@@ -24,24 +24,27 @@ static void toast_timer_callback(timer_callback_t* timer_callback) {
 static void toast_add(toast_t* t) {
     app_t* a = t->ui.a;
     assert(t->toast_timer_callback.id == 0);
-    t->toast_start_time = a->time_in_nanoseconds;
     t->toast_timer_callback.id = 0;
     t->toast_timer_callback.that = a;
-    t->toast_timer_callback.ns = t->nanoseconds / 2;
+    t->toast_timer_callback.ns = t->nanoseconds + 1;
     t->toast_timer_callback.callback = toast_timer_callback;
     t->toast_timer_callback.last_fired = 0;
     a->timer_add(a, &t->toast_timer_callback);
-    t->ui.hidden = false;
+    a->root->add(a->root, &t->ui, 0, 0, 0, 0);
 }
 
 static void toast_cancel(toast_t* t) {
-    if (t->toast_timer_callback.id != 0) { // it is not an error to cancel cancelled toast
+    // It is not an error to cancel inactive toast:
+    if (t->toast_timer_callback.id != 0) {
         app_t* a = t->ui.a;
         a->timer_remove(a, &t->toast_timer_callback);
         memset(&t->toast_timer_callback, 0, sizeof(t->toast_timer_callback));
         t->text[0] = 0; // toast OFF
         t->toast_start_time = 0;
-        t->ui.hidden = true;
+        assertion(t->ui.parent == ui_root, "toast() must be added to ui_root");
+        a->root->remove(a->root, &t->ui);
+    } else {
+        assertion(t->ui.parent == null, "parent=%p expected null", t->ui.parent);
     }
 }
 
@@ -76,7 +79,7 @@ static void toast_render(toast_t* t) {
     int y = (int)((a->root->h - h) / 2);
     colorf_t c = *colors_dk.light_gray;
     c.a = 0.75;
-    dc.fill(&dc, &c, x, y, w, h);
+    dc.stadium(&dc, &c, x, y, w, h, f->em);
     char* s = t->text;
     screen_writer_t sw = screen_writer(0, y + f->em / 2 + f->height, f, colors.black);
     for (int i = 0; i < n; i++) {
@@ -95,8 +98,8 @@ static void toast_draw(ui_t* self) {
     app_t* a = self->a;
     assert(t->theme != null && t->theme->font != null);
     if (t->text[0] != 0) {
-        if (t->toast_start_time == 0) {
-            toast_add(t);
+        if (t->toast_start_time == 0) { // first time drawn
+            t->toast_start_time = a->time_in_nanoseconds;
         } else {
             int64_t time_on_screen = a->time_in_nanoseconds - t->toast_start_time;
             if (time_on_screen > t->nanoseconds) { // nanoseconds
@@ -109,14 +112,17 @@ static void toast_draw(ui_t* self) {
 }
 
 static void toast_print(toast_t* t, const char* format, ...) {
-    assertion(t->ui.parent == ui_root, "toast() must be added to ui_root");
     if (t->toast_timer_callback.id != 0) { t->cancel(t); }
-    assert(t->toast_start_time == 0); // timer will be added in toast_draw
+    assertion(t->ui.parent == null, "parent=%d expected null", t->ui.parent);
+    assertion(t->toast_timer_callback.id == 0, "timer should not be active");
+    assertion(t->toast_start_time == 0, "toast_start_time expected 0");
     va_list vl;
     va_start(vl, format);
     vsnprintf0(t->text, format, vl);
     va_end(vl);
+    assert(t->text[0] != 0);
     t->ui.hidden = false;
+    toast_add(t);
     t->ui.a->invalidate(t->ui.a);
 }
 
@@ -130,9 +136,9 @@ toast_t* toast(app_t* a) {
         toast.nanoseconds = TOAST_TIME_IN_NS;
         toast.ui.children = null;
         toast.ui.parent = null;
-        toast.ui.focus = false;
-        toast.ui.hidden = true;
-        toast.ui.decor = true;
+        toast.ui.focus  = false;
+        toast.ui.hidden = false;
+        toast.ui.decor  = true;
         toast.ui.kind = UI_KIND_CONTAINER;
         toast.ui.that = &toast;
         toast.ui.draw = toast_draw;

@@ -13,28 +13,28 @@
 
 BEGIN_C
 
-static void ui_add(ui_t* self, ui_t* child, float x, float y, float w, float h) {
+static void ui_add(ui_t* container, ui_t* child, float x, float y, float w, float h) {
     assert(child != null);
     assertion(child->parent == null && child->next == null, "Reparenting of a ui is not supported. Can be implemented if needed");
     if (child->next != null) { return; }
-    ui_t* c = self->children;
+    ui_t* c = container->children;
     while (c != null) {
         assertion(c != child, "Attempt to add child that has already been added.");
         if (c == child) { return; }
         c = c->next;
     }
-    child->next = self->children;
-    self->children = child;
+    child->next = container->children;
+    container->children = child;
     child->x = x;
     child->y = y;
     child->w = w;
     child->h = h;
-    child->parent = self;
+    child->parent = container;
 }
 
-static void ui_remove(ui_t* self, ui_t* child) {
-    ui_t** prev = &self->children;
-    ui_t* c = self->children;
+static void ui_remove(ui_t* container, ui_t* child) {
+    ui_t** prev = &container->children;
+    ui_t* c = container->children;
     while (c != null) {
         if (c == child) {
             *prev = child->next;
@@ -72,47 +72,55 @@ static void ui_dispose(ui_t* ui) {
     }
 }
 
-static void ui_draw_childs(ui_t* self, bool decor) {
-    ui_t* c = self->children;
+static void ui_draw_childs(ui_t* ui, bool decor) {
+    ui_t* c = ui->children;
     while (c != null) {
         if (!c->hidden && !c->decor == !decor) { c->draw(c); }
         c = c->next;
     }
 }
 
-static void ui_draw_children(ui_t* self) {
-    ui_draw_childs(self, false);
-    ui_draw_childs(self, true);
+static void ui_draw_children(ui_t* ui) {
+    ui_draw_childs(ui, false);
+    ui_draw_childs(ui, true);
 }
 
-static void ui_draw(ui_t* self) {
-    ui_draw_children(self);
+static void ui_draw(ui_t* ui) {
+    ui_draw_children(ui);
 }
 
-static void ui_mouse(ui_t* self, int mouse_action, float x, float y) {
-    ui_t* c = self->children;
+static void ui_mouse(ui_t* ui, int mouse_action, float x, float y) {
+}
+
+static void ui_screen_mouse(ui_t* ui, int mouse_action, float x, float y) {
+}
+
+static void ui_dispatch_mouse(ui_t* ui, int mouse_action, float x, float y) {
+    ui_t* c = ui->children;
     while (c != null) {
-        if (!c->hidden && c->x <= x && x < c->x + c->w && c->y <= y && y < c->y + c->h && c->mouse != null) {
-            c->mouse(c, mouse_action, x - c->x, y - c->y);
+        if (!c->hidden && c->x <= x && x < c->x + c->w && c->y <= y && y < c->y + c->h) {
+            if (c->mouse != null) { c->mouse(c, mouse_action, x - c->x, y - c->y); }
+            c->dispatch_mouse(c, mouse_action, x - c->x, y - c->y);
         }
         c = c->next;
     }
 }
 
-static void ui_screen_mouse(ui_t* self, int mouse_action, float x, float y) {
-    ui_t* c = self->children;
+static void ui_dispatch_screen_mouse(ui_t* ui, int mouse_action, float x, float y) {
+    ui_t* c = ui->children;
     while (c != null) { // do it even for hidden widgets
         if (c->screen_mouse != null) { c->screen_mouse(c, mouse_action, x, y); }
+        c->dispatch_screen_mouse(c, mouse_action, x, y);
         c = c->next;
     }
 }
 
-static void ui_keyboard(ui_t* self, int flags, int ch) {
-    if (self->a->trace_flags & APP_TRACE_KEYBOARD) { app_trace_key(flags, ch); }
+static void ui_keyboard(ui_t* ui, int flags, int ch) {
+    if (ui->a->trace_flags & APP_TRACE_KEYBOARD) { app_trace_key(flags, ch); }
 }
 
-static void ui_focus(ui_t* self, bool gain) {
-//  traceln("%p gain=%d", self, gain);
+static void ui_focus(ui_t* ui, bool gain) {
+//  traceln("%p gain=%d", ui, gain);
 }
 
 static pointf_t ui_screen_xy(ui_t* ui) {
@@ -163,7 +171,9 @@ static ui_t root = {
     ui_mouse,
     ui_screen_mouse,
     ui_keyboard,
-    ui_focus
+    ui_focus,
+    ui_dispatch_mouse,
+    ui_dispatch_screen_mouse
 };
 
 ui_t* ui_root = &root;

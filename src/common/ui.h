@@ -129,6 +129,9 @@ typedef struct ui_s {
     void (*screen_mouse)(ui_t* self, int mouse_flags, float screen_x, float screen_y); // x,y screen coordinates
     void (*keyboard)(ui_t* self, int flags, int ch);
     void (*focus)(ui_t* self, bool gain);
+//  do not override dispatch_* use mouse() and screen_mouse() as listeners:
+    void (*dispatch_mouse)(ui_t* self, int mouse_flags, float x, float y); // x,y in ui coordinates
+    void (*dispatch_screen_mouse)(ui_t* self, int mouse_flags, float screen_x, float screen_y); // x,y screen coordinates
 } ui_t;
 
 typedef struct ui_theme_s { // UI theme attributes

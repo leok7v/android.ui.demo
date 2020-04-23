@@ -39,8 +39,11 @@ typedef struct application_s {
     button_t* quit;
     button_t* exit;
     button_t* glyphs;
+    button_t* test;
+    bool testing; // testing draw commands primitives
     slider_t* slider1;
     slider_t* slider2;
+    ui_t* view_content;
     ui_t* view_textures;
     ui_t* view_glyphs;
     ui_t* view_ascii;
@@ -62,7 +65,7 @@ static button_t* create_button(application_t* app, float x, float y, int key_fla
     const float lw = font_text_width(&app->font, label, -1) + app->font.em;
     const float bw = max(lw, pt2px(a, MIN_BUTTON_WIDTH_PT));
     const float bh = app->font.height * app->theme.ui_height;
-    button_t* b = button_create(a->root, app, &app->theme, key_flags, key, mnemonic, label, x, y, bw, bh);
+    button_t* b = button_create(app->view_content, app, &app->theme, key_flags, key, mnemonic, label, x, y, bw, bh);
     b->ui.that = app;
     b->click = click;
     return b;
@@ -80,7 +83,7 @@ static void slider_notify(slider_t* s) {
 static slider_t* create_slider(application_t* app, float x, float y, const char* label, int* minimum, int* maximum, int* current) {
     float fh = app->font.height;
     float w = font_text_width(&app->font, label, -1) + app->font.em * 2;
-    slider_t* s = slider_create(app->a->root, app, &app->theme, colors.orange, label, x, y, w, fh, minimum, maximum, current);
+    slider_t* s = slider_create(app->view_content, app, &app->theme, colors.orange, label, x, y, w, fh, minimum, maximum, current);
     s->ui.that = app;
     s->notify = slider_notify;
     s->ui.focusable = true; // has buttons
@@ -132,11 +135,18 @@ static void test(ui_t* view) {
     dc.stadium(&dc, colors_nc.dirty_gold, x, y, 400, 200, r);
 }
 
-static void root_draw(ui_t* view) {
-//  application_t* app = (application_t*)view->a->that;
+static void content_mouse(ui_t* ui, int mouse_action, float x, float y) {
+    application_t* app = (application_t*)ui->a->that;
+    if ((mouse_action & MOUSE_LBUTTON_UP) && app->testing) {
+        app->testing = false;
+        ui->a->invalidate(ui->a);
+    }
+}
+
+static void content_draw(ui_t* view) {
+    application_t* app = (application_t*)view->a->that;
     dc.clear(&dc, colors_nc.dark_blue);
-    const bool simple_test = false;
-    if (simple_test) {
+    if (app->testing) {
         test(view);
     } else {
         view->draw_children(view);
@@ -194,13 +204,20 @@ static void on_glyphs(button_t* b) {
     b->ui.a->show_keyboard(b->ui.a, !app->view_glyphs->hidden);
 }
 
+static void on_test(button_t* b) {
+    b->ui.a->invalidate(b->ui.a);
+}
+
 static void init_ui(application_t* app) {
+    ui_t* content = app->a->root->create(app->a->root, app, 0, 0, app->a->root->w, app->a->root->h);
+    app->view_content = content;
     float vgap = pt2px(app->a, VERTICAL_GAP_PT);
     float hgap = pt2px(app->a, HORIZONTAL_GAP_PT);
     float bh = app->font.height * 3 / 2; // button height
     float y = 240 + vgap;
     app->quit   = create_button(app, 10, y, 0, 'q', "Q", "Quit", on_quit);      y += bh + vgap;
     app->exit   = create_button(app, 10, y, 0, 'e', "E", "Exit(153)", on_exit); y += bh + vgap;
+    app->test   = create_button(app, 10, y, 0, 'x', "X", "Test", on_test);      y += bh + vgap;
     app->glyphs = create_button(app, 10, y, 0, 'x', "X", "Glyphs", on_glyphs);  y += bh + vgap;
     int x = app->glyphs->ui.w + hgap * 4;
     y = 240 + vgap;
@@ -216,16 +233,18 @@ static void init_ui(application_t* app) {
     snprintf0(app->slider2_label, SLIDER2_LABEL, app->slider2_current);
     app->slider2 = create_slider(app, x, y, app->slider2_label, &app->slider2_minimum, &app->slider2_maximum, &app->slider2_current);
     y += bh + vgap;
-    app->view_glyphs = app->a->root->create(app->a->root, app, x, y, app->font.atlas.w, app->font.atlas.h);
+    app->view_glyphs = content->create(content, app, x, y, app->font.atlas.w, app->font.atlas.h);
     app->view_glyphs->draw = glyphs_draw;
     app->view_glyphs->hidden = true;
+    app->test->flip = &app->testing;
     app->glyphs->flip = &app->view_glyphs->hidden;
-    app->glyphs->negate = true; // because flip point to hidden not to `shown` in the absence of that bit
+    app->glyphs->inverse = true; // because flip point to hidden not to `shown` in the absence of that bit
     y += app->font.atlas.h;
-    app->view_ascii = app->a->root->create(app->a->root, app, 0, y, app->font.em * 26, app->font.em * 4);
+    app->view_ascii = content->create(content, app, 0, y, app->font.em * 26, app->font.em * 4);
     app->view_ascii->draw = ascii_draw;
-    app->a->root->draw = root_draw;
-    app->view_textures = app->a->root->create(app->a->root, app, 0, 0, 320 * 3 + 4, 240 + 2);
+    content->draw  = content_draw;
+    content->mouse = content_mouse;
+    app->view_textures = content->create(content, app, 0, 0, 320 * 3 + 4, 240 + 2);
     app->view_textures->mouse = textures_mouse;
     app->view_textures->draw = textures_draw;
 }
@@ -288,11 +307,15 @@ static int create_gl_program(app_t* a, const char* name, int *program) {
     return r;
 }
 
-static void shown(app_t* a) {
-    dc.init(&dc);
+static void resized(app_t* a) {
     // both model and view matricies are identity:
     gl_ortho_2d(dc.mvp, a->root->x, a->root->y, a->root->w, a->root->h);
-//  traceln("root %.0fx%.0f", a->root->w, a->root->h);
+    a->invalidate(a);
+}
+
+static void shown(app_t* a) {
+    dc.init(&dc);
+    resized(a);
     application_t* app = (application_t*)a->that;
     load_font(app);
     (void)create_gl_program;
@@ -304,29 +327,25 @@ static void shown(app_t* a) {
         bitmap_allocate_and_update_texture(&app->bitmaps[i]);
     }
     init_ui(app);
-    toast(a)->theme = &app->theme;
-    a->root->add(a->root, &toast(a)->ui, 0, 0, 0, 0);
-    toast(a)->print(toast(a), "resolution\n%.0fx%.0fpx", a->root->w, a->root->h);
-}
-
-static void resized(app_t* a) {
-//  traceln("root %.0fx%.0f", a->root->w, a->root->h);
-    gl_ortho_2d(dc.mvp, a->root->x, a->root->y, a->root->w, a->root->h);
-    a->invalidate(a);
+    toast_t* t = toast(a);
+    t->theme = &app->theme;
+    t->print(t, "resolution\n%.0fx%.0fpx", a->root->w, a->root->h);
 }
 
 static void hidden(app_t* a) {
-    // application/activity is detached from its window. On Android application will NOT exit
     application_t* app = (application_t*)a->that;
-    a->focus(a, null);
+    // Application/activity is detached from the window.
+    // Window surface may be different next time application is shown()
+    // On Android application may continue running.
     toast(a)->cancel(toast(a));
-    a->root->remove(a->root, &toast(a)->ui);
     app->view_textures->dispose(app->view_textures); app->view_textures = null;
-    app->view_glyphs->dispose(app->view_glyphs);     app->view_glyphs = null;
-    app->view_ascii->dispose(app->view_ascii);       app->view_ascii = null;
-    button_dispose(app->quit);    app->quit = null;
-    button_dispose(app->exit);    app->exit = null;
-    button_dispose(app->glyphs);  app->glyphs = null;
+    app->view_glyphs->dispose(app->view_glyphs);     app->view_glyphs   = null;
+    app->view_ascii->dispose(app->view_ascii);       app->view_ascii    = null;
+    app->view_content->dispose(app->view_content);   app->view_content  = null;
+    button_dispose(app->quit);    app->quit    = null;
+    button_dispose(app->exit);    app->exit    = null;
+    button_dispose(app->glyphs);  app->glyphs  = null;
+    button_dispose(app->test);    app->test    = null;
     slider_dispose(app->slider1); app->slider1 = null;
     slider_dispose(app->slider2); app->slider2 = null;
     bitmap_deallocate_texture(&app->font.atlas);

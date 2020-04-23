@@ -411,8 +411,12 @@ static int32_t handle_motion(glue_t* glue, AInputEvent* me) {
                 glue->a->focus(glue->a, null); // kill focus if no focusable components were found
             }
         }
-        if (glue->a->root->mouse != null) { glue->a->root->mouse(glue->a->root, mouse_action, x, y); }
-        if (glue->a->root->screen_mouse != null) { glue->a->root->screen_mouse(glue->a->root, mouse_action, x, y); }
+        if (glue->a->root->dispatch_mouse != null) {
+            glue->a->root->dispatch_mouse(glue->a->root, mouse_action, x, y);
+        }
+        if (glue->a->root->dispatch_screen_mouse != null) {
+            glue->a->root->dispatch_screen_mouse(glue->a->root, mouse_action, x, y);
+        }
     } else {
         traceln("TODO: touch event [%d] x,y=%d,%d", index, x, y);
     }
@@ -530,6 +534,7 @@ static void on_native_window_destroyed(ANativeActivity* na, ANativeWindow* windo
     assert(glue->window == window);
     term_display(glue);
     if (glue->a->hidden != null) { glue->a->hidden(glue->a); }
+    glue->a->focus(glue->a, null); // focus is lost
     glue->window = null;
 }
 

@@ -60,7 +60,7 @@ static void button_draw(ui_t* ui) {
     float baseline = f->baseline;
     pt.y += (int)(baseline + (ui->h - fh) / 2);
     pt.x += em;
-    if (b->flip != null) { pt.x = checkbox_draw(ui, pt, (*b->flip != 0) ^ (b->negate != 0)); }
+    if (b->flip != null) { pt.x = checkbox_draw(ui, pt, (*b->flip != 0) ^ (b->inverse != 0)); }
     dc.text(&dc, b->theme->color_text, f, pt.x, pt.y, b->label, (int)strlen(b->label));
     if (m >= 0) { // draw highlighted mnemonic
         copy[m] = 0;
