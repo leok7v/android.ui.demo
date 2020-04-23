@@ -132,17 +132,17 @@ typedef struct ui_s {
 } ui_t;
 
 typedef struct ui_theme_s { // UI theme attributes
-    font_t*   font;
-    float     ui_height; // 1.75 means 175% of font height in pixels for button, labels and other UI elements
-    colorf_t* color_text;
-    colorf_t* color_background;
-    colorf_t* color_mnemonic; // color for mnemonic charachter highlight
-    colorf_t* color_focused;
-    colorf_t* color_background_focused;
-    colorf_t* color_armed;
-    colorf_t* color_background_armed;
-    colorf_t* color_pressed;
-    colorf_t* color_background_pressed;
+    font_t* font;
+    float ui_height; // 1.75 means 175% of font height in pixels for button, labels and other UI elements
+    const colorf_t* color_text;
+    const colorf_t* color_background;
+    const colorf_t* color_mnemonic; // color for mnemonic charachter highlight
+    const colorf_t* color_focused;
+    const colorf_t* color_background_focused;
+    const colorf_t* color_armed;
+    const colorf_t* color_background_armed;
+    const colorf_t* color_pressed;
+    const colorf_t* color_background_pressed;
 } ui_theme_t;
 
 extern ui_t* ui_root;

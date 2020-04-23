@@ -22,15 +22,15 @@ typedef struct slider_s {
     int* minimum; // may be changed by caller on the fly, thus pointer
     int* maximum;
     int* current;
-    const char*  label;     // can be null
-    colorf_t* color_slider; // color for slider itself
+    const char*  label;           // can be null
+    const colorf_t* color_slider; // color for slider itself
     // internal state:
     int timer_id;
     timer_callback_t timer_callback;
 } slider_t;
 
 slider_t* slider_create(ui_t* parent, void* that, ui_theme_t* theme,
-                        colorf_t* color_slider,
+                        const colorf_t* color_slider,
                         const char* label, float x, float y, float w, float h,
                         int* minimum, int* maximum, int* current);
 

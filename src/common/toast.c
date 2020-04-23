@@ -74,11 +74,11 @@ static void toast_render(toast_t* t) {
     h += f->em * 2;
     int x = (int)((a->root->w - w) / 2);
     int y = (int)((a->root->h - h) / 2);
-    colorf_t c = colors.dk_light_gray;
-    c.a = 0.5;
+    colorf_t c = *colors_dk.light_gray;
+    c.a = 0.75;
     dc.fill(&dc, &c, x, y, w, h);
     char* s = t->text;
-    screen_writer_t sw = screen_writer(0, y + f->em / 2 + f->height, f, &colors.black);
+    screen_writer_t sw = screen_writer(0, y + f->em / 2 + f->height, f, colors.black);
     for (int i = 0; i < n; i++) {
         int k = 0;
         char* line = s;

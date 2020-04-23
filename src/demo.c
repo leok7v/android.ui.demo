@@ -80,7 +80,7 @@ static void slider_notify(slider_t* s) {
 static slider_t* create_slider(application_t* app, float x, float y, const char* label, int* minimum, int* maximum, int* current) {
     float fh = app->font.height;
     float w = font_text_width(&app->font, label, -1) + app->font.em * 2;
-    slider_t* s = slider_create(app->a->root, app, &app->theme, &colors.orange, label, x, y, w, fh, minimum, maximum, current);
+    slider_t* s = slider_create(app->a->root, app, &app->theme, colors.orange, label, x, y, w, fh, minimum, maximum, current);
     s->ui.that = app;
     s->notify = slider_notify;
     s->ui.focusable = true; // has buttons
@@ -98,23 +98,43 @@ static void test(ui_t* view) {
     const float h = view->h;
     pointf_t vertices0[] = { {1, 1}, {1 + 99, 1},  {1, 1 + 99} };
     pointf_t vertices1[] = { {w - 2, h - 2}, {w - 2, h - 2 - 99},  {w - 2 - 99, h - 2} };
-    dc.poly(&dc, &colors.red,   vertices0, countof(vertices0));
-    dc.poly(&dc, &colors.green, vertices1, countof(vertices1));
-    dc.fill(&dc, &colors.black, 100, 100, app->bitmaps[2].w, app->bitmaps[2].h);
+    dc.poly(&dc, colors.red,   vertices0, countof(vertices0));
+    dc.poly(&dc, colors.green, vertices1, countof(vertices1));
+    dc.fill(&dc, colors.black, 100, 100, app->bitmaps[2].w, app->bitmaps[2].h);
     dc.bblt(&dc, &app->bitmaps[2], 100, 100);
-    colorf_t green = colors.green;
+    colorf_t green = *colors.green;
     green.a = 0.75; // translucent
     dc.luma(&dc, &green, &app->font.atlas, 100, 100);
-    dc.rect(&dc, &colors.white, 100, 100, w - 200, h - 200, 4);
-    dc.ring(&dc, &colors.white, w / 2, h / 2, 100, 50);
-    dc.text(&dc, &colors.white, &app->font, 500, 500, "Hello World", strlen("Hello World"));
-    dc.text(&dc, &colors.white, &app->font, 560, 560, "ABC", strlen("ABC"));
-    dc.line(&dc, &colors.red, w / 2 - 100, h / 2, w / 2 + 100, h / 2 + 100, 10);
+    dc.rect(&dc, colors.white, 100, 100, w - 200, h - 200, 4);
+    float x = w / 2;
+    float y = h / 2;
+    float r = 100;
+    dc.fill(&dc, colors.black, x - r, y - r, r * 2, r * 2);
+    dc.ring(&dc, colors.white, x, y, r, r / 2);
+    colorf_t c = *colors.green; c.a = 0.50;
+    dc.fill(&dc, &c, x - r / 2, y - r / 2, r, r);
+    dc.text(&dc, colors.white, &app->font, 500, 500, "Hello World", strlen("Hello World"));
+    dc.text(&dc, colors.white, &app->font, 560, 560, "ABC", strlen("ABC"));
+    dc.line(&dc, colors.red, w / 2 - 100, h / 2, w / 2 + 100, h / 2 + 100, 10);
+    c = *colors_nc.dirty_gold;  c.a = 0.75;
+    dc.line(&dc, &c, 0, 0, w, h, 4);
+    x = 900;
+    y = 700;
+    r = 100;
+    dc.fill(&dc, colors.black, x - r, y - r, r * 2, r * 2);
+    dc.quadrant(&dc, colors.red,           x, y, r, 0);
+    dc.quadrant(&dc, colors.green,         x, y, r, 1);
+    dc.quadrant(&dc, colors.blue,          x, y, r, 2);
+    dc.quadrant(&dc, colors_nc.dirty_gold, x, y, r, 3);
+    x =  900;
+    y = 1000;
+    r =   50;
+    dc.stadium(&dc, colors_nc.dirty_gold, x, y, 400, 200, r);
 }
 
 static void root_draw(ui_t* view) {
 //  application_t* app = (application_t*)view->a->that;
-    dc.clear(&dc, &colors.nc_dark_blue);
+    dc.clear(&dc, colors_nc.dark_blue);
     const bool simple_test = false;
     if (simple_test) {
         test(view);
@@ -128,7 +148,7 @@ static void glyphs_draw(ui_t* view) {
     font_t* f = &app->font;
     float x = view->x + 0.5;
     float y = view->y + 0.5;
-    dc.luma(&dc, &colors.white, &f->atlas, x, y);
+    dc.luma(&dc, colors.white, &f->atlas, x, y);
     view->draw_children(view);
 }
 
@@ -138,7 +158,7 @@ static void ascii_draw(ui_t* view) {
     float y = view->y + 0.5;
     char text[97] = {};
     for (int i = 0; i < 96; i++) { text[i] = 32 + i; }
-    screen_writer_t sw = screen_writer(x, y, app->theme.font, &colors.green);
+    screen_writer_t sw = screen_writer(x, y, app->theme.font, colors.green);
     for (int i = 0; i < countof(text); i += 24) {
         sw.println(&sw, "%-24.24s", &text[i]);
     }
@@ -147,15 +167,15 @@ static void ascii_draw(ui_t* view) {
 
 static void textures_draw(ui_t* view) {
     application_t* app = (application_t*)view->a->that;
-    dc.line(&dc, &colors.white, 0.5, 0.5, 0.5, 240 + 2.5, 1);
+    dc.line(&dc, colors.white, 0.5, 0.5, 0.5, 240 + 2.5, 1);
     for (int i = 0; i < countof(app->bitmaps); i++) {
         bitmap_t* b = &app->bitmaps[i];
         float x = i * (b->w + 1.5);
         dc.bblt(&dc, b, x + 1.5, 1.5);
-        dc.line(&dc, &colors.white, x + b->w + 1.5, 1.5, x + b->w + 1.5, b->h + 1.5, 1.5);
+        dc.line(&dc, colors.white, x + b->w + 1.5, 1.5, x + b->w + 1.5, b->h + 1.5, 1.5);
     }
-    dc.line(&dc, &colors.white, 0.5, 1.5, view->w, 1.5, 1);
-    dc.line(&dc, &colors.white, 0.5, 240 + 2.5, view->w, 240 + 2.5, 1);
+    dc.line(&dc, colors.white, 0.5, 1.5, view->w, 1.5, 1);
+    dc.line(&dc, colors.white, 0.5, 240 + 2.5, view->w, 240 + 2.5, 1);
     view->draw_children(view);
 }
 
@@ -231,15 +251,15 @@ static void init_theme(application_t* app) {
     ui_theme_t* th = &app->theme;
     th->font = &app->font;
     th->ui_height = 1.5; // 150% of font height in pixels for UI elements height
-    th->color_text = &colors.nc_light_blue;
-    th->color_background =&colors.nc_teal;
-    th->color_mnemonic = &colors.nc_dirty_gold;
-    th->color_focused = th->color_text; // TODO: lighter
-    th->color_background_focused = &colors.nc_light_gray;
+    th->color_text        = colors_nc.light_blue;
+    th->color_background  = colors_nc.teal;
+    th->color_mnemonic    = colors_nc.dirty_gold;
+    th->color_focused     = th->color_text; // TODO: lighter
+    th->color_background_focused = colors_nc.light_gray;
     th->color_armed = th->color_text; // TODO: different
-    th->color_background_armed = &colors.orange;
+    th->color_background_armed = colors.orange;
     th->color_pressed = th->color_text; // TODO: different
-    th->color_background_pressed = &colors.green;
+    th->color_background_pressed = colors.green;
 }
 
 static int create_gl_program(app_t* a, const char* name, int *program) {

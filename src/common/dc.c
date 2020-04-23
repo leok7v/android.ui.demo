@@ -28,6 +28,8 @@ static void quad(dc_t* dc, const colorf_t* color, bitmap_t* bitmap, quadf_t* qua
 static void poly(dc_t* dc, const colorf_t* color, const pointf_t* vertices, int count);
 static void line(dc_t* dc, const colorf_t* c, float x0, float y0, float x1, float y1, float thickness);
 static float text(dc_t* dc, const colorf_t* color, font_t* font, float x, float y, const char* text, int count);
+static void quadrant(dc_t* dc, const colorf_t* color, float x, float y, float r, int q);
+static void stadium(dc_t* dc, const colorf_t* color, float x, float y, float w, float h, float r);
 
 dc_t dc = {
     init,
@@ -41,7 +43,9 @@ dc_t dc = {
     quad,
     poly,
     line,
-    text
+    text,
+    quadrant,
+    stadium,
 };
 
 static void init(dc_t* dc, ...) {
@@ -113,10 +117,10 @@ static void ring(dc_t* dc, const colorf_t* color, float x, float y, float radius
     const float y1 = y + radius;
     const float ri = inner / radius;
     const GLfloat vertices[] = {
-        x0, y0,  0, 0,
-        x1, y0,  1, 0,
-        x1, y1,  1, 1,
-        x0, y1,  0, 1 };
+        x0, y0,  -1, -1,
+        x1, y0,   1, -1,
+        x1, y1,   1,  1,
+        x0, y1,  -1,  1 };
     use_program(shaders.ring);
     gl_check(glUniformMatrix4fv(shaders.ring_mvp, 1, false, (GLfloat*)dc->mvp));
     gl_check(glUniform4fv(shaders.ring_rgba, 1, (GLfloat*)color));
@@ -125,6 +129,39 @@ static void ring(dc_t* dc, const colorf_t* color, float x, float y, float radius
     gl_check(glUniform1f(shaders.ring_ri2, ri * ri));
     gl_check(glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 0, vertices));
     gl_check(glDrawArrays(GL_TRIANGLE_FAN, 0, 4));
+}
+
+static void quadrant(dc_t* dc, const colorf_t* color, float x, float y, float r, int q) {
+    float r2 = r * 2 / sqrt(2);
+    int sx[4] = { +r2, +r2, -r2, -r2 };
+    int sy[4] = { -r2, +r2, +r2, -r2 };
+    float dx = sx[q & 0x3];
+    float dy = sy[q & 0x3];
+    const GLfloat vertices[] = {
+        x     , y     ,  0, 0,
+        x     , y + dy,  0, 1,
+        x + dx, y     ,  1, 0 };
+    use_program(shaders.ring);
+    gl_check(glUniformMatrix4fv(shaders.ring_mvp, 1, false, (GLfloat*)dc->mvp));
+    gl_check(glUniform4fv(shaders.ring_rgba, 1, (GLfloat*)color));
+    // outter and inner radius (inclusive) squared:
+    gl_check(glUniform1f(shaders.ring_ro2, 0.5)); // outer radius^2
+    gl_check(glUniform1f(shaders.ring_ri2, 0));
+    gl_check(glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 0, vertices));
+    gl_check(glDrawArrays(GL_TRIANGLES, 0, 3));
+}
+
+// static inline_c float pow2(float v) { return v * v; }
+
+static void stadium(dc_t* dc, const colorf_t* c, float x, float y, float w, float h, float r) {
+    float x0 = x + r;
+    float y0 = y + r;
+    float x1 = x - r + w;
+    float y1 = y - r + h;
+    pointf_t qs[] = { { x1, y0 }, { x1, y1 }, { x0, y1 }, { x0, y0 } }; // quadrants
+    for (int q = 0; q < 4; q++) {
+        dc->quadrant(dc, c, qs[q].x, qs[q].y, r, q);
+    }
 }
 
 static void bblt(dc_t* dc, const bitmap_t* bitmap, float x, float y) {

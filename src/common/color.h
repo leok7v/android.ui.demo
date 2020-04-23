@@ -15,34 +15,194 @@ BEGIN_C
 
 typedef struct colorf_s { float r, g, b, a; } packed colorf_t;
 
+typedef struct color_info_s { // treat all fields as a const
+    const char* name;
+    const colorf_t* color;
+    uint32_t rgba;
+} color_info_t;
+
 colorf_t colorf_from_rgb(uint32_t argb);
 
 typedef struct colors_s { // treat all fields as a const
-    colorf_t transparent;
-    // "primary" colors:
-    colorf_t black;
-    colorf_t white;
-    colorf_t red;
-    colorf_t green;
-    colorf_t blue;
-    colorf_t orange;
-    // "Norton Commander" palette see:
-    // https://en.wikipedia.org/wiki/Norton_Commander#/media/File:Norton_Commander_5.51.png
-    colorf_t nc_dark_blue;    // background color
-    colorf_t nc_light_blue;   // light bluemain text color
-    colorf_t nc_dirty_gold;   // selection and labels color
-    colorf_t nc_light_gray;   // keyboard menu color (on black)
-    colorf_t nc_teal;         // keyboard menu labels background (on almost black)
-    colorf_t nc_darker_blue;  // darker blue
-    colorf_t nc_almost_black; // keyboard menu text (on teal)
-    // "Google Android Dark Theme"
-    colorf_t dk_light_blue;
-    colorf_t dk_dark_blue;
-    colorf_t dk_light_gray;
-    colorf_t dk_dark_gray;
-    colorf_t dk_gray_text;
+    const colorf_t
+    *transparent,
+    *black,
+    *white,
+    *red,
+    *lime,
+    *blue,
+    *yellow,
+    *cyan,
+    *aqua,
+    *magenta,
+    *fuchsia,
+    *silver,
+    *gray,
+    *maroon,
+    *olive,
+    *green,
+    *purple,
+    *teal,
+    *navy,
+    *dark_red,
+    *brown,
+    *firebrick,
+    *crimson,
+    *tomato,
+    *coral,
+    *indian_red,
+    *light_coral,
+    *dark_salmon,
+    *salmon,
+    *light_salmon,
+    *orange_red,
+    *dark_orange,
+    *orange,
+    *gold,
+    *dark_golden_rod,
+    *golden_rod,
+    *pale_golden_rod,
+    *dark_khaki,
+    *khaki,
+    *yellow_green,
+    *dark_olive_green,
+    *olive_drab,
+    *lawn_green,
+    *chart_reuse,
+    *green_yellow,
+    *dark_green,
+    *forest_green,
+    *lime_green,
+    *light_green,
+    *pale_green,
+    *dark_sea_green,
+    *medium_spring_green,
+    *spring_green,
+    *sea_green,
+    *medium_aqua_marine,
+    *medium_sea_green,
+    *light_sea_green,
+    *dark_slate_gray,
+    *dark_cyan,
+    *light_cyan,
+    *dark_turquoise,
+    *turquoise,
+    *medium_turquoise,
+    *pale_turquoise,
+    *aqua_marine,
+    *powder_blue,
+    *cadet_blue,
+    *steel_blue,
+    *corn_flower_blue,
+    *deep_sky_blue,
+    *dodger_blue,
+    *light_blue,
+    *sky_blue,
+    *light_sky_blue,
+    *midnight_blue,
+    *dark_blue,
+    *medium_blue,
+    *royal_blue,
+    *blue_violet,
+    *indigo,
+    *dark_slate_blue,
+    *slate_blue,
+    *medium_slate_blue,
+    *medium_purple,
+    *dark_magenta,
+    *dark_violet,
+    *dark_orchid,
+    *medium_orchid,
+    *thistle,
+    *plum,
+    *violet,
+    *orchid,
+    *medium_violet_red,
+    *pale_violet_red,
+    *deep_pink,
+    *hot_pink,
+    *light_pink,
+    *pink,
+    *antique_white,
+    *beige,
+    *bisque,
+    *blanched_almond,
+    *wheat,
+    *corn_silk,
+    *lemon_chiffon,
+    *light_golden_rod_yellow,
+    *light_yellow,
+    *saddle_brown,
+    *sienna,
+    *chocolate,
+    *peru,
+    *sandy_brown,
+    *burly_wood,
+    *tannum,
+    *rosy_brown,
+    *moccasin,
+    *navajo_white,
+    *peach_puff,
+    *misty_rose,
+    *lavender_blush,
+    *linen,
+    *old_lace,
+    *papaya_whip,
+    *sea_shell,
+    *mint_cream,
+    *slate_gray,
+    *light_slate_gray,
+    *light_steel_blue,
+    *lavender,
+    *floral_white,
+    *alice_blue,
+    *ghost_white,
+    *honeydew,
+    *ivory,
+    *azure,
+    *snow,
+    *dim_gray,
+    *dim_grey,
+    *grey,
+    *dark_gray,
+    *dark_grey,
+    *light_gray,
+    *light_grey,
+    *gainsboro,
+    *white_smoke;
 } colors_t;
 
-extern colors_t colors; // treat as const
+const colors_t colors;
+const color_info_t* color_names;
+const int color_names_count;
+
+typedef struct colors_dk_s { // treat all fields as a const
+    const colorf_t* light_blue;
+    const colorf_t* dark_blue;
+    const colorf_t* light_gray;
+    const colorf_t* dark_gray;
+    const colorf_t* gray_text;
+} colors_dk_t;
+
+typedef struct colors_nc_s { // treat all fields as a const
+    // "Norton Commander" palette see:
+    // https://en.wikipedia.org/wiki/Norton_Commander#/media/File:Norton_Commander_5.51.png
+    const colorf_t* dark_blue;    // background color
+    const colorf_t* light_blue;   // light bluemain text color
+    const colorf_t* dirty_gold;   // selection and labels color
+    const colorf_t* light_gray;   // keyboard menu color (on black)
+    const colorf_t* teal;         // keyboard menu labels background (on almost black)
+    const colorf_t* darker_blue;  // darker blue
+    const colorf_t* almost_black; // keyboard menu text (on teal)
+} colors_nc_t;
+
+const colors_dk_t colors_dk;
+const color_info_t* color_dk_names;
+const int color_dk_names_count;
+
+const colors_nc_t colors_nc;
+const color_info_t* color_nc_names;
+const int color_nc_names_count;
+
 
 END_C

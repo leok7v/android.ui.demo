@@ -35,6 +35,8 @@ typedef struct dc_s { // draw commands/context
     void (*poly)(dc_t* dc, const colorf_t* color, const pointf_t* vertices, int count); // filled with TRIANGLE_FAN
     void (*line)(dc_t* dc, const colorf_t* c, float x0, float y0, float x1, float y1, float thickness);
     float(*text)(dc_t* dc, const colorf_t* color, font_t* font, float x, float y, const char* text, int count);
+    void (*quadrant)(dc_t* dc, const colorf_t* color, float x, float y, float r, int quadrant);
+    void (*stadium)(dc_t* dc, const colorf_t* color, float x, float y, float w, float h, float r);
     mat4x4 mvp; // model * view * projection
 } dc_t;
 

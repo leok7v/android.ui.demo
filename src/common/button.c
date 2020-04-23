@@ -20,8 +20,8 @@ static float checkbox_draw(ui_t* ui, pointf_t pt, bool on) {
     const float em = f->em;
     const float R = em * 3 / 4;
     const float r = em / 2;
-    colorf_t* light = on ? &colors.dk_light_blue : &colors.dk_light_gray;
-    colorf_t* dark  = on ? &colors.dk_dark_blue  : &colors.dk_dark_gray;
+    const colorf_t* light = on ? colors_dk.light_blue : colors_dk.light_gray;
+    const colorf_t* dark  = on ? colors_dk.dark_blue  : colors_dk.dark_gray;
     dc.fill(&dc, dark, pt.x, pt.y - em, em, em);
     float y = pt.y - em + r;
     if (on) {
@@ -36,7 +36,7 @@ static float checkbox_draw(ui_t* ui, pointf_t pt, bool on) {
 
 static void button_draw(ui_t* ui) {
     button_t* b = (button_t*)ui;
-    colorf_t* color = b->bitset & BUTTON_STATE_PRESSED ? b->theme->color_background_pressed : b->theme->color_background;
+    const colorf_t* color = b->bitset & BUTTON_STATE_PRESSED ? b->theme->color_background_pressed : b->theme->color_background;
     pointf_t pt = ui->screen_xy(ui);
     dc.fill(&dc, color, pt.x, pt.y, ui->w, ui->h);
     int k = (int)strlen(b->label) + 1;

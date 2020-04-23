@@ -117,8 +117,8 @@ const char* shader_ring_px = "\
     uniform float ri2;       \n\
     varying highp vec2 ts;   \n\
     void main() {                           \n\
-        float x = ts.x * 2.0 - 1.0;         \n\
-        float y = ts.y * 2.0 - 1.0;         \n\
+        float x = ts.x;                     \n\
+        float y = ts.y;                     \n\
         float x2_y2 = x * x + y * y;        \n\
         if (ri2 <= x2_y2 && x2_y2 <= ro2) { \n\
             gl_FragColor = rgba;            \n\

@@ -200,7 +200,7 @@ static void slider_draw(ui_t* self) {
 }
 
 slider_t* slider_create(ui_t* parent, void* that, ui_theme_t* theme,
-                        colorf_t* color_slider,
+                        const colorf_t* color_slider,
                         const char* label, float x, float y, float w, float h,
                         int* minimum, int* maximum, int* current) {
     slider_t* s = (slider_t*)allocate(sizeof(slider_t));
