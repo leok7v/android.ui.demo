@@ -9,8 +9,7 @@
    CONDITIONS OF ANY KIND, either express or implied. See the License for the specific
    language governing permissions and limitations under the License.
 */
-#include "color.h"
-#include "linmath.h"
+#include "rt.h"
 
 BEGIN_C
 
@@ -27,13 +26,9 @@ BEGIN_C
 
 // all functions 0 in success or last glGetError() if failed
 
-int gl_init();
-int gl_viewport(int x, int y, int w, int h);
 int gl_allocate_texture(int *ti);
 int gl_update_texture(int ti, int w, int h, int bpp, const void* data); // bpp - bytes per pixel
 int gl_delete_texture(int ti);
-
-void gl_ortho_2d(mat4x4 m, float x, float y, float w, float h);
 
 const char* gl_strerror(int gle);
 int gl_trace_errors_(const char* file, int line, const char* func, const char* call, int gle); // returns last glGetError()

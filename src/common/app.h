@@ -10,7 +10,6 @@
    language governing permissions and limitations under the License.
 */
 
-#include "glh.h"
 #include "ui.h"
 #include "font.h"
 #include "linmath.h"

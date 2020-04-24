@@ -9,7 +9,8 @@
    language governing permissions and limitations under the License.
 */
 #include "glh.h"
-#include "gl_inc.h"
+#include <GLES/gl.h>
+#include <GLES3/gl3.h>
 
 BEGIN_C
 
@@ -18,71 +19,6 @@ BEGIN_C
 #else
 #define gl_error() 0
 #endif
-
-int gl_init() {
-    int r = 0;
-    const char* version = (const char*)glGetString(GL_VERSION); (void)version;
-    int major = 0;
-    int minor = 0;
-#if defined(GL_MAJOR_VERSION) && defined(GL_MINOR_VERSION) // GLES3
-    glGetIntegerv(GL_MAJOR_VERSION, &major);
-    glGetIntegerv(GL_MINOR_VERSION, &minor);
-    bool got_version = glGetError() == 0;
-    while (glGetError() != 0) { }
-#else
-    bool got_version = false;
-#endif
-    // calls do fail on GL ES 2.0:
-    if (!got_version) {
-        const char* p = version;
-        while (*p != 0 && !isdigit(*p)) { p++; }
-        if (p != 0) { sscanf(p, "%d.%d", &major, &minor); }
-    }
-//  traceln("GL_VERSION=%d.%d %s", major, minor, version);
-    gl_if_no_error(r, glEnable(GL_BLEND));
-    gl_if_no_error(r, glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
-    gl_if_no_error(r, glDisable(GL_DEPTH_TEST));
-    gl_if_no_error(r, glDisable(GL_CULL_FACE));
-    return r;
-}
-
-int gl_viewport(int x, int y, int w, int h) {
-    int r = 0;
-//  traceln("%d,%d %dx%d", x, y, w, h);
-    gl_if_no_error(r, glViewport(x, y, w, h));
-    return r;
-}
-
-void gl_ortho_2d(mat4x4 m, float x, float y, float w, float h) {
-//  traceln("%.0f,%.0f %.0fx%.0f", x, y, w, h);
-    // this is basically from
-    // http://en.wikipedia.org/wiki/Orthographic_projection_(geometry)
-    const float znear = -1;
-    const float zfar  =  1;
-    const float inv_z =  1 / (zfar - znear);
-    const float inv_x =  1 / w;
-    const float inv_y = -1 / h;
-    // first column:
-    m[0][0] = 2 * inv_x;
-    m[1][0] = 0;
-    m[2][0] = 0;
-    m[3][0] = 0;
-    // second column:
-    m[0][1] = 0;
-    m[1][1] = inv_y * 2;
-    m[2][1] = 0;
-    m[3][1] = 0;
-    // third column:
-    m[0][2] = 0;
-    m[1][2] = 0;
-    m[2][2] = inv_z * -2;
-    m[3][2] = 0;
-    // forth column:
-    m[0][3] = -(x + x + w) * inv_x;
-    m[1][3] = -(y + y + h) * inv_y;
-    m[2][3] = -(zfar + znear) * inv_z;
-    m[3][3] = 1;
-}
 
 static int init_texture(int ti) {
     int r = 0;
@@ -192,6 +128,20 @@ int gl_trace_errors_return_int_(const char* file, int line, const char* func,
         gl_trace_errors_(file, line, func, call, gle);
     }
     return r;
+}
+
+static_init(glh) {
+    assert(sizeof(GLuint)     == sizeof(uint32_t));
+    assert(sizeof(GLint)      == sizeof(int32_t));
+    assert(sizeof(GLushort)   == sizeof(uint16_t));
+    assert(sizeof(GLshort)    == sizeof(int16_t));
+    assert(sizeof(GLfloat)    == sizeof(float));
+    assert(sizeof(GLchar)     == sizeof(char));
+    assert(sizeof(GLbyte)     == sizeof(char));
+    assert(sizeof(GLubyte)    == sizeof(byte));
+    assert(sizeof(GLsizei)    == sizeof(int));
+    assert(sizeof(GLintptr)   == sizeof(uintptr_t));
+    assert(sizeof(GLsizeiptr) == sizeof(GLsizeiptr));
 }
 
 END_C

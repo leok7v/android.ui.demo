@@ -23,7 +23,8 @@ typedef struct quadf_s  { float x; float y; float s; float t; } packed quadf_t;
 typedef struct dc_s dc_t;
 
 typedef struct dc_s { // draw commands/context
-    void (*init)(dc_t* dc, ...);
+    void (*init)(dc_t* dc);
+    void (*viewport)(dc_t* dc, float x, float y, float w, float h);
     void (*dispose)(dc_t* dc);
     void (*clear)(dc_t* dc, const colorf_t* color);
     void (*fill)(dc_t* dc, const colorf_t* color, float x, float y, float w, float h);

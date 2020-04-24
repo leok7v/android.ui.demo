@@ -10,7 +10,8 @@
 */
 #include "shaders.h"
 #include "glh.h"
-#include "gl_inc.h"
+#include <GLES/gl.h>
+#include <GLES3/gl3.h>
 
 BEGIN_C
 

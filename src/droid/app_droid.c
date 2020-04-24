@@ -250,9 +250,12 @@ static void process_configuration(glue_t* glue) {
 static int init_display(glue_t* glue) {
     const EGLint attribs[] = {
         EGL_SURFACE_TYPE, EGL_WINDOW_BIT,
+        EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT,
         EGL_BLUE_SIZE,  8,
         EGL_GREEN_SIZE, 8,
         EGL_RED_SIZE,   8,
+//      EGL_SAMPLE_BUFFERS, 1, // this is needed for 4xMSAA which does not work...
+//      EGL_SAMPLES, 4, // 4x MSAA (multisample anti-aliasing)
         EGL_NONE
     };
     EGLDisplay display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
@@ -268,7 +271,7 @@ static int init_display(glue_t* glue) {
     uint32_t format = AHARDWAREBUFFER_FORMAT_R8G8B8A8_UNORM;
     ANativeWindow_setBuffersGeometry(glue->window, 0, 0, format);
     EGLSurface surface = eglCreateWindowSurface(display, config, glue->window, null);
-    const EGLint context_attributes[] = { EGL_CONTEXT_CLIENT_VERSION, 2, EGL_NONE };
+    const EGLint context_attributes[] = { EGL_CONTEXT_CLIENT_VERSION, 3, EGL_NONE };
     EGLContext context = eglCreateContext(display, config, null, context_attributes);
     if (eglMakeCurrent(display, surface, surface, context) == EGL_FALSE) {
         traceln("eglMakeCurrent() failed");
@@ -522,11 +525,12 @@ static void on_native_window_created(ANativeActivity* na, ANativeWindow* window)
     assert(glue->window == null && window != null);
     glue->window = window;
     init_display(glue);
-    glue->a->root->w = ANativeWindow_getWidth(window);
-    glue->a->root->h = ANativeWindow_getHeight(window);
-    gl_init();
-    if (glue->a->shown != null) { glue->a->shown(glue->a); }
-    glue->a->invalidate(glue->a);
+    app_t* a = glue->a;
+    a->root->w = ANativeWindow_getWidth(window);
+    a->root->h = ANativeWindow_getHeight(window);
+    dc.init(&dc);
+    if (a->shown != null) { a->shown(a); }
+    a->invalidate(a);
 }
 
 static void on_native_window_destroyed(ANativeActivity* na, ANativeWindow* window) {
@@ -599,7 +603,7 @@ static void on_content_rect_changed(ANativeActivity* na, const ARect* rc) {
     root->y = rc->top;
     root->w = rc->right - rc->left;
     root->h = rc->bottom - rc->top;
-    gl_viewport(root->x, root->y, root->w, root->h);
+    dc.viewport(&dc, root->x, root->y, root->w, root->h);
     if (a->resized != null) { a->resized(a); }
     app_invalidate(glue->a);
 }

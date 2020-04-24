@@ -309,12 +309,11 @@ static int create_gl_program(app_t* a, const char* name, int *program) {
 
 static void resized(app_t* a) {
     // both model and view matricies are identity:
-    gl_ortho_2d(dc.mvp, a->root->x, a->root->y, a->root->w, a->root->h);
+    dc.viewport(&dc, a->root->x, a->root->y, a->root->w, a->root->h);
     a->invalidate(a);
 }
 
 static void shown(app_t* a) {
-    dc.init(&dc);
     resized(a);
     application_t* app = (application_t*)a->that;
     load_font(app);

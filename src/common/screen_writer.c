@@ -12,7 +12,6 @@
 #include "color.h"
 #include "app.h"
 #include "font.h"
-#include "glh.h"
 #include "ui.h"
 
 BEGIN_C
@@ -20,8 +19,7 @@ BEGIN_C
 static void screen_writer_draw_text(screen_writer_t* sw, const char* format, va_list vl, bool line_feed) {
     assert(sw != null && format != null);
     char text[1024];
-    int r = vsnprintf0(text, format, vl);
-    (void)r; // unused - can be used for stack_alloc() resize of text
+    vsnprintf0(text, format, vl);
     float x = dc.text(&dc, sw->color, sw->font, sw->x, sw->y, text, (int)strlen(text));
     if (line_feed) {
         sw->y += sw->font->height;

@@ -78,7 +78,7 @@ static void toast_render(toast_t* t) {
     int x = (int)((a->root->w - w) / 2);
     int y = (int)((a->root->h - h) / 2);
     colorf_t c = *colors_dk.light_gray;
-    c.a = 0.75;
+    c.a = 0.65;
     dc.stadium(&dc, &c, x, y, w, h, f->em);
     char* s = t->text;
     screen_writer_t sw = screen_writer(0, y + f->em / 2 + f->height, f, colors.black);
