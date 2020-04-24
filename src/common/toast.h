@@ -18,7 +18,6 @@ typedef struct toast_s toast_t;
 
 typedef struct toast_s {
     ui_t ui;
-    ui_theme_t* theme;
     uint64_t nanoseconds; // time to keep toast on screen
     void (*print)(toast_t* t, const char* format, ...);
     void (*cancel)(toast_t* t);

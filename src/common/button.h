@@ -23,7 +23,6 @@ enum {
 
 typedef struct button_s {
     ui_t ui;
-    ui_theme_t* theme;
     void (*click)(button_t* self);
     int key_flags; /* keyboard shortcut flags zero or KEYBOARD_ALT|KEYBOARD_CTRL|KEYBOARD_SHIFT */
     int key;       /* keyboard shortcut */
@@ -34,7 +33,7 @@ typedef struct button_s {
     bool inverse; /* inverse *flip value drawing UI */
 } button_t;
 
-button_t* button_create(ui_t* parent, void* that, ui_theme_t* theme,
+button_t* button_create(ui_t* parent, void* that,
                         int key_flags, int key, const char* mnemonic,
                         const char* label,
                         float x, float y, float w, float h);

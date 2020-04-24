@@ -32,7 +32,6 @@ typedef struct application_s {
     app_t* a;
     int font_height_px;
     font_t font;    // default UI font
-    ui_theme_t theme;
 //  int program_main;
     toast_t*  toast;
     bitmap_t  bitmaps[3];
@@ -64,8 +63,8 @@ static button_t* create_button(application_t* app, float x, float y, int key_fla
     app_t* a = app->a;
     const float lw = font_text_width(&app->font, label, -1) + app->font.em;
     const float bw = max(lw, pt2px(a, MIN_BUTTON_WIDTH_PT));
-    const float bh = app->font.height * app->theme.ui_height;
-    button_t* b = button_create(app->view_content, app, &app->theme, key_flags, key, mnemonic, label, x, y, bw, bh);
+    const float bh = app->font.height * app->a->theme.ui_height;
+    button_t* b = button_create(app->view_content, app, key_flags, key, mnemonic, label, x, y, bw, bh);
     b->ui.that = app;
     b->click = click;
     return b;
@@ -80,10 +79,11 @@ static void slider_notify(slider_t* s) {
     }
 }
 
-static slider_t* create_slider(application_t* app, float x, float y, const char* label, int* minimum, int* maximum, int* current) {
+static slider_t* create_slider(application_t* app, float x, float y, const char* label,
+                               int* minimum, int* maximum, int* current) {
     float fh = app->font.height;
     float w = font_text_width(&app->font, label, -1) + app->font.em * 2;
-    slider_t* s = slider_create(app->view_content, app, &app->theme, colors.orange, label, x, y, w, fh, minimum, maximum, current);
+    slider_t* s = slider_create(app->view_content, app, label, x, y, w, fh, minimum, maximum, current);
     s->ui.that = app;
     s->notify = slider_notify;
     s->ui.focusable = true; // has buttons
@@ -168,7 +168,7 @@ static void ascii_draw(ui_t* view) {
     float y = view->y + 0.5;
     char text[97] = {};
     for (int i = 0; i < 96; i++) { text[i] = 32 + i; }
-    screen_writer_t sw = screen_writer(x, y, app->theme.font, colors.green);
+    screen_writer_t sw = screen_writer(x, y, app->a->theme.font, colors.green);
     for (int i = 0; i < countof(text); i += 24) {
         sw.println(&sw, "%-24.24s", &text[i]);
     }
@@ -209,7 +209,7 @@ static void on_test(button_t* b) {
 }
 
 static void init_ui(application_t* app) {
-    ui_t* content = app->a->root->create(app->a->root, app, 0, 0, app->a->root->w, app->a->root->h);
+    ui_t* content = app->a->root.create(&app->a->root, app, 0, 0, app->a->root.w, app->a->root.h);
     app->view_content = content;
     float vgap = pt2px(app->a, VERTICAL_GAP_PT);
     float hgap = pt2px(app->a, HORIZONTAL_GAP_PT);
@@ -267,18 +267,23 @@ static void load_font(application_t* app) {
 }
 
 static void init_theme(application_t* app) {
-    ui_theme_t* th = &app->theme;
+    static colorf_t light_gray_alpha_0_60;
+    light_gray_alpha_0_60 = *colors.light_gray; light_gray_alpha_0_60.a = 0.6;
+    theme_t* th = &app->a->theme;
     th->font = &app->font;
     th->ui_height = 1.5; // 150% of font height in pixels for UI elements height
-    th->color_text        = colors_nc.light_blue;
-    th->color_background  = colors_nc.teal;
-    th->color_mnemonic    = colors_nc.dirty_gold;
-    th->color_focused     = th->color_text; // TODO: lighter
-    th->color_background_focused = colors_nc.light_gray;
-    th->color_armed = th->color_text; // TODO: different
-    th->color_background_armed = colors.orange;
-    th->color_pressed = th->color_text; // TODO: different
-    th->color_background_pressed = colors.green;
+    th->color_text                = colors_nc.light_blue;
+    th->color_background          = colors_nc.teal;
+    th->color_mnemonic            = colors_nc.dirty_gold;
+    th->color_focused             = th->color_text; // TODO: lighter
+    th->color_background_focused  = colors_nc.light_gray;
+    th->color_armed               = th->color_text; // TODO: different
+    th->color_background_armed    = colors.orange;
+    th->color_pressed             = th->color_text; // TODO: different
+    th->color_background_pressed  = colors.green;
+    th->color_slider              = colors.orange;
+    th->color_toast_text          = colors.black;
+    th->color_toast_background    = &light_gray_alpha_0_60;
 }
 
 static int create_gl_program(app_t* a, const char* name, int *program) {
@@ -309,7 +314,7 @@ static int create_gl_program(app_t* a, const char* name, int *program) {
 
 static void resized(app_t* a) {
     // both model and view matricies are identity:
-    dc.viewport(&dc, a->root->x, a->root->y, a->root->w, a->root->h);
+    dc.viewport(&dc, a->root.x, a->root.y, a->root.w, a->root.h);
     a->invalidate(a);
 }
 
@@ -327,8 +332,7 @@ static void shown(app_t* a) {
     }
     init_ui(app);
     toast_t* t = toast(a);
-    t->theme = &app->theme;
-    t->print(t, "resolution\n%.0fx%.0fpx", a->root->w, a->root->h);
+    t->print(t, "resolution\n%.0fx%.0fpx", a->root.w, a->root.h);
 }
 
 static void hidden(app_t* a) {
@@ -365,7 +369,7 @@ static void resume(app_t* a) {
 
 static void init(app_t* a) { // init application
     application_t* app = (application_t*)a->that;
-    a->root->that = &app;
+    a->root.that = &app;
     if (app->bitmaps[0].data == null) {
         bitmap_load_asset(&app->bitmaps[0], a, "cube-320x240.png");
         bitmap_load_asset(&app->bitmaps[1], a, "geometry-320x240.png");

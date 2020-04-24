@@ -47,12 +47,12 @@
     <ClInclude Include="..\src\common\dc.h" />
     <ClInclude Include="..\src\common\font.h" />
     <ClInclude Include="..\src\common\glh.h" />
-    <ClInclude Include="..\src\common\gl_inc.h" />
     <ClInclude Include="..\src\common\rt.h" />
     <ClInclude Include="..\src\common\screen_writer.h" />
     <ClInclude Include="..\src\common\shaders.h" />
     <ClInclude Include="..\src\common\slider.h" />
     <ClInclude Include="..\src\common\stb_inc.h" />
+    <ClInclude Include="..\src\common\theme.h" />
     <ClInclude Include="..\src\common\toast.h" />
     <ClInclude Include="..\src\common\ui.h" />
     <ClInclude Include="..\src\droid\droid_jni.h" />

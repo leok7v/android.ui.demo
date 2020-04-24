@@ -30,7 +30,7 @@ static void toast_add(toast_t* t) {
     t->toast_timer_callback.callback = toast_timer_callback;
     t->toast_timer_callback.last_fired = 0;
     a->timer_add(a, &t->toast_timer_callback);
-    a->root->add(a->root, &t->ui, 0, 0, 0, 0);
+    a->root.add(&a->root, &t->ui, 0, 0, 0, 0);
 }
 
 static void toast_cancel(toast_t* t) {
@@ -41,16 +41,15 @@ static void toast_cancel(toast_t* t) {
         memset(&t->toast_timer_callback, 0, sizeof(t->toast_timer_callback));
         t->text[0] = 0; // toast OFF
         t->toast_start_time = 0;
-        assertion(t->ui.parent == ui_root, "toast() must be added to ui_root");
-        a->root->remove(a->root, &t->ui);
+        assertion(t->ui.parent == &a->root, "toast() must be added to ui_root");
+        a->root.remove(&a->root, &t->ui);
     } else {
         assertion(t->ui.parent == null, "parent=%p expected null", t->ui.parent);
     }
 }
 
 static int toast_measure(toast_t* t, float *w, float *h) {
-    assert(t->theme != null && t->theme->font != null);
-    font_t* f = t->theme->font;
+    font_t* f = t->ui.a->theme.font;
     int n = 1;
     char* s = t->text;
     while (*s != 0) { n += *s == '\n'; s++; }
@@ -72,11 +71,11 @@ static void toast_render(toast_t* t) {
     float w = 0;
     float h = 0;
     int n = toast_measure(t, &w, &h);
-    font_t* f = t->theme->font;
+    font_t* f = a->theme.font;
     w += f->em * 2;
     h += f->em * 2;
-    int x = (int)((a->root->w - w) / 2);
-    int y = (int)((a->root->h - h) / 2);
+    int x = (int)((a->root.w - w) / 2);
+    int y = (int)((a->root.h - h) / 2);
     colorf_t c = *colors_dk.light_gray;
     c.a = 0.65;
     dc.stadium(&dc, &c, x, y, w, h, f->em);
@@ -96,7 +95,6 @@ static void toast_render(toast_t* t) {
 static void toast_draw(ui_t* self) {
     toast_t* t = self->that;
     app_t* a = self->a;
-    assert(t->theme != null && t->theme->font != null);
     if (t->text[0] != 0) {
         if (t->toast_start_time == 0) { // first time drawn
             t->toast_start_time = a->time_in_nanoseconds;
@@ -104,7 +102,7 @@ static void toast_draw(ui_t* self) {
             int64_t time_on_screen = a->time_in_nanoseconds - t->toast_start_time;
             if (time_on_screen > t->nanoseconds) { // nanoseconds
                 toast_cancel(t);
-            } else if (t->theme != null && t->theme->font != null) {
+            } else {
                 toast_render(t);
             }
         }
@@ -132,7 +130,7 @@ toast_t* toast(app_t* a) {
         toast.cancel = toast_cancel;
         toast.print = toast_print;
         toast.ui.a = a;
-        toast.ui = *ui_root;
+        toast.ui = a->root;
         toast.nanoseconds = TOAST_TIME_IN_NS;
         toast.ui.children = null;
         toast.ui.parent = null;

@@ -46,20 +46,6 @@ static void  show_keyboard(app_t* app, bool on);
 static void  enqueue_command(glue_t* glue, int8_t command);
 
 static app_t app = {
-    /* that:    */ null,
-    /* glue:    */ null,
-    /* root:    */ null,
-    /* focused: */ null,
-    /* xdpi: */ 0,
-    /* ydpi: */ 0,
-    /* keyboard_flags: */ 0,
-    /* mouse_flags:    */ 0,
-    /* last_mouse_x:   */ 0,
-    /* last_mouse_y:   */ 0,
-    /* time_in_nanoseconds: */ 0ULL,
-    /* trace_flags: */ 0,
-    /* sw: */ 0,
-    /* sh: */ 0,
     /* init:    */ null,
     /* shown:   */ null,
     /* resized: */ null,
@@ -284,7 +270,6 @@ static int init_display(glue_t* glue) {
     glue->display = display;
     glue->context = context;
     glue->surface = surface;
-//  traceln("screen %dx%d dpi %.1fx%.1f", w, h, glue->a->xdpi, glue->a->ydpi);
     return 0;
 }
 
@@ -328,8 +313,9 @@ static bool dispatch_keyboard_shortcuts(ui_t* p, int flags, int keycode) {
 
 static void draw_frame(glue_t* glue) {
     if (glue->display != null) {
-        if (!glue->a->root->hidden && glue->a->root->draw != null) {
-            glue->a->root->draw(glue->a->root);
+        app_t* a = glue->a;
+        if (!a->root.hidden && a->root.draw != null) {
+            a->root.draw(&a->root);
             // eglSwapBuffers performs an implicit flush operation on the context (glFlush for an OpenGL ES)
             bool swapped = eglSwapBuffers(glue->display, glue->surface);
             assertion(swapped, "eglSwapBuffers() failed"); (void)swapped;
@@ -368,18 +354,20 @@ void app_trace_key(int flags, int ch) {
 }
 
 static void dispatch_keycode(glue_t* glue, int flags, int keycode) {
-    glue->a->keyboard_flags = flags;
-    if (glue->a->focused != null && glue->a->focused->keyboard != null) {
-        glue->a->focused->keyboard(glue->a->focused, flags, keycode);
+    app_t* a = glue->a;
+    a->keyboard_flags = flags;
+    if (a->focused != null && a->focused->keyboard != null) {
+        a->focused->keyboard(a->focused, flags, keycode);
     }
     if (flags & KEYBOARD_KEY_PRESSED) {
         int f = flags & ~(KEYBOARD_KEY_PRESSED|KEYBOARD_SHIFT|KEYBOARD_NUMLOCK|KEYBOARD_CAPSLOCK);
-        dispatch_keyboard_shortcuts(glue->a->root, f, keycode);
+        dispatch_keyboard_shortcuts(&a->root, f, keycode);
     }
 }
 
 static int32_t handle_motion(glue_t* glue, AInputEvent* me) {
     assert(AInputEvent_getType(me) == AINPUT_EVENT_TYPE_MOTION);
+    app_t* a = glue->a;
 /*
     AMOTION_EVENT_TOOL_TYPE_FINGER = 1,
     AMOTION_EVENT_TOOL_TYPE_STYLUS = 2,
@@ -395,7 +383,7 @@ static int32_t handle_motion(glue_t* glue, AInputEvent* me) {
     action = action & AMOTION_EVENT_ACTION_MASK;
     if (index == 0) {
         int mouse_action = 0;
-        int mouse_flags = glue->a->mouse_flags;
+        int mouse_flags = a->mouse_flags;
         switch (action) {
             case AMOTION_EVENT_ACTION_DOWN        : mouse_action = MOUSE_LBUTTON_DOWN; mouse_flags |=  MOUSE_LBUTTON_FLAG; break;
             case AMOTION_EVENT_ACTION_UP          : mouse_action = MOUSE_LBUTTON_UP;   mouse_flags &= ~MOUSE_LBUTTON_FLAG; break;
@@ -405,20 +393,20 @@ static int32_t handle_motion(glue_t* glue, AInputEvent* me) {
             case AMOTION_EVENT_ACTION_SCROLL      : traceln("TODO: AMOTION_EVENT_ACTION_SCROLL"); break; // mouse wheel generates it
             default: break;
         }
-        glue->a->mouse_flags = mouse_flags;
-        glue->a->last_mouse_x = x;
-        glue->a->last_mouse_y = y;
-        if (glue->a->trace_flags & APP_TRACE_MOUSE) { app_trace_mouse(glue->a->mouse_flags, mouse_action, index, x, y); }
+        a->mouse_flags = mouse_flags;
+        a->last_mouse_x = x;
+        a->last_mouse_y = y;
+        if (a->trace_flags & APP_TRACE_MOUSE) { app_trace_mouse(a->mouse_flags, mouse_action, index, x, y); }
         if (mouse_action & MOUSE_LBUTTON_DOWN) {
-            if (!ui_set_focus(glue->a->root, x, y)) {
-                glue->a->focus(glue->a, null); // kill focus if no focusable components were found
+            if (!ui_set_focus(&a->root, x, y)) {
+                a->focus(a, null); // kill focus if no focusable components were found
             }
         }
-        if (glue->a->root->dispatch_mouse != null) {
-            glue->a->root->dispatch_mouse(glue->a->root, mouse_action, x, y);
+        if (a->root.dispatch_mouse != null) {
+            a->root.dispatch_mouse(&a->root, mouse_action, x, y);
         }
-        if (glue->a->root->dispatch_screen_mouse != null) {
-            glue->a->root->dispatch_screen_mouse(glue->a->root, mouse_action, x, y);
+        if (a->root.dispatch_screen_mouse != null) {
+            a->root.dispatch_screen_mouse(&a->root, mouse_action, x, y);
         }
     } else {
         traceln("TODO: touch event [%d] x,y=%d,%d", index, x, y);
@@ -521,13 +509,13 @@ static void* on_save_state(ANativeActivity* na, size_t* bytes) {
 
 static void on_native_window_created(ANativeActivity* na, ANativeWindow* window) {
     glue_t* glue = (glue_t*)na->instance;
+    app_t* a = glue->a;
     // The window is being shown, get it ready.
     assert(glue->window == null && window != null);
     glue->window = window;
     init_display(glue);
-    app_t* a = glue->a;
-    a->root->w = ANativeWindow_getWidth(window);
-    a->root->h = ANativeWindow_getHeight(window);
+    a->root.w = ANativeWindow_getWidth(window);
+    a->root.h = ANativeWindow_getHeight(window);
     dc.init(&dc);
     if (a->shown != null) { a->shown(a); }
     a->invalidate(a);
@@ -535,10 +523,11 @@ static void on_native_window_created(ANativeActivity* na, ANativeWindow* window)
 
 static void on_native_window_destroyed(ANativeActivity* na, ANativeWindow* window) {
     glue_t* glue = (glue_t*)na->instance;
+    app_t* a = glue->a;
     assert(glue->window == window);
     term_display(glue);
-    if (glue->a->hidden != null) { glue->a->hidden(glue->a); }
-    glue->a->focus(glue->a, null); // focus is lost
+    if (a->hidden != null) { a->hidden(a); }
+    a->focus(a, null); // focus is lost
     glue->window = null;
 }
 
@@ -598,14 +587,14 @@ static void on_content_rect_changed(ANativeActivity* na, const ARect* rc) {
         traceln("%d %d %d %d", rc->left, rc->top, rc->right, rc->bottom);
     }
     app_t* a = glue->a;
-    ui_t* root = a->root;
+    ui_t* root = &a->root;
     root->x = rc->left;
     root->y = rc->top;
     root->w = rc->right - rc->left;
     root->h = rc->bottom - rc->top;
     dc.viewport(&dc, root->x, root->y, root->w, root->h);
     if (a->resized != null) { a->resized(a); }
-    app_invalidate(glue->a);
+    app_invalidate(a);
 }
 
 static void app_invalidate(app_t* app) {
@@ -895,6 +884,7 @@ static void process_accel(glue_t* glue, android_poll_source_t* source) {
 static void on_destroy(ANativeActivity* na) {
     traceln("pid/tid=%d/%d na=%p", getpid(), gettid(), na);
     glue_t* glue = (glue_t*)na->instance;
+    app_t* a = glue->a;
     assert(glue->sensor_event_queue != null);
     if (glue->sensor_event_queue != null) {
         ASensorManager_destroyEventQueue(glue->sensor_manager, glue->sensor_event_queue);
@@ -912,21 +902,22 @@ static void on_destroy(ANativeActivity* na) {
     AConfiguration_delete(glue->config); glue->config = 0;
     glue->sensor_manager = null; // shared instance do not hold on to
     glue->accelerometer_sensor = null;
-    if (glue->a->done != null) { glue->a->done(glue->a); }
+    if (a->done != null) { a->done(a); }
     assert(glue->display == null);
     assert(glue->surface == null);
     assert(glue->context == null);
-    glue->a->focused = null;
+    a->focused = null;
     glue->na = null;
 }
 
 static void display_real_size(glue_t* glue, ANativeActivity* na) {
+    app_t* a = glue->a;
     droid_jni_get_display_real_size(na, &glue->dm);
     glue->density = glue->dm.scaled_density;
-    glue->a->xdpi = glue->dm.xdpi;
-    glue->a->ydpi = glue->dm.ydpi;
-    glue->a->sw = glue->dm.w;
-    glue->a->sh = glue->dm.h;
+    a->xdpi = glue->dm.xdpi;
+    a->ydpi = glue->dm.ydpi;
+    a->sw = glue->dm.w;
+    a->sh = glue->dm.h;
     glue->inches_wide = glue->dm.w / glue->dm.xdpi;
     glue->inches_high = glue->dm.h / glue->dm.ydpi;
     traceln("DISPLAY REAL SIZE: %dx%d dpi: %d %.1fx%.1f density: %.1f scaled %.1f physical: %.3fx%.3f inches",
@@ -1040,8 +1031,8 @@ static void create_activitiy(glue_t* glue, ANativeActivity* na, void* data, size
     assert(glue->a = &app);
     assert(app.glue == glue);
     assert(app.focused == null);
-    app.root = ui_root;
-    ui_root->a = &app;
+    app.root = *ui_if;
+    app.root.a = glue->a;
     na->instance = glue;
     glue->destroy_requested = false;
     glue->na = na;
@@ -1057,7 +1048,7 @@ static void create_activitiy(glue_t* glue, ANativeActivity* na, void* data, size
     init_looper(glue, na);
     init_accelerometer(glue);
     init_timer_thread(glue);
-    if (glue->a->init != null) { glue->a->init(glue->a); }
+    if (app.init != null) { app.init(&app); }
 }
 
 static glue_t glue;

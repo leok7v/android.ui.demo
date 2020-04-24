@@ -78,7 +78,8 @@ enum {
 enum {
     UI_KIND_CONTAINER   = 0,
     UI_KIND_BUTTON      = 1,
-    UI_KIND_SLIDER      = 2
+    UI_KIND_SLIDER      = 2,
+    UI_KIND_DECOR       = 3
 };
 
 typedef struct app_s app_t;
@@ -108,16 +109,6 @@ typedef struct timer_callback_s {
 */
 
 typedef struct ui_s {
-    void* that;
-    int kind;
-    float x, y, w, h;
-    bool hidden;
-    bool focusable;
-    bool decor; // draw this ui element on top of children
-    ui_t* parent;
-    app_t* a;
-    ui_t* next; // next sibling
-    ui_t* children; // linked list of children
     pointf_t (*screen_xy)(ui_t* self);
     void (*add)(ui_t* self, ui_t* child, float x, float y, float w, float h);
     void (*remove)(ui_t* self, ui_t* child);
@@ -132,23 +123,19 @@ typedef struct ui_s {
 //  do not override dispatch_* use mouse() and screen_mouse() as listeners:
     void (*dispatch_mouse)(ui_t* self, int mouse_flags, float x, float y); // x,y in ui coordinates
     void (*dispatch_screen_mouse)(ui_t* self, int mouse_flags, float screen_x, float screen_y); // x,y screen coordinates
+    int kind;
+    void* that;
+    float x, y, w, h;
+    bool hidden;
+    bool focusable;
+    bool decor; // draw this ui element on top of children
+    ui_t* parent;
+    app_t* a;
+    ui_t* next; // next sibling
+    ui_t* children; // linked list of children
 } ui_t;
 
-typedef struct ui_theme_s { // UI theme attributes
-    font_t* font;
-    float ui_height; // 1.75 means 175% of font height in pixels for button, labels and other UI elements
-    const colorf_t* color_text;
-    const colorf_t* color_background;
-    const colorf_t* color_mnemonic; // color for mnemonic charachter highlight
-    const colorf_t* color_focused;
-    const colorf_t* color_background_focused;
-    const colorf_t* color_armed;
-    const colorf_t* color_background_armed;
-    const colorf_t* color_pressed;
-    const colorf_t* color_background_pressed;
-} ui_theme_t;
-
-extern ui_t* ui_root;
+extern const ui_t* ui_if; // UI interface
 
 bool ui_set_focus(ui_t* ui, int x, int y); // returns true if focus was set
 

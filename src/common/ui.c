@@ -150,17 +150,7 @@ bool ui_set_focus(ui_t* ui, int x, int y) {
     return focus_was_set;
 }
 
-static ui_t root = {
-    /* that: */ null,
-    /* kind: */ UI_KIND_CONTAINER,
-    /* x, y, w, h */ 0, 0, 0, 0,
-    /* hidden:    */ false,
-    /* focusable: */ false,
-    /* decor:     */ false,
-    /* parent:    */ null,
-    /* ui:        */ null,
-    /* next:      */ null,
-    /* children:  */ null,
+static const ui_t ui_interface = {
     ui_screen_xy,
     ui_add,
     ui_remove,
@@ -173,9 +163,10 @@ static ui_t root = {
     ui_keyboard,
     ui_focus,
     ui_dispatch_mouse,
-    ui_dispatch_screen_mouse
+    ui_dispatch_screen_mouse,
+    /* kind: */ UI_KIND_CONTAINER,
 };
 
-ui_t* ui_root = &root;
+const ui_t* ui_if = &ui_interface;
 
 END_C

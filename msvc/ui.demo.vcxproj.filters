@@ -117,9 +117,6 @@
     <ClInclude Include="..\src\common\dc.h">
       <Filter>inc</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\common\gl_inc.h">
-      <Filter>inc</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\common\color.h">
       <Filter>inc</Filter>
     </ClInclude>
@@ -133,6 +130,9 @@
       <Filter>inc</Filter>
     </ClInclude>
     <ClInclude Include="..\src\common\toast.h">
+      <Filter>inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\common\theme.h">
       <Filter>inc</Filter>
     </ClInclude>
   </ItemGroup>
