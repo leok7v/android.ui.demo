@@ -20,6 +20,7 @@ BEGIN_C
 #else
 #define gl_check(call) ((call), 0) // glError() is very expensive use only in DEBUG build
 #define gl_check_call_int(call) (call)
+#define gl_check_int_call(r, call) (call)
 #endif
 
 #define gl_if_no_error(r, call) do { if (r == 0) { r = gl_check(call); } } while (0)

@@ -19,48 +19,48 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\src\common\bitmap.c" />
-    <ClCompile Include="..\src\common\button.c" />
-    <ClCompile Include="..\src\common\color.c" />
-    <ClCompile Include="..\src\common\dc.c" />
-    <ClCompile Include="..\src\common\font.c" />
-    <ClCompile Include="..\src\common\glh.c" />
-    <ClCompile Include="..\src\common\linmath.c" />
-    <ClCompile Include="..\src\common\rt.c" />
-    <ClCompile Include="..\src\common\screen_writer.c" />
-    <ClCompile Include="..\src\common\shaders_gles2.c" />
-    <ClCompile Include="..\src\common\slider.c" />
-    <ClCompile Include="..\src\common\stb_font.c" />
-    <ClCompile Include="..\src\common\stb_image.c" />
-    <ClCompile Include="..\src\common\toast.c" />
-    <ClCompile Include="..\src\common\ui.c" />
-    <ClCompile Include="..\src\demo.c" />
-    <ClCompile Include="..\src\droid\app_droid.c" />
-    <ClCompile Include="..\src\droid\droid_jni.c" />
-    <ClCompile Include="..\src\droid\droid_keys.c" />
+    <ClCompile Include="..\demo\demo.c" />
+    <ClCompile Include="..\droid\app_droid.c" />
+    <ClCompile Include="..\droid\droid_jni.c" />
+    <ClCompile Include="..\droid\droid_keys.c" />
+    <ClCompile Include="..\src\bitmap.c" />
+    <ClCompile Include="..\src\button.c" />
+    <ClCompile Include="..\src\color.c" />
+    <ClCompile Include="..\src\dc.c" />
+    <ClCompile Include="..\src\font.c" />
+    <ClCompile Include="..\src\glh.c" />
+    <ClCompile Include="..\src\linmath.c" />
+    <ClCompile Include="..\src\rt.c" />
+    <ClCompile Include="..\src\screen_writer.c" />
+    <ClCompile Include="..\src\shaders_gles2.c" />
+    <ClCompile Include="..\src\slider.c" />
+    <ClCompile Include="..\src\stb_font.c" />
+    <ClCompile Include="..\src\stb_image.c" />
+    <ClCompile Include="..\src\toast.c" />
+    <ClCompile Include="..\src\ui.c" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\src\common\app.h" />
-    <ClInclude Include="..\src\common\bitmap.h" />
-    <ClInclude Include="..\src\common\button.h" />
-    <ClInclude Include="..\src\common\color.h" />
-    <ClInclude Include="..\src\common\dc.h" />
-    <ClInclude Include="..\src\common\font.h" />
-    <ClInclude Include="..\src\common\glh.h" />
-    <ClInclude Include="..\src\common\rt.h" />
-    <ClInclude Include="..\src\common\screen_writer.h" />
-    <ClInclude Include="..\src\common\shaders.h" />
-    <ClInclude Include="..\src\common\slider.h" />
-    <ClInclude Include="..\src\common\stb_inc.h" />
-    <ClInclude Include="..\src\common\theme.h" />
-    <ClInclude Include="..\src\common\toast.h" />
-    <ClInclude Include="..\src\common\ui.h" />
-    <ClInclude Include="..\src\droid\droid_jni.h" />
-    <ClInclude Include="..\src\droid\droid_keys.h" />
-    <ClInclude Include="..\src\ext\linmath.h" />
-    <ClInclude Include="..\src\ext\stb_image.h" />
-    <ClInclude Include="..\src\ext\stb_rect_pack.h" />
-    <ClInclude Include="..\src\ext\stb_truetype.h" />
+    <ClInclude Include="..\droid\droid_jni.h" />
+    <ClInclude Include="..\droid\droid_keys.h" />
+    <ClInclude Include="..\ext\linmath.h" />
+    <ClInclude Include="..\ext\stb_image.h" />
+    <ClInclude Include="..\ext\stb_rect_pack.h" />
+    <ClInclude Include="..\ext\stb_truetype.h" />
+    <ClInclude Include="..\inc\app.h" />
+    <ClInclude Include="..\inc\bitmap.h" />
+    <ClInclude Include="..\inc\button.h" />
+    <ClInclude Include="..\inc\color.h" />
+    <ClInclude Include="..\inc\dc.h" />
+    <ClInclude Include="..\inc\font.h" />
+    <ClInclude Include="..\inc\glh.h" />
+    <ClInclude Include="..\inc\rt.h" />
+    <ClInclude Include="..\inc\screen_writer.h" />
+    <ClInclude Include="..\inc\shaders.h" />
+    <ClInclude Include="..\inc\slider.h" />
+    <ClInclude Include="..\inc\stb_inc.h" />
+    <ClInclude Include="..\inc\theme.h" />
+    <ClInclude Include="..\inc\toast.h" />
+    <ClInclude Include="..\inc\ui.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{3B14C861-EABD-4B4B-89E8-567153E741EE}</ProjectGuid>
@@ -132,7 +132,7 @@
       <CppLanguageStandard>c++11</CppLanguageStandard>
       <CLanguageStandard>c11</CLanguageStandard>
       <PrecompiledHeaderCompileAs>CompileAsC</PrecompiledHeaderCompileAs>
-      <AdditionalIncludeDirectories>..\src\common;..\src\android;..\src\ext;$(VS_NdkRoot)\sysroot\usr\include\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\inc;..\ext;..\droid;$(VS_NdkRoot)\sysroot\usr\include\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <LibraryDependencies>%(LibraryDependencies);GLESv1_CM;GLESv2;GLESv3;EGL;m;</LibraryDependencies>
@@ -154,7 +154,7 @@
       <CppLanguageStandard>c++11</CppLanguageStandard>
       <CLanguageStandard>c11</CLanguageStandard>
       <PrecompiledHeaderCompileAs>CompileAsC</PrecompiledHeaderCompileAs>
-      <AdditionalIncludeDirectories>..\src\common;..\src\android;..\src\ext;$(VS_NdkRoot)\sysroot\usr\include\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\inc;..\ext;..\droid;$(VS_NdkRoot)\sysroot\usr\include\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <LibraryDependencies>%(LibraryDependencies);GLESv1_CM;GLESv2;GLESv3;EGL;m;</LibraryDependencies>
@@ -176,7 +176,7 @@
       <CLanguageStandard>c11</CLanguageStandard>
       <PrecompiledHeaderCompileAs>CompileAsC</PrecompiledHeaderCompileAs>
       <EnableNeonCodegen>true</EnableNeonCodegen>
-      <AdditionalIncludeDirectories>..\src\common;..\src\android;..\src\ext;$(VS_NdkRoot)\sysroot\usr\include\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\inc;..\ext;..\droid;$(VS_NdkRoot)\sysroot\usr\include\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <LibraryDependencies>%(LibraryDependencies);GLESv1_CM;GLESv2;GLESv3;EGL;m;</LibraryDependencies>
@@ -199,7 +199,7 @@
       <CLanguageStandard>c11</CLanguageStandard>
       <PrecompiledHeaderCompileAs>CompileAsC</PrecompiledHeaderCompileAs>
       <EnableNeonCodegen>true</EnableNeonCodegen>
-      <AdditionalIncludeDirectories>..\src\common;..\src\android;..\src\ext;$(VS_NdkRoot)\sysroot\usr\include\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\inc;..\ext;..\droid;$(VS_NdkRoot)\sysroot\usr\include\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <LibraryDependencies>%(LibraryDependencies);GLESv1_CM;GLESv2;GLESv3;EGL;m;</LibraryDependencies>

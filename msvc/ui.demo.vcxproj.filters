@@ -1,66 +1,65 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <ClCompile Include="..\src\demo.c" />
-    <ClCompile Include="..\src\common\ui.c">
-      <Filter>common</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\common\button.c">
-      <Filter>common</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\common\slider.c">
-      <Filter>common</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\common\bitmap.c">
-      <Filter>common</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\common\stb_image.c">
-      <Filter>common</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\common\stb_font.c">
-      <Filter>common</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\common\font.c">
-      <Filter>common</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\common\glh.c">
-      <Filter>common</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\common\color.c">
-      <Filter>common</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\common\rt.c">
-      <Filter>common</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\common\linmath.c">
-      <Filter>common</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\common\screen_writer.c">
-      <Filter>common</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\common\dc.c">
-      <Filter>common</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\common\shaders_gles2.c">
-      <Filter>common</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\droid\app_droid.c">
+    <ClCompile Include="..\droid\app_droid.c">
       <Filter>droid</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\droid\droid_jni.c">
+    <ClCompile Include="..\droid\droid_jni.c">
       <Filter>droid</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\droid\droid_keys.c">
+    <ClCompile Include="..\droid\droid_keys.c">
       <Filter>droid</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\common\toast.c">
-      <Filter>common</Filter>
+    <ClCompile Include="..\src\bitmap.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\button.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\color.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\dc.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\font.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\glh.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\linmath.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\rt.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\screen_writer.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\shaders_gles2.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\slider.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\stb_font.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\stb_image.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\toast.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\ui.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\demo\demo.c">
+      <Filter>demo</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <Filter Include="common">
-      <UniqueIdentifier>{40799e1b-7400-4dad-ad16-73a4d1d8c742}</UniqueIdentifier>
-    </Filter>
     <Filter Include="ext">
       <UniqueIdentifier>{15582b9f-ee22-40fd-a903-1684f7a07d79}</UniqueIdentifier>
     </Filter>
@@ -70,70 +69,76 @@
     <Filter Include="inc">
       <UniqueIdentifier>{058b27ef-af7b-457d-bb80-7bdd5459bcdb}</UniqueIdentifier>
     </Filter>
+    <Filter Include="src">
+      <UniqueIdentifier>{40799e1b-7400-4dad-ad16-73a4d1d8c742}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="demo">
+      <UniqueIdentifier>{8ad0c671-930a-4b04-a5ef-c2b33fc3db13}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\src\ext\stb_rect_pack.h">
+    <ClInclude Include="..\inc\app.h">
+      <Filter>inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\inc\bitmap.h">
+      <Filter>inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\inc\button.h">
+      <Filter>inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\inc\color.h">
+      <Filter>inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\inc\dc.h">
+      <Filter>inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\inc\font.h">
+      <Filter>inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\inc\glh.h">
+      <Filter>inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\inc\rt.h">
+      <Filter>inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\inc\screen_writer.h">
+      <Filter>inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\inc\shaders.h">
+      <Filter>inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\inc\slider.h">
+      <Filter>inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\inc\stb_inc.h">
+      <Filter>inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\inc\theme.h">
+      <Filter>inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\inc\toast.h">
+      <Filter>inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\inc\ui.h">
+      <Filter>inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ext\linmath.h">
       <Filter>ext</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\ext\stb_truetype.h">
+    <ClInclude Include="..\ext\stb_image.h">
       <Filter>ext</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\ext\linmath.h">
+    <ClInclude Include="..\ext\stb_rect_pack.h">
       <Filter>ext</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\ext\stb_image.h">
+    <ClInclude Include="..\ext\stb_truetype.h">
       <Filter>ext</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\droid\droid_jni.h">
+    <ClInclude Include="..\droid\droid_jni.h">
       <Filter>droid</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\droid\droid_keys.h">
+    <ClInclude Include="..\droid\droid_keys.h">
       <Filter>droid</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\common\ui.h">
-      <Filter>inc</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\common\stb_inc.h">
-      <Filter>inc</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\common\slider.h">
-      <Filter>inc</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\common\shaders.h">
-      <Filter>inc</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\common\screen_writer.h">
-      <Filter>inc</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\common\rt.h">
-      <Filter>inc</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\common\glh.h">
-      <Filter>inc</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\common\font.h">
-      <Filter>inc</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\common\dc.h">
-      <Filter>inc</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\common\color.h">
-      <Filter>inc</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\common\button.h">
-      <Filter>inc</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\common\bitmap.h">
-      <Filter>inc</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\common\app.h">
-      <Filter>inc</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\common\toast.h">
-      <Filter>inc</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\common\theme.h">
-      <Filter>inc</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
