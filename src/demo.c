@@ -33,19 +33,19 @@ typedef struct application_s {
     int font_height_px;
     font_t font;    // default UI font
 //  int program_main;
-    toast_t*  toast;
-    bitmap_t  bitmaps[3];
-    button_t* quit;
-    button_t* exit;
-    button_t* glyphs;
-    button_t* test;
+    toast_t* toast;
+    bitmap_t bitmaps[3];
+    button_t quit;
+    button_t exit;
+    button_t glyphs;
+    button_t test;
     bool testing; // testing draw commands primitives
-    slider_t* slider1;
-    slider_t* slider2;
-    ui_t* view_content;
-    ui_t* view_textures;
-    ui_t* view_glyphs;
-    ui_t* view_ascii;
+    slider_t slider1;
+    slider_t slider2;
+    ui_t ui_content;
+    ui_t ui_textures;
+    ui_t ui_glyphs;
+    ui_t ui_ascii;
     int  slider1_minimum;
     int  slider1_maximum;
     int  slider1_current;
@@ -58,36 +58,33 @@ typedef struct application_s {
 
 static inline_c float pt2px(app_t* a, float pt) { return pt * a->xdpi / 72.0f; }
 
-static button_t* create_button(application_t* app, float x, float y, int key_flags, int key,
+static void init_button(application_t* app, button_t* b, float x, float y, int key_flags, int key,
                                const char* mnemonic, const char* label, void (*click)(button_t* ui)) {
     app_t* a = app->a;
     const float lw = font_text_width(&app->font, label, -1) + app->font.em;
     const float bw = max(lw, pt2px(a, MIN_BUTTON_WIDTH_PT));
     const float bh = app->font.height * app->a->theme.ui_height;
-    button_t* b = button_create(app->view_content, app, key_flags, key, mnemonic, label, x, y, bw, bh);
+    button_init(b, &app->ui_content, app, key_flags, key, mnemonic, label, x, y, bw, bh);
     b->ui.that = app;
     b->click = click;
-    return b;
 }
 
 static void slider_notify(slider_t* s) {
     application_t* app = (application_t*)s->ui.a->that;
-    if (s == app->slider1) {
+    if (s == &app->slider1) {
         snprintf0(app->slider1_label, SLIDER1_LABEL, app->slider1_current);
-    } else if (s == app->slider2) {
+    } else if (s == &app->slider2) {
         snprintf0(app->slider2_label, SLIDER2_LABEL, app->slider2_current);
     }
 }
 
-static slider_t* create_slider(application_t* app, float x, float y, const char* label,
-                               int* minimum, int* maximum, int* current) {
+static void init_slider(application_t* app, slider_t* s, float x, float y, const char* label,
+                        int* minimum, int* maximum, int* current) {
     float fh = app->font.height;
     float w = font_text_width(&app->font, label, -1) + app->font.em * 2;
-    slider_t* s = slider_create(app->view_content, app, label, x, y, w, fh, minimum, maximum, current);
+    slider_init(s, &app->ui_content, app, label, x, y, w, fh, minimum, maximum, current);
     s->ui.that = app;
     s->notify = slider_notify;
-    s->ui.focusable = true; // has buttons
-    return s;
 }
 
 static void textures_mouse(ui_t* ui, int flags, float x, float y) {
@@ -201,7 +198,7 @@ static void on_exit(button_t* b) {
 
 static void on_glyphs(button_t* b) {
     application_t* app = (application_t*)b->ui.a->that;
-    b->ui.a->show_keyboard(b->ui.a, !app->view_glyphs->hidden);
+    b->ui.a->show_keyboard(b->ui.a, !app->ui_glyphs.hidden);
 }
 
 static void on_test(button_t* b) {
@@ -209,44 +206,44 @@ static void on_test(button_t* b) {
 }
 
 static void init_ui(application_t* app) {
-    ui_t* content = app->a->root.create(&app->a->root, app, 0, 0, app->a->root.w, app->a->root.h);
-    app->view_content = content;
+    ui_t* content = &app->ui_content;
+    app->a->root.init(content, &app->a->root, app, 0, 0, app->a->root.w, app->a->root.h);
     float vgap = pt2px(app->a, VERTICAL_GAP_PT);
     float hgap = pt2px(app->a, HORIZONTAL_GAP_PT);
     float bh = app->font.height * 3 / 2; // button height
     float y = 240 + vgap;
-    app->quit   = create_button(app, 10, y, 0, 'q', "Q", "Quit", on_quit);      y += bh + vgap;
-    app->exit   = create_button(app, 10, y, 0, 'e', "E", "Exit(153)", on_exit); y += bh + vgap;
-    app->test   = create_button(app, 10, y, 0, 'x', "X", "Test", on_test);      y += bh + vgap;
-    app->glyphs = create_button(app, 10, y, 0, 'x', "X", "Glyphs", on_glyphs);  y += bh + vgap;
-    int x = app->glyphs->ui.w + hgap * 4;
+    init_button(app, &app->quit,   10, y, 0, 'q', "Q", "Quit", on_quit);      y += bh + vgap;
+    init_button(app, &app->exit,   10, y, 0, 'e', "E", "Exit(153)", on_exit); y += bh + vgap;
+    init_button(app, &app->test,   10, y, 0, 'x', "X", "Test", on_test);      y += bh + vgap;
+    init_button(app, &app->glyphs, 10, y, 0, 'x', "X", "Glyphs", on_glyphs);  y += bh + vgap;
+    int x = app->glyphs.ui.w + hgap * 4;
     y = 240 + vgap;
     app->slider1_minimum = 0;
     app->slider1_maximum = 255;
     app->slider1_current = 240;
     snprintf0(app->slider1_label, SLIDER1_LABEL, app->slider1_current);
-    app->slider1 = create_slider(app, x, y, app->slider1_label, &app->slider1_minimum, &app->slider1_maximum, &app->slider1_current);
+    init_slider(app, &app->slider1, x, y, app->slider1_label, &app->slider1_minimum, &app->slider1_maximum, &app->slider1_current);
     y += bh + vgap;
     app->slider2_minimum = 0;
     app->slider2_maximum = 1023;
     app->slider2_current = 512;
     snprintf0(app->slider2_label, SLIDER2_LABEL, app->slider2_current);
-    app->slider2 = create_slider(app, x, y, app->slider2_label, &app->slider2_minimum, &app->slider2_maximum, &app->slider2_current);
+    init_slider(app, &app->slider2, x, y, app->slider2_label, &app->slider2_minimum, &app->slider2_maximum, &app->slider2_current);
     y += bh + vgap;
-    app->view_glyphs = content->create(content, app, x, y, app->font.atlas.w, app->font.atlas.h);
-    app->view_glyphs->draw = glyphs_draw;
-    app->view_glyphs->hidden = true;
-    app->test->flip = &app->testing;
-    app->glyphs->flip = &app->view_glyphs->hidden;
-    app->glyphs->inverse = true; // because flip point to hidden not to `shown` in the absence of that bit
+    content->init(&app->ui_glyphs, content, app, x, y, app->font.atlas.w, app->font.atlas.h);
+    app->ui_glyphs.draw = glyphs_draw;
+    app->ui_glyphs.hidden = true;
+    app->test.flip = &app->testing;
+    app->glyphs.flip = &app->ui_glyphs.hidden;
+    app->glyphs.inverse = true; // because flip point to hidden not to `shown` in the absence of that bit
     y += app->font.atlas.h;
-    app->view_ascii = content->create(content, app, 0, y, app->font.em * 26, app->font.em * 4);
-    app->view_ascii->draw = ascii_draw;
+    content->init(&app->ui_ascii, content, app, 0, y, app->font.em * 26, app->font.em * 4);
+    app->ui_ascii.draw = ascii_draw;
     content->draw  = content_draw;
     content->mouse = content_mouse;
-    app->view_textures = content->create(content, app, 0, 0, 320 * 3 + 4, 240 + 2);
-    app->view_textures->mouse = textures_mouse;
-    app->view_textures->draw = textures_draw;
+    content->init(&app->ui_textures, content, app, 0, 0, 320 * 3 + 4, 240 + 2);
+    app->ui_textures.mouse = textures_mouse;
+    app->ui_textures.draw = textures_draw;
 }
 
 static void load_font(application_t* app) {
@@ -341,16 +338,16 @@ static void hidden(app_t* a) {
     // Window surface may be different next time application is shown()
     // On Android application may continue running.
     toast(a)->cancel(toast(a));
-    app->view_textures->dispose(app->view_textures); app->view_textures = null;
-    app->view_glyphs->dispose(app->view_glyphs);     app->view_glyphs   = null;
-    app->view_ascii->dispose(app->view_ascii);       app->view_ascii    = null;
-    app->view_content->dispose(app->view_content);   app->view_content  = null;
-    button_dispose(app->quit);    app->quit    = null;
-    button_dispose(app->exit);    app->exit    = null;
-    button_dispose(app->glyphs);  app->glyphs  = null;
-    button_dispose(app->test);    app->test    = null;
-    slider_dispose(app->slider1); app->slider1 = null;
-    slider_dispose(app->slider2); app->slider2 = null;
+    app->ui_textures.done(&app->ui_textures);
+    app->ui_glyphs.done(&app->ui_glyphs);
+    app->ui_ascii.done(&app->ui_ascii);
+    app->ui_content.done(&app->ui_content);
+    button_done(&app->quit);
+    button_done(&app->exit);
+    button_done(&app->glyphs);
+    button_done(&app->test);
+    slider_done(&app->slider1);
+    slider_done(&app->slider2);
     bitmap_deallocate_texture(&app->font.atlas);
     for (int i = 0; i < countof(app->bitmaps); i++) { bitmap_deallocate_texture(&app->bitmaps[i]); }
 //  shader_program_dispose(app->program_main);   app->program_main = 0;

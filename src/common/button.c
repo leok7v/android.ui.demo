@@ -97,40 +97,36 @@ static void button_screen_mouse(ui_t* ui, int mouse_action, float x, float y) {
     }
 }
 
-button_t* button_create(ui_t* parent, void* that,
+void button_init(button_t* b, ui_t* parent, void* that,
                         int key_flags, int key, const char* mnemonic,
                         const char* label,
                         float x, float y, float w, float h) {
-    button_t* b = (button_t*)allocate(sizeof(button_t));
-    if (b != null) {
-        b->ui = *parent;
-        b->ui.that = that;
-        b->ui.parent = null;
-        b->ui.children = null;
-        b->ui.next = null;
-        b->ui.focusable = true; // buttons are focusable by default
-        b->ui.hidden = false;
-        b->click = null;
-        b->key = key;
-        b->key_flags = key_flags;
-        b->mnemonic = mnemonic;
-        b->label = label;
-        b->bitset = 0;
-        assert((void*)b == (void*)&b->ui);
-        parent->add(parent, &b->ui, x, y, w, h);
-        assert(b->ui.parent == parent);
-        b->ui.kind = UI_KIND_BUTTON;
-        b->ui.draw = button_draw;
-        b->ui.mouse = button_mouse;
-        b->ui.screen_mouse = button_screen_mouse;
-    }
-    return b;
+    b->ui = *parent;
+    b->ui.that = that;
+    b->ui.parent = null;
+    b->ui.children = null;
+    b->ui.next = null;
+    b->ui.focusable = true; // buttons are focusable by default
+    b->ui.hidden = false;
+    b->click = null;
+    b->key = key;
+    b->key_flags = key_flags;
+    b->mnemonic = mnemonic;
+    b->label = label;
+    b->bitset = 0;
+    assert((void*)b == (void*)&b->ui);
+    parent->add(parent, &b->ui, x, y, w, h);
+    assert(b->ui.parent == parent);
+    b->ui.kind = UI_KIND_BUTTON;
+    b->ui.draw = button_draw;
+    b->ui.mouse = button_mouse;
+    b->ui.screen_mouse = button_screen_mouse;
 }
 
-void button_dispose(button_t* b) {
+void button_done(button_t* b) {
     if (b != null) {
         b->ui.parent->remove(b->ui.parent, &b->ui);
-        deallocate(b);
+        memset(b, 0, sizeof(*b));
     }
 }
 

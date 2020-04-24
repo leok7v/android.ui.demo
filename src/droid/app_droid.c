@@ -402,12 +402,8 @@ static int32_t handle_motion(glue_t* glue, AInputEvent* me) {
                 a->focus(a, null); // kill focus if no focusable components were found
             }
         }
-        if (a->root.dispatch_mouse != null) {
-            a->root.dispatch_mouse(&a->root, mouse_action, x, y);
-        }
-        if (a->root.dispatch_screen_mouse != null) {
-            a->root.dispatch_screen_mouse(&a->root, mouse_action, x, y);
-        }
+        ui_dispatch_mouse(&a->root, mouse_action, x, y);
+        ui_dispatch_screen_mouse(&a->root, mouse_action, x, y);
     } else {
         traceln("TODO: touch event [%d] x,y=%d,%d", index, x, y);
     }

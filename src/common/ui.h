@@ -109,20 +109,17 @@ typedef struct timer_callback_s {
 */
 
 typedef struct ui_s {
-    pointf_t (*screen_xy)(ui_t* ui);
+    void (*init)(ui_t* ui, ui_t* parent, void* that, float x, float y, float w, float h); // x, y relative to parent
+    void (*done)(ui_t* ui); // remove() ui from parent and dispose it
     void (*add)(ui_t* ui, ui_t* child, float x, float y, float w, float h);
     void (*remove)(ui_t* ui, ui_t* child);
-    ui_t* (*create)(ui_t* parent, void* that, float x, float y, float w, float h); // create and dd container
-    void (*dispose)(ui_t* ui); // remove() ui from parent and dispose it
     void (*draw)(ui_t* ui); // calls draw_children
     void (*draw_children)(ui_t* ui);
+    pointf_t (*screen_xy)(ui_t* ui); // return ui element screen coordinates
     void (*mouse)(ui_t* ui, int mouse_flags, float x, float y); // x,y in ui coordinates
     void (*screen_mouse)(ui_t* ui, int mouse_flags, float screen_x, float screen_y); // x,y screen coordinates
     void (*keyboard)(ui_t* ui, int flags, int ch);
     void (*focus)(ui_t* ui, bool gain);
-//  do not override dispatch_* use mouse() and screen_mouse() as listeners:
-    void (*dispatch_mouse)(ui_t* ui, int mouse_flags, float x, float y); // x,y in ui coordinates
-    void (*dispatch_screen_mouse)(ui_t* ui, int mouse_flags, float screen_x, float screen_y); // x,y screen coordinates
     int kind;
     void* that;
     float x, y, w, h;
@@ -138,5 +135,7 @@ typedef struct ui_s {
 extern const ui_t* ui_if; // UI interface
 
 bool ui_set_focus(ui_t* ui, int x, int y); // returns true if focus was set
+void ui_dispatch_mouse(ui_t* ui, int mouse_flags, float x, float y); // x,y in ui coordinates
+void ui_dispatch_screen_mouse(ui_t* ui, int mouse_flags, float screen_x, float screen_y); // x,y screen coordinates
 
 END_C

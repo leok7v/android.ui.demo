@@ -137,7 +137,7 @@ toast_t* toast(app_t* a) {
         toast.ui.focus  = false;
         toast.ui.hidden = false;
         toast.ui.decor  = true;
-        toast.ui.kind = UI_KIND_CONTAINER;
+        toast.ui.kind = UI_KIND_DECOR;
         toast.ui.that = &toast;
         toast.ui.draw = toast_draw;
     }

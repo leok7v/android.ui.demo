@@ -33,11 +33,11 @@ typedef struct button_s {
     bool inverse; /* inverse *flip value drawing UI */
 } button_t;
 
-button_t* button_create(ui_t* parent, void* that,
-                        int key_flags, int key, const char* mnemonic,
-                        const char* label,
-                        float x, float y, float w, float h);
+void button_init(button_t* b, ui_t* parent, void* that,
+                 int key_flags, int key, const char* mnemonic,
+                 const char* label,
+                 float x, float y, float w, float h);
 
-void button_dispose(button_t* b);
+void button_done(button_t* b);
 
 END_C

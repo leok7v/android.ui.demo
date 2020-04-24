@@ -27,10 +27,10 @@ typedef struct slider_s {
     timer_callback_t timer_callback;
 } slider_t;
 
-slider_t* slider_create(ui_t* parent, void* that,
-                        const char* label, float x, float y, float w, float h,
-                        int* minimum, int* maximum, int* current);
+void slider_init(slider_t* s, ui_t* parent, void* that,
+                 const char* label, float x, float y, float w, float h,
+                 int* minimum, int* maximum, int* current);
 
-void slider_dispose(slider_t* s);
+void slider_done(slider_t* s);
 
 END_C

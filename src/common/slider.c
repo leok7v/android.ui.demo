@@ -202,45 +202,39 @@ static void slider_draw(ui_t* ui) {
     }
 }
 
-slider_t* slider_create(ui_t* parent, void* that,
-                        const char* label, float x, float y, float w, float h,
-                        int* minimum, int* maximum, int* current) {
-    slider_t* s = (slider_t*)allocate(sizeof(slider_t));
-    if (s != null) {
-        theme_t* theme = &parent->a->theme;
-        const float em4 = theme->font->em / 4;
-        const float dec_width = font_text_width(theme->font, SLIDER_DEC_LABEL, -1) + em4;
-        const float inc_width = font_text_width(theme->font, SLIDER_INC_LABEL, -1) + em4;
-        s->ui = *parent;
-        s->ui.that = that;
-        s->ui.parent = null;
-        s->ui.children = null;
-        s->ui.next = null;
-        s->ui.focusable = true; // default: with buttons
-        s->ui.hidden = false;
-        s->notify = null;
-        s->label = label;
-        s->minimum = minimum;
-        s->maximum = maximum;
-        s->current = current;
-        assert((void*)s == (void*)&s->ui);
-        parent->add(parent, &s->ui, x, y, dec_width + w + inc_width, h);
-        assert(s->ui.parent == parent);
-//      traceln("ui.(x,y)[w x h] = (%.1f,%.1f)[%.1fx%.1f]", s->ui.x, s->ui.y, s->ui.w, s->ui.h);
-        s->ui.kind = UI_KIND_SLIDER;
-        s->ui.draw = slider_draw;
-        s->ui.mouse = slider_mouse;
-        s->ui.keyboard = slider_keyboard;
-        s->ui.screen_mouse = slider_screen_mouse;
-    }
-//  traceln("slider=%p", s);
-    return s;
+void slider_init(slider_t* s, ui_t* parent, void* that,
+                 const char* label, float x, float y, float w, float h,
+                 int* minimum, int* maximum, int* current) {
+    theme_t* theme = &parent->a->theme;
+    const float em4 = theme->font->em / 4;
+    const float dec_width = font_text_width(theme->font, SLIDER_DEC_LABEL, -1) + em4;
+    const float inc_width = font_text_width(theme->font, SLIDER_INC_LABEL, -1) + em4;
+    s->ui = *parent;
+    s->ui.that = that;
+    s->ui.parent = null;
+    s->ui.children = null;
+    s->ui.next = null;
+    s->ui.focusable = true; // default: with buttons
+    s->ui.hidden = false;
+    s->notify = null;
+    s->label = label;
+    s->minimum = minimum;
+    s->maximum = maximum;
+    s->current = current;
+    assert((void*)s == (void*)&s->ui);
+    parent->add(parent, &s->ui, x, y, dec_width + w + inc_width, h);
+    assert(s->ui.parent == parent);
+    s->ui.kind = UI_KIND_SLIDER;
+    s->ui.draw = slider_draw;
+    s->ui.mouse = slider_mouse;
+    s->ui.keyboard = slider_keyboard;
+    s->ui.screen_mouse = slider_screen_mouse;
 }
 
-void slider_dispose(slider_t* s) {
+void slider_done(slider_t* s) {
     if (s != null) {
         s->ui.parent->remove(s->ui.parent, &s->ui);
-        deallocate(s);
+        memset(s, 0, sizeof(*s));
     }
 }
 

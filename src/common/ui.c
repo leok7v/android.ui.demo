@@ -48,27 +48,22 @@ static void ui_remove(ui_t* container, ui_t* child) {
     assertion(false, "control not found");
 }
 
-static ui_t* ui_create(ui_t* parent, void* that, float x, float y, float w, float h) {
-    ui_t* ui = (ui_t*)allocate(sizeof(ui_t));
-    if (ui != null) {
-        *ui = *parent;
-        ui->that = that;
-        ui->parent = null;
-        ui->children = null;
-        ui->next = null;
-        ui->focusable = false;
-        ui->hidden = false;
-        parent->add(parent, ui, x, y, w, h);
-        ui->kind = UI_KIND_CONTAINER;
-    }
-    return ui;
-
+static void ui_init(ui_t* ui, ui_t* parent, void* that, float x, float y, float w, float h) {
+    *ui = *parent;
+    ui->that = that;
+    ui->parent = null;
+    ui->children = null;
+    ui->next = null;
+    ui->focusable = false;
+    ui->hidden = false;
+    ui->decor = false;
+    parent->add(parent, ui, x, y, w, h);
+    ui->kind = UI_KIND_CONTAINER;
 }
 
-static void ui_dispose(ui_t* ui) {
+static void ui_done(ui_t* ui) {
     if (ui != null) {
         ui->parent->remove(ui->parent, ui);
-        deallocate(ui);
     }
 }
 
@@ -95,22 +90,22 @@ static void ui_mouse(ui_t* ui, int mouse_action, float x, float y) {
 static void ui_screen_mouse(ui_t* ui, int mouse_action, float x, float y) {
 }
 
-static void ui_dispatch_mouse(ui_t* ui, int mouse_action, float x, float y) {
+void ui_dispatch_mouse(ui_t* ui, int mouse_action, float x, float y) {
     ui_t* c = ui->children;
     while (c != null) {
         if (!c->hidden && c->x <= x && x < c->x + c->w && c->y <= y && y < c->y + c->h) {
             if (c->mouse != null) { c->mouse(c, mouse_action, x - c->x, y - c->y); }
-            c->dispatch_mouse(c, mouse_action, x - c->x, y - c->y);
+            ui_dispatch_mouse(c, mouse_action, x - c->x, y - c->y);
         }
         c = c->next;
     }
 }
 
-static void ui_dispatch_screen_mouse(ui_t* ui, int mouse_action, float x, float y) {
+void ui_dispatch_screen_mouse(ui_t* ui, int mouse_action, float x, float y) {
     ui_t* c = ui->children;
     while (c != null) { // do it even for hidden widgets
         if (c->screen_mouse != null) { c->screen_mouse(c, mouse_action, x, y); }
-        c->dispatch_screen_mouse(c, mouse_action, x, y);
+        ui_dispatch_screen_mouse(c, mouse_action, x, y);
         c = c->next;
     }
 }
@@ -151,19 +146,17 @@ bool ui_set_focus(ui_t* ui, int x, int y) {
 }
 
 static const ui_t ui_interface = {
-    ui_screen_xy,
+    ui_init,
+    ui_done,
     ui_add,
     ui_remove,
-    ui_create,
-    ui_dispose,
     ui_draw,
     ui_draw_children,
+    ui_screen_xy,
     ui_mouse,
     ui_screen_mouse,
     ui_keyboard,
     ui_focus,
-    ui_dispatch_mouse,
-    ui_dispatch_screen_mouse,
     /* kind: */ UI_KIND_CONTAINER,
 };
 
