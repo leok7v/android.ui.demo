@@ -59,7 +59,7 @@ typedef struct application_s {
 static inline_c float pt2px(app_t* a, float pt) { return pt * a->xdpi / 72.0f; }
 
 static button_t* create_button(application_t* app, float x, float y, int key_flags, int key,
-                               const char* mnemonic, const char* label, void (*click)(button_t* self)) {
+                               const char* mnemonic, const char* label, void (*click)(button_t* ui)) {
     app_t* a = app->a;
     const float lw = font_text_width(&app->font, label, -1) + app->font.em;
     const float bw = max(lw, pt2px(a, MIN_BUTTON_WIDTH_PT));
@@ -90,15 +90,15 @@ static slider_t* create_slider(application_t* app, float x, float y, const char*
     return s;
 }
 
-static void textures_mouse(ui_t* self, int flags, float x, float y) {
+static void textures_mouse(ui_t* ui, int flags, float x, float y) {
 //  traceln("flags=0x%08X", flags);
     if (flags & MOUSE_LBUTTON_UP) { traceln("click at %.1f %.1f", x, y); }
 }
 
-static void test(ui_t* view) {
-    application_t* app = (application_t*)view->a->that;
-    const float w = view->w;
-    const float h = view->h;
+static void test(ui_t* ui) {
+    application_t* app = (application_t*)ui->a->that;
+    const float w = ui->w;
+    const float h = ui->h;
     pointf_t vertices0[] = { {1, 1}, {1 + 99, 1},  {1, 1 + 99} };
     pointf_t vertices1[] = { {w - 2, h - 2}, {w - 2, h - 2 - 99},  {w - 2 - 99, h - 2} };
     dc.poly(&dc, colors.red,   vertices0, countof(vertices0));
@@ -143,40 +143,40 @@ static void content_mouse(ui_t* ui, int mouse_action, float x, float y) {
     }
 }
 
-static void content_draw(ui_t* view) {
-    application_t* app = (application_t*)view->a->that;
+static void content_draw(ui_t* ui) {
+    application_t* app = (application_t*)ui->a->that;
     dc.clear(&dc, colors_nc.dark_blue);
     if (app->testing) {
-        test(view);
+        test(ui);
     } else {
-        view->draw_children(view);
+        ui->draw_children(ui);
     }
 }
 
-static void glyphs_draw(ui_t* view) {
-    application_t* app = (application_t*)view->a->that;
+static void glyphs_draw(ui_t* ui) {
+    application_t* app = (application_t*)ui->a->that;
     font_t* f = &app->font;
-    float x = view->x + 0.5;
-    float y = view->y + 0.5;
+    float x = ui->x + 0.5;
+    float y = ui->y + 0.5;
     dc.luma(&dc, colors.white, &f->atlas, x, y);
-    view->draw_children(view);
+    ui->draw_children(ui);
 }
 
-static void ascii_draw(ui_t* view) {
-    application_t* app = (application_t*)view->a->that;
-    float x = view->x + 0.5;
-    float y = view->y + 0.5;
+static void ascii_draw(ui_t* ui) {
+    application_t* app = (application_t*)ui->a->that;
+    float x = ui->x + 0.5;
+    float y = ui->y + 0.5;
     char text[97] = {};
     for (int i = 0; i < 96; i++) { text[i] = 32 + i; }
     screen_writer_t sw = screen_writer(x, y, app->a->theme.font, colors.green);
     for (int i = 0; i < countof(text); i += 24) {
         sw.println(&sw, "%-24.24s", &text[i]);
     }
-    view->draw_children(view);
+    ui->draw_children(ui);
 }
 
-static void textures_draw(ui_t* view) {
-    application_t* app = (application_t*)view->a->that;
+static void textures_draw(ui_t* ui) {
+    application_t* app = (application_t*)ui->a->that;
     dc.line(&dc, colors.white, 0.5, 0.5, 0.5, 240 + 2.5, 1);
     for (int i = 0; i < countof(app->bitmaps); i++) {
         bitmap_t* b = &app->bitmaps[i];
@@ -184,9 +184,9 @@ static void textures_draw(ui_t* view) {
         dc.bblt(&dc, b, x + 1.5, 1.5);
         dc.line(&dc, colors.white, x + b->w + 1.5, 1.5, x + b->w + 1.5, b->h + 1.5, 1.5);
     }
-    dc.line(&dc, colors.white, 0.5, 1.5, view->w, 1.5, 1);
-    dc.line(&dc, colors.white, 0.5, 240 + 2.5, view->w, 240 + 2.5, 1);
-    view->draw_children(view);
+    dc.line(&dc, colors.white, 0.5, 1.5, ui->w, 1.5, 1);
+    dc.line(&dc, colors.white, 0.5, 240 + 2.5, ui->w, 240 + 2.5, 1);
+    ui->draw_children(ui);
 }
 
 static void on_quit(button_t* b) {

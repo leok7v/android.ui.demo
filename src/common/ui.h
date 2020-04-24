@@ -109,20 +109,20 @@ typedef struct timer_callback_s {
 */
 
 typedef struct ui_s {
-    pointf_t (*screen_xy)(ui_t* self);
-    void (*add)(ui_t* self, ui_t* child, float x, float y, float w, float h);
-    void (*remove)(ui_t* self, ui_t* child);
+    pointf_t (*screen_xy)(ui_t* ui);
+    void (*add)(ui_t* ui, ui_t* child, float x, float y, float w, float h);
+    void (*remove)(ui_t* ui, ui_t* child);
     ui_t* (*create)(ui_t* parent, void* that, float x, float y, float w, float h); // create and dd container
-    void (*dispose)(ui_t* self); // remove() ui from parent and dispose it
-    void (*draw)(ui_t* self); // calls draw_children
-    void (*draw_children)(ui_t* self);
-    void (*mouse)(ui_t* self, int mouse_flags, float x, float y); // x,y in ui coordinates
-    void (*screen_mouse)(ui_t* self, int mouse_flags, float screen_x, float screen_y); // x,y screen coordinates
-    void (*keyboard)(ui_t* self, int flags, int ch);
-    void (*focus)(ui_t* self, bool gain);
+    void (*dispose)(ui_t* ui); // remove() ui from parent and dispose it
+    void (*draw)(ui_t* ui); // calls draw_children
+    void (*draw_children)(ui_t* ui);
+    void (*mouse)(ui_t* ui, int mouse_flags, float x, float y); // x,y in ui coordinates
+    void (*screen_mouse)(ui_t* ui, int mouse_flags, float screen_x, float screen_y); // x,y screen coordinates
+    void (*keyboard)(ui_t* ui, int flags, int ch);
+    void (*focus)(ui_t* ui, bool gain);
 //  do not override dispatch_* use mouse() and screen_mouse() as listeners:
-    void (*dispatch_mouse)(ui_t* self, int mouse_flags, float x, float y); // x,y in ui coordinates
-    void (*dispatch_screen_mouse)(ui_t* self, int mouse_flags, float screen_x, float screen_y); // x,y screen coordinates
+    void (*dispatch_mouse)(ui_t* ui, int mouse_flags, float x, float y); // x,y in ui coordinates
+    void (*dispatch_screen_mouse)(ui_t* ui, int mouse_flags, float screen_x, float screen_y); // x,y screen coordinates
     int kind;
     void* that;
     float x, y, w, h;

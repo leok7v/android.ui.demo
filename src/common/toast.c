@@ -92,9 +92,9 @@ static void toast_render(toast_t* t) {
     }
 }
 
-static void toast_draw(ui_t* self) {
-    toast_t* t = self->that;
-    app_t* a = self->a;
+static void toast_draw(ui_t* ui) {
+    toast_t* t = ui->that;
+    app_t* a = ui->a;
     if (t->text[0] != 0) {
         if (t->toast_start_time == 0) { // first time drawn
             t->toast_start_time = a->time_in_nanoseconds;
