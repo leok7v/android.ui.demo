@@ -112,10 +112,10 @@
     <Content Include="res\values\strings.xml" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="ui.demo.vcxproj" />
+    <Folder Include="assets\data\" />
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="assets\data\" />
+    <ProjectReference Include="ui.demo.vcxproj" />
   </ItemGroup>
   <Import Project="$(AndroidTargetsPath)\Android.targets" />
   <ImportGroup Label="ExtensionTargets" />
