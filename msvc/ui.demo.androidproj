@@ -112,9 +112,6 @@
     <Content Include="res\values\strings.xml" />
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="assets\data\" />
-  </ItemGroup>
-  <ItemGroup>
     <ProjectReference Include="ui.demo.vcxproj" />
   </ItemGroup>
   <Import Project="$(AndroidTargetsPath)\Android.targets" />
