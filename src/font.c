@@ -36,7 +36,6 @@ static int pack_font_to_texture(font_t* f, const void* ttf, stbtt_packedchar* ch
     do {
         deallocate(f->atlas.data);
         f->atlas.data = allocate(f->atlas.w * f->atlas.h); // 1 byte per pixel
-//      traceln("trying atlas=%dx%d", f->aw, f->ah);
         if (f->atlas.data == null) {
             r = errno;
             done = true;
@@ -45,7 +44,6 @@ static int pack_font_to_texture(font_t* f, const void* ttf, stbtt_packedchar* ch
             memset(chars, 0, chars_bytes);
             done = stbtt_PackBegin(&pc, f->atlas.data, f->atlas.w, f->atlas.h, 0, 1, null);
             if (done) {
-//              stbtt_PackSetOversampling(&pc, 2, 2); // do NOT oversample font, default is 1,1
                 done = stbtt_PackFontRange(&pc, (void*)ttf, 0, hpx, from, count, chars);
                 stbtt_PackEnd(&pc);
             }
@@ -59,7 +57,6 @@ static int pack_font_to_texture(font_t* f, const void* ttf, stbtt_packedchar* ch
             }
         }
     } while (!done);
-//  traceln("atlas=%dx%d r=%d", f->aw, f->ah, r);
     return r;
 }
 
@@ -85,8 +82,6 @@ static int load_asset(font_t* f, app_t* a, const char* name, int hpx, int from, 
         f->baseline = (int)(ascent * scale);
         f->from = from;
         f->count = count;
-//      traceln("%s ascent=%.1f, descent=%.1f, line_gap=%d baseline=%.1f count=%d glyphs=%d",
-//              name, f->ascent, f->descent, line_gap, f->baseline, count, f->fi.numGlyphs);
         int chars_bytes = sizeof(stbtt_packedchar) * count;
         stbtt_packedchar* chars = (stbtt_packedchar*)allocate(sizeof(stbtt_packedchar) * chars_bytes);
         if (chars == null) {

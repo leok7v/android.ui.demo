@@ -88,7 +88,6 @@ static void init_slider(application_t* app, slider_t* s, float x, float y, const
 }
 
 static void textures_mouse(ui_t* ui, int flags, float x, float y) {
-//  traceln("flags=0x%08X", flags);
     if (flags & MOUSE_LBUTTON_UP) { traceln("click at %.1f %.1f", x, y); }
 }
 
@@ -299,7 +298,6 @@ static int create_gl_program(app_t* a, const char* name, int *program) {
     for (int i = 0; i < countof(sources); i++) {
         assets[i] = a->asset_map(a, sources[i].name, &sources[i].data, &sources[i].bytes);
         assertion(assets[i] != null, "asset \"%s\"not found", sources[i].name);
-//      traceln("%s=\n%.*s", sources[i].name, sources[i].bytes, sources[i].data);
     }
     r = shader_program_create_and_link(program, sources, countof(sources));
     assert(r == 0);
@@ -382,19 +380,19 @@ static void done(app_t* a) {
     font_dispose(&app->font);
 }
 
-static application_t app;
+static application_t application;
 
-void app_create(app_t* a) {
-    a->that = &app;
-    app.a = a;
-    app.a->init    = init;
-    app.a->shown   = shown;
-    app.a->resized = resized;
-    app.a->hidden  = hidden;
-    app.a->pause   = paused;
-    app.a->stop    = stop;
-    app.a->resume  = resume;
-    app.a->done    = done;
+void app_init() {
+    app.that = &application;
+    application.a = &app;
+    app.init    = init;
+    app.shown   = shown;
+    app.resized = resized;
+    app.hidden  = hidden;
+    app.pause   = paused;
+    app.stop    = stop;
+    app.resume  = resume;
+    app.done    = done;
 }
 
 END_C

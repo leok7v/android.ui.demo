@@ -16,12 +16,6 @@
 
 BEGIN_C
 
-enum {
-    APP_TRACE_MOUSE         = (1 << 0),
-    APP_TRACE_KEYBOARD      = (2 << 0),
-    APP_TRACE_ALL           = 0xFFFFFFFF
-};
-
 enum { // vibration_effect
     DEFAULT_AMPLITUDE = -1,
     EFFECT_CLICK = 0,
@@ -75,13 +69,13 @@ typedef struct app_s {
     theme_t theme;
 } app_t;
 
-// app_create() MUST be implemented by application. It is called before main()
+// app_init() MUST be implemented by application. It is called before main()
 // application must load main ui font (e.g. from resources) and assign to app_t.font field
 // application is expected to fill some of the callbacks that will be called later.
 
-void app_create(app_t* app);
-void app_trace_key(int flags, int ch);
-void app_trace_mouse(int mouse_flags, int mouse_action, int index, float x, float y);
+extern app_t app;
+
+void app_init();
 
 enum { // logging level
     LOG_DEFAULT = 1,
@@ -93,7 +87,5 @@ enum { // logging level
     LOG_FATAL   = 7,
     LOG_SILENT  = 8
 };
-
-extern int (*app_log)(int level, const char* tag, const char* location, const char* format, va_list vl); // may be null
 
 END_C

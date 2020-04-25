@@ -14,13 +14,13 @@ BEGIN_C
 
 static int logln(const char* filename, int line, const char* function, const char* format, va_list vl) {
     int r = 0;
-    if (app_log != null) {
+    if (app.logln != null) {
         const char* file = strrchr(filename, '/');
         if (file == null) { file = strrchr(filename, '\\'); }
         if (file == null) { file = filename; } else { file++; }
         char location[1024];
         snprintf0(location, "%s(%d) \t%s ", file, line, function);
-        r = app_log(LOG_INFO, "@!@", location, format, vl);
+        r = app.logln(LOG_INFO, "@!@", location, format, vl);
     }
     return r;
 }

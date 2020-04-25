@@ -44,8 +44,9 @@ static void  asset_unmap(app_t* a, void* asset, const void* data, int bytes);
 static void  vibrate(app_t* a, int vibration_effect);
 static void  show_keyboard(app_t* app, bool on);
 static void  enqueue_command(glue_t* glue, int8_t command);
+static int   log_vprintf(int level, const char* tag, const char* location, const char* format, va_list vl);
 
-static app_t app = {
+app_t app = {
     /* init:    */ null,
     /* shown:   */ null,
     /* resized: */ null,
@@ -63,7 +64,8 @@ static app_t app = {
     asset_map,
     asset_unmap,
     vibrate,
-    show_keyboard
+    show_keyboard,
+    log_vprintf
 };
 
 enum {
@@ -88,8 +90,6 @@ enum {
     COMMAND_TIMER  = 2,
     COMMAND_QUIT   = 3
 };
-
-enum { APP_STATE_MAGIC = 'APPS' };
 
 typedef struct app_state_s {
     byte data[4 * 1024]; // state data here. TODO: expose to app.h in more flexible manner
@@ -171,7 +171,6 @@ static int log_vprintf(int level, const char* tag, const char* location, const c
     return __android_log_vprint(level, tag, f, vl);
 }
 
-int (*app_log)(int level, const char* tag, const char* location, const char* format, va_list vl) = log_vprintf;
 
 #define case_return(id) case id: return #id;
 
@@ -221,16 +220,8 @@ static void asset_unmap(app_t* a, void* asset, const void* data, int bytes) {
     AAsset_close(asset);
 }
 
-static bool trace_config;
-
-static void trace_current_configuration(glue_t* glue);
-
 static void process_configuration(glue_t* glue) {
-    trace_current_configuration(glue);
-    // I do not know a way to distuinguish between Androids with build in QWERTY keyboars
-    // and external connected keyboards:
     glue->keyboad_present = AConfiguration_getKeyboard(glue->config) == ACONFIGURATION_KEYBOARD_QWERTY;
-//  traceln("physical keyboard present=%d", glue->keyboad_present);
 }
 
 static int init_display(glue_t* glue) {
@@ -250,10 +241,9 @@ static int init_display(glue_t* glue) {
     EGLConfig config = 0;
     eglChooseConfig(display, attribs, &config, 1, &configs_count);
     EGLint id = 0;
-    eglGetConfigAttrib(display, config, EGL_NATIVE_VISUAL_ID, &id);
-    eglGetConfigAttrib(display, config, EGL_MAX_PBUFFER_WIDTH, &glue->max_tex_w);
+    eglGetConfigAttrib(display, config, EGL_NATIVE_VISUAL_ID,   &id);
+    eglGetConfigAttrib(display, config, EGL_MAX_PBUFFER_WIDTH,  &glue->max_tex_w);
     eglGetConfigAttrib(display, config, EGL_MAX_PBUFFER_HEIGHT, &glue->max_tex_h);
-//  traceln("max texture size %dx%d", glue->max_tex_w, glue->max_tex_h);
     uint32_t format = AHARDWAREBUFFER_FORMAT_R8G8B8A8_UNORM;
     ANativeWindow_setBuffersGeometry(glue->window, 0, 0, format);
     EGLSurface surface = eglCreateWindowSurface(display, config, glue->window, null);
@@ -276,7 +266,7 @@ static int init_display(glue_t* glue) {
 static void focus(app_t* app, ui_t* ui) {
     // ui can be null, thus cannot used ui->a
     if (ui == app->focused) {
-//      traceln("already focused %p", ui);
+        // already focused
     } else if (ui == null || ui->focusable) {
         if (app->focused != null && app->focused->focus != null) {
             app->focused->focus(app->focused, false);
@@ -319,7 +309,6 @@ static void draw_frame(glue_t* glue) {
             // eglSwapBuffers performs an implicit flush operation on the context (glFlush for an OpenGL ES)
             bool swapped = eglSwapBuffers(glue->display, glue->surface);
             assertion(swapped, "eglSwapBuffers() failed"); (void)swapped;
-//          traceln("eglSwapBuffers()=%d", swapped);
         }
     }
 }
@@ -340,19 +329,6 @@ static void term_display(glue_t* glue) {
     glue->surface = EGL_NO_SURFACE;
 }
 
-void app_trace_mouse(int mouse_flags, int mouse_action, int index, float x, float y) {
-    char text[128] = {};
-    if (mouse_action & MOUSE_LBUTTON_DOWN) { strncat(text, "LBUTTON_DOWN|", countof(text)); }
-    if (mouse_action & MOUSE_LBUTTON_UP)   { strncat(text, "LBUTTON_UP|", countof(text)); }
-    if (mouse_action & MOUSE_MOVE)         { strncat(text, "MOVE|", countof(text)); }
-    if (mouse_flags  & MOUSE_LBUTTON_FLAG) { strncat(text, "MOUSE_LBUTTON_FLAG|", countof(text)); }
-    traceln("mouse_flags=0x%08X %.*s index=%d x,y=%.1f,%.1f", mouse_flags, strlen(text) - 1, text, index, x, y);
-}
-
-void app_trace_key(int flags, int ch) {
-    traceln("%s", droid_keys_text(flags, ch).text);
-}
-
 static void dispatch_keycode(glue_t* glue, int flags, int keycode) {
     app_t* a = glue->a;
     a->keyboard_flags = flags;
@@ -368,14 +344,6 @@ static void dispatch_keycode(glue_t* glue, int flags, int keycode) {
 static int32_t handle_motion(glue_t* glue, AInputEvent* me) {
     assert(AInputEvent_getType(me) == AINPUT_EVENT_TYPE_MOTION);
     app_t* a = glue->a;
-/*
-    AMOTION_EVENT_TOOL_TYPE_FINGER = 1,
-    AMOTION_EVENT_TOOL_TYPE_STYLUS = 2,
-    AMOTION_EVENT_TOOL_TYPE_ERASER = 4,
-*/
-    if (AInputEvent_getSource(me) == AINPUT_SOURCE_MOUSE) {
-//      traceln("AInputEvent_getSource AINPUT_SOURCE_MOUSE");
-    }
     int x = AMotionEvent_getX(me, 0);
     int y = AMotionEvent_getY(me, 0);
     int32_t action = AMotionEvent_getAction(me);
@@ -396,7 +364,6 @@ static int32_t handle_motion(glue_t* glue, AInputEvent* me) {
         a->mouse_flags = mouse_flags;
         a->last_mouse_x = x;
         a->last_mouse_y = y;
-        if (a->trace_flags & APP_TRACE_MOUSE) { app_trace_mouse(a->mouse_flags, mouse_action, index, x, y); }
         if (mouse_action & MOUSE_LBUTTON_DOWN) {
             if (!ui_set_focus(&a->root, x, y)) {
                 a->focus(a, null); // kill focus if no focusable components were found
@@ -421,11 +388,9 @@ static int32_t handle_key(glue_t* glue, AInputEvent* ke) {
         case AKEY_EVENT_ACTION_MULTIPLE: rc = AKeyEvent_getRepeatCount(ke); break;
         default: traceln("unknown action: %d", action);
     }
-//  traceln("Received key event: %d\n", key_code);
     int meta_state = AKeyEvent_getMetaState(ke);
     int flags = KEYBOARD_KEY_PRESSED;
     int kc = droid_keys_translate(key_code, meta_state, flags);
-    traceln("kc=%d 0x%08X %c", kc, kc, kc);
     if (kc != 0) {
         switch (action) {
             case AKEY_EVENT_ACTION_DOWN: flags |= KEYBOARD_KEY_PRESSED;  flags &= ~KEYBOARD_KEY_RELEASED; break;
@@ -433,7 +398,6 @@ static int32_t handle_key(glue_t* glue, AInputEvent* ke) {
             default: break;
         }
         if (action == AKEY_EVENT_ACTION_MULTIPLE) {
-            traceln("AKEY_EVENT_ACTION_MULTIPLE repeat_count=%d", rc);
             for (int i = 0; i < rc; i++) { dispatch_keycode(glue, flags | KEYBOARD_KEY_REPEAT, kc); }
         } else {
             dispatch_keycode(glue, flags, kc);
@@ -448,7 +412,6 @@ static int32_t handle_input(glue_t* glue, AInputEvent* ie) {
     } else if (AInputEvent_getType(ie) == AINPUT_EVENT_TYPE_KEY) {
         return handle_key(glue, ie);
     } else {
-        traceln("getType()=%d", AInputEvent_getType(ie));
         return 0;
     }
 }
@@ -463,7 +426,6 @@ static void on_pause(ANativeActivity* na) {
     glue_t* glue = (glue_t*)na->instance;
     assert(glue->running == 1);
     glue->running = 0;
-//  traceln("glue->running=%d", glue->running);
     if (glue->accelerometer_sensor != null) {
         ASensorEventQueue_disableSensor(glue->sensor_event_queue, glue->accelerometer_sensor);
     }
@@ -474,11 +436,9 @@ static void on_resume(ANativeActivity* na) {
     glue_t* glue = (glue_t*)na->instance;
     assert(glue->running == 0);
     glue->running = 1;
-//  traceln("glue->running=%d", glue->running);
     if (glue->accelerometer_sensor != null) {
         ASensorEventQueue_enableSensor(glue->sensor_event_queue, glue->accelerometer_sensor);
-        int us = ASensor_getMinDelay(glue->accelerometer_sensor); // microseconds
-//      traceln("accel microseconds=%d", us); // 10,000us = 100Hz
+        int us = ASensor_getMinDelay(glue->accelerometer_sensor); // 10,000 microseconds = 100Hz
         ASensorEventQueue_setEventRate(glue->sensor_event_queue, glue->accelerometer_sensor, us);
     }
     glue->a->resume(glue->a); // it is up to application code to resume animation if necessary
@@ -552,7 +512,6 @@ static void on_native_window_redraw_needed(ANativeActivity* na, ANativeWindow* w
 
 static int looper_callback(int fd, int events, void* data) {
     android_poll_source_t* ps = (android_poll_source_t*)data;
-//  traceln("events=%d ps->id=%s", events, id2str(ps->id));
     uint64_t now = time_monotonic_ns();
     ps->glue->a->time_in_nanoseconds = now - ps->glue->start_time_in_ns;
     ps->process(ps->glue, ps); (void)id2str;
@@ -578,10 +537,6 @@ static void on_input_queued_destroyed(ANativeActivity* na, AInputQueue* queue) {
 
 static void on_content_rect_changed(ANativeActivity* na, const ARect* rc) {
     glue_t* glue = (glue_t*)na->instance;
-    traceln("%d %d %d %d", rc->left, rc->top, rc->right, rc->bottom);
-    if (rc->left != 0 || rc->top != 0) {
-        traceln("%d %d %d %d", rc->left, rc->top, rc->right, rc->bottom);
-    }
     app_t* a = glue->a;
     ui_t* root = &a->root;
     root->x = rc->left;
@@ -625,11 +580,9 @@ static void* timer_thread(void* p) {
         synchronized_wait(glue->mutex, glue->cond, ts,
             wait_ns = glue->timer_next_ns;
             ts = ns_to_timespec(time_monotonic_ns() + wait_ns);
-//          traceln("timed_wait=%.3f", glue->timer_next_ns / (double)NS_IN_MS);
         );
         if (!glue->destroy_requested) {
             enqueue_command(glue, COMMAND_TIMER);
-//          traceln("COMMAND_TIMER");
         }
     }
     return null;
@@ -656,13 +609,11 @@ static void on_timer(glue_t* glue) {
             }
             if (earliest < 0 || tc->ns < earliest) {
                 earliest = tc->ns;
-//              traceln("id=%d earliest := %.6fms", tc->id, earliest / (double)NS_IN_MS);
             }
         }
     }
     if (earliest < 0 || !glue->running) { earliest = FOREVER; } // wait `forever' or until next wakeup
     if (earliest != glue->timer_next_ns) {
-//      traceln("WAKEUP: earliest = %.6fms", earliest / (double)NS_IN_MS);
         synchronized_signal(glue->mutex, glue->cond, glue->timer_next_ns = earliest);
     }
 }
@@ -682,7 +633,6 @@ static int timer_add(app_t* app, timer_callback_t* tcb) {
         }
     }
     if (id > 0) {
-//      traceln("glue.timers[%d]=%p ns=%lld", id, tcb, tcb->ns);
         glue->timers[id] = tcb;
         enqueue_command(glue, COMMAND_TIMER); // will recalculate 'earliest' -> 'timer_next_ns'
     } else {
@@ -697,7 +647,6 @@ static void timer_remove(app_t* app, timer_callback_t* tcb) {
     int id = tcb->id;
     assertion(0 <= id && id < countof(glue->timers), "id=%d out of range [0..%d]", id, countof(glue->timers));
     if (0 < id && id < countof(glue->timers)) {
-//      traceln("glue.timers[%d]", id);
         assertion(glue->timers[id] != null, "app->timers[%d] already null", id);
         if (glue->timers[id] != null) {
             glue->timers[id] = null;
@@ -740,98 +689,15 @@ static void vibrate(app_t* app, int effect) {
 static void show_keyboard(app_t* app, bool on) {
     glue_t* glue = (glue_t*)app->glue;
     if (on) { // ANATIVEACTIVITY_SHOW_SOFT_INPUT_FORCED means "even if physical keyboard is present"
-//      ANativeActivity_showSoftInput(glue->na, 0); // broken
         droid_jni_show_keyboard(glue->na, true, ANATIVEACTIVITY_SHOW_SOFT_INPUT_FORCED);
     } else {
-//      ANativeActivity_hideSoftInput(glue->na, 0); // 0 means always
         droid_jni_show_keyboard(glue->na, false, 0);
-    }
-}
-
-static const char* screen_size(int i) {
-    switch (i) {
-        case ACONFIGURATION_SCREENSIZE_ANY   : return "ANY";
-        case ACONFIGURATION_SCREENSIZE_SMALL : return "SMALL";
-        case ACONFIGURATION_SCREENSIZE_NORMAL: return "NORMAL";
-        case ACONFIGURATION_SCREENSIZE_LARGE : return "LARGE";
-        case ACONFIGURATION_SCREENSIZE_XLARGE: return "XLARGE";
-        default: return "???";
-    }
-}
-
-static const char* density(int i) {
-    switch (i) {
-        case ACONFIGURATION_DENSITY_DEFAULT: return "DEFAULT";
-        case ACONFIGURATION_DENSITY_LOW    : return "LOW"; // 120dpi
-        case ACONFIGURATION_DENSITY_MEDIUM : return "MEDIUM"; // 160dpi
-        case ACONFIGURATION_DENSITY_TV     : return "TV"; // 213
-        case ACONFIGURATION_DENSITY_HIGH   : return "HIGH"; // 240
-        case ACONFIGURATION_DENSITY_XHIGH  : return "XHIGH"; // 320
-        case ACONFIGURATION_DENSITY_XXHIGH : return "XXHIGH"; // 480
-        case ACONFIGURATION_DENSITY_XXXHIGH: return "XXXHIGH"; // 640
-        case ACONFIGURATION_DENSITY_ANY    : return "ANY";
-        case ACONFIGURATION_DENSITY_NONE   : return "NONE";
-        default: return "???";
-    }
-}
-
-static const char* mode_type(int i) {
-    switch (i) {
-        case ACONFIGURATION_UI_MODE_TYPE_ANY       : return "ANY";
-        case ACONFIGURATION_UI_MODE_TYPE_NORMAL    : return "NORMAL";
-        case ACONFIGURATION_UI_MODE_TYPE_DESK      : return "DESK";
-        case ACONFIGURATION_UI_MODE_TYPE_CAR       : return "CAR";
-        case ACONFIGURATION_UI_MODE_TYPE_TELEVISION: return "TELEVISION";
-        case ACONFIGURATION_UI_MODE_TYPE_APPLIANCE : return "APPLIANCE";
-        case ACONFIGURATION_UI_MODE_TYPE_WATCH     : return "WATCH";
-        default: return "???";
-    }
-}
-
-static void trace_current_configuration(glue_t* glue) {
-    char lang[2], country[2];
-    AConfiguration_getLanguage(glue->config, lang);
-    AConfiguration_getCountry(glue->config, country);
-    if (trace_config) {
-        traceln("config mcc=%d mnc=%d lang=%c%c cnt=%c%c smallest=%ddp %dx%ddp "
-                "orien=%d touch=%d dens=%d %s "
-                "keys=%d nav=%d keysHid=%d navHid=%d sdk=%d size=%d %s long=%d "
-                "modetype=%d %s modenight=%d",
-                AConfiguration_getMcc(glue->config),
-                AConfiguration_getMnc(glue->config),
-                lang[0], lang[1], country[0], country[1],
-                AConfiguration_getSmallestScreenWidthDp(glue->config),
-                AConfiguration_getScreenWidthDp(glue->config),
-                AConfiguration_getScreenHeightDp(glue->config),
-                AConfiguration_getOrientation(glue->config),
-                AConfiguration_getTouchscreen(glue->config),
-                AConfiguration_getDensity(glue->config),
-                density(AConfiguration_getDensity(glue->config)),
-                AConfiguration_getKeyboard(glue->config),
-                AConfiguration_getNavigation(glue->config),
-                AConfiguration_getKeysHidden(glue->config),
-                AConfiguration_getNavHidden(glue->config),
-                AConfiguration_getSdkVersion(glue->config),
-                AConfiguration_getScreenSize(glue->config),
-                screen_size(AConfiguration_getScreenSize(glue->config)),
-                AConfiguration_getScreenLong(glue->config),
-                AConfiguration_getUiModeType(glue->config),
-                mode_type(AConfiguration_getUiModeType(glue->config)),
-                AConfiguration_getUiModeNight(glue->config));
     }
 }
 
 static void process_input(glue_t* glue, android_poll_source_t* source) {
     AInputEvent* ie = null;
     while (AInputQueue_getEvent(glue->input_queue, &ie) >= 0) {
-//      int i = AInputEvent_getType(ie);
-//      const char* s = "???";
-//      switch (i) {
-//          case AINPUT_EVENT_TYPE_KEY   : s = "KEY";    break;
-//          case AINPUT_EVENT_TYPE_MOTION: s = "MOTION"; break;
-//          default: assertion(false, "i=%d", i); break;
-//      }
-//      traceln("input event: type=%s %d", s, i);
         if (AInputQueue_preDispatchEvent(glue->input_queue, ie)) {
             continue;
         }
@@ -842,7 +708,6 @@ static void process_input(glue_t* glue, android_poll_source_t* source) {
 }
 
 static void enqueue_command(glue_t* glue, int8_t command) {
-//  traceln("%s", cmd2str(command));
     if (write(glue->write_pipe, &command, sizeof(command)) != sizeof(command)) {
         traceln("Failure writing a command: %s", strerror(errno));
     }
@@ -854,20 +719,17 @@ static int8_t dequeue_command(glue_t* glue) {
     if (read(glue->read_pipe, &command, sizeof(command)) == sizeof(command)) {
         return command;
     } else {
-        traceln("No data in command pipe");
         return -1;
     }
 }
 
 static void process_command(glue_t* glue, android_poll_source_t* source) {
     int8_t command = dequeue_command(glue);
-//  traceln("%.3fms %s", glue->a->time_in_nanoseconds / (double)NS_IN_SEC, cmd2str(command));
     switch (command) {
         case COMMAND_REDRAW: draw_frame(glue); break;
         case COMMAND_TIMER : on_timer(glue);   break;
         case COMMAND_QUIT  :
             ANativeActivity_finish(glue->na);
-            traceln("exit(%d)", glue->exit_code);
             exit(glue->exit_code);
             break;
         default: traceln("unhandled command=%d %s", command, cmd2str(command));
@@ -972,9 +834,7 @@ static void init_looper(glue_t* glue, ANativeActivity* na) {
         int r = ALooper_addFd(glue->looper, glue->read_pipe, LOOPER_ID_MAIN,
             ALOOPER_EVENT_INPUT, looper_callback, &glue->command_poll_source);
         assert(r == 1);
-        if (r != 1) {
-            traceln("ALooper_addFd() failed");
-        }
+        if (r != 1) { traceln("ALooper_addFd() failed"); }
     }
 }
 
@@ -988,7 +848,6 @@ static void init_accelerometer(glue_t* glue) {
     glue->sensor_event_queue = ASensorManager_createEventQueue(glue->sensor_manager,
         glue->looper, LOOPER_ID_ACCEL, looper_callback, &glue->accel_poll_source);
     int us = ASensor_getMinDelay(glue->accelerometer_sensor); // microseconds
-//  traceln("accel microseconds=%d", us); // 10,000us = 100Hz
     ASensorEventQueue_registerSensor(glue->sensor_event_queue,
         glue->accelerometer_sensor, us, 0); // 0 means "streaming"
 }
@@ -1060,28 +919,9 @@ void ANativeActivity_onCreate(ANativeActivity* na, void* data, size_t bytes) {
 }
 
 static_init(app_android) {
-    app_create(&app);
+    app_init(&app);
     app.glue = &glue;
     glue.a = &app;
 }
 
 END_C
-
-/* typical sequence of events inside same process:
-
-on_create
-  on_start
-    on_resume
-      on_input_queue_created
-      on_native_window_created
-      on_native_window_resized
-      on_content_rect_changed
-      on_native_window_redraw_needed
-      on_window_focus_changed
-      on_window_focus_changed
-    on_pause
-      on_native_window_destroyed
-  on_stop
-      on_input_queued_destroyed
-on_destroy // process is not killed after on_destriy it may continue
-*/

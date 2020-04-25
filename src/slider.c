@@ -24,7 +24,6 @@ static void slider_notify(slider_t* s) {
 
 static int slider_scale(slider_t* s) {
     enum { CTRL_SHIFT = KEYBOARD_CTRL|KEYBOARD_SHIFT };
-//  if (app.trace_flags & APP_TRACE_KEYBOARD) { app_trace_key(s->ui.a->keyboard_flags, 0); }
     return (s->ui.a->keyboard_flags & CTRL_SHIFT) == CTRL_SHIFT     ? 1000 :
            (s->ui.a->keyboard_flags & CTRL_SHIFT) == KEYBOARD_SHIFT ?  100 :
            (s->ui.a->keyboard_flags & CTRL_SHIFT) == KEYBOARD_CTRL  ?   10 : 1;
@@ -111,7 +110,6 @@ static void slider_mouse(ui_t* ui, int mouse_action, float x, float y) {
                 assertion(0 <= ratio && ratio <= 1.0, "ratio=%.3f", ratio);
                 if (range > 0) {
                     int v = (int)(*s->minimum + ratio * range);
-//                  traceln("range=%d ratio=%.3f v=%d", range, ratio, v);
                     assertion(*s->minimum <= v && v <= *s->maximum, "[%d..%d] range=%d ratio=%.3f v=%d", *s->minimum, *s->maximum, range, ratio, v);
                     if (*s->minimum <= v && v <= *s->maximum && v != *s->current) { *s->current = v; slider_notify(s); }
                 }
@@ -150,7 +148,6 @@ static int slider_dec_inc_key(slider_t* s, int flags, int ch) {
 
 static void slider_keyboard(ui_t* ui, int flags, int ch) {
     slider_t* s = (slider_t*)ui;
-//  if (app.trace_flags & APP_TRACE_KEYBOARD) { app_trace_key(flags, ch); }
     int dx = slider_dec_inc_key(s, flags, ch);
     if (dx != 0) {
         int v = *s->current + dx;

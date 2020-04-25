@@ -111,11 +111,9 @@ void ui_dispatch_screen_mouse(ui_t* ui, int mouse_action, float x, float y) {
 }
 
 static void ui_keyboard(ui_t* ui, int flags, int ch) {
-    if (ui->a->trace_flags & APP_TRACE_KEYBOARD) { app_trace_key(flags, ch); }
 }
 
 static void ui_focus(ui_t* ui, bool gain) {
-//  traceln("%p gain=%d", ui, gain);
 }
 
 static pointf_t ui_screen_xy(ui_t* ui) {
@@ -134,14 +132,11 @@ bool ui_set_focus(ui_t* ui, int x, int y) {
         focus_was_set = ui_set_focus(child, x, y);
         child = child->next;
     }
-//  traceln("focus_was_set=%d on children of %p", focus_was_set, ui);
     if (!focus_was_set && ui->focusable) {
         const pointf_t pt = ui->screen_xy(ui);
-//      traceln("%p %.1f,%.1f %.1fx%.1f focusable=%d mouse %d,%d  pt %.1f,%.1f", ui, ui->x, ui->y, ui->w, ui->h, ui->focusable, x, y, pt.x, pt.y);
         focus_was_set = pt.x <= x && x < pt.x + ui->w && pt.y <= y && y < pt.y + ui->h;
         if (focus_was_set) { ui->a->focus(ui->a, ui); }
     }
-//  traceln("focus_was_set=%d on %p", focus_was_set, ui);
     return focus_was_set;
 }
 

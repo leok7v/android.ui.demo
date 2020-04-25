@@ -295,9 +295,6 @@ static float text(dc_t* dc, const colorf_t* c, font_t* f, float x, float y, cons
 }
 
 static void orthographic_projection_2d(mat4x4 m, float x, float y, float w, float h) {
-//  traceln("%.0f,%.0f %.0fx%.0f", x, y, w, h);
-    // this is basically from
-    // http://en.wikipedia.org/wiki/Orthographic_projection_(geometry)
     const float znear = -1;
     const float zfar  =  1;
     const float inv_z =  1 / (zfar - znear);
