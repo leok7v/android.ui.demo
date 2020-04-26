@@ -172,37 +172,38 @@ typedef struct colors_s { // treat all fields as a const
     *white_smoke;
 } colors_t;
 
-const colors_t colors;
-const color_info_t* color_names;
-const int color_names_count;
+extern const colors_t colors;
+extern const color_info_t* color_names;
+extern const int color_names_count;
 
 typedef struct colors_dk_s { // treat all fields as a const
-    const colorf_t* light_blue;
-    const colorf_t* dark_blue;
-    const colorf_t* light_gray;
-    const colorf_t* dark_gray;
-    const colorf_t* gray_text;
+    const colorf_t
+    * light_blue,
+    * dark_blue,
+    * light_gray,
+    * dark_gray,
+    * gray_text;
 } colors_dk_t;
 
 typedef struct colors_nc_s { // treat all fields as a const
     // "Norton Commander" palette see:
     // https://en.wikipedia.org/wiki/Norton_Commander#/media/File:Norton_Commander_5.51.png
-    const colorf_t* dark_blue;    // background color
-    const colorf_t* light_blue;   // light bluemain text color
-    const colorf_t* dirty_gold;   // selection and labels color
-    const colorf_t* light_gray;   // keyboard menu color (on black)
-    const colorf_t* teal;         // keyboard menu labels background (on almost black)
-    const colorf_t* darker_blue;  // darker blue
-    const colorf_t* almost_black; // keyboard menu text (on teal)
+    const colorf_t
+    * dark_blue,    // background color
+    * light_blue,   // light bluemain text color
+    * dirty_gold,   // selection and labels color
+    * light_gray,   // keyboard menu color (on black)
+    * teal,         // keyboard menu labels background (on almost black)
+    * darker_blue,  // darker blue
+    * almost_black; // keyboard menu text (on teal)
 } colors_nc_t;
 
-const colors_dk_t colors_dk;
-const color_info_t* color_dk_names;
-const int color_dk_names_count;
+extern const colors_dk_t colors_dk;
+extern const color_info_t* color_dk_names;
+extern const int color_dk_names_count;
 
-const colors_nc_t colors_nc;
-const color_info_t* color_nc_names;
-const int color_nc_names_count;
-
+extern const colors_nc_t colors_nc;
+extern const color_info_t* color_nc_names;
+extern const int color_nc_names_count;
 
 END_C

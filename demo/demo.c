@@ -326,8 +326,8 @@ static void shown(app_t* a) {
         bitmap_allocate_and_update_texture(&app->bitmaps[i]);
     }
     init_ui(app);
-    toast_t* t = toast(a);
-    t->print(t, "resolution\n%.0fx%.0fpx", a->root.w, a->root.h);
+//  toast_t* t = toast(a);
+//  t->print(t, "resolution\n%.0fx%.0fpx", a->root.w, a->root.h);
 }
 
 static void hidden(app_t* a) {
@@ -335,7 +335,7 @@ static void hidden(app_t* a) {
     // Application/activity is detached from the window.
     // Window surface may be different next time application is shown()
     // On Android application may continue running.
-    toast(a)->cancel(toast(a));
+//  toast(a)->cancel(toast(a));
     app->ui_textures.done(&app->ui_textures);
     app->ui_glyphs.done(&app->ui_glyphs);
     app->ui_ascii.done(&app->ui_ascii);

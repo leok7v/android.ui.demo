@@ -32,7 +32,7 @@ typedef struct dc_s { // draw commands/context
     void (*ring)(dc_t* dc, const colorf_t* color, float x, float y, float radius, float inner);
     void (*bblt)(dc_t* dc, const bitmap_t* bitmap, float x, float y);
     void (*luma)(dc_t* dc, const colorf_t* color, bitmap_t* bitmap, float x, float y);
-    void (*quad)(dc_t* dc, const colorf_t* color, bitmap_t* bitmap, quadf_t* quads, int count);
+    void (*tex4)(dc_t* dc, const colorf_t* color, bitmap_t* bitmap, quadf_t* quads, int count);
     void (*poly)(dc_t* dc, const colorf_t* color, const pointf_t* vertices, int count); // filled with TRIANGLE_FAN
     void (*line)(dc_t* dc, const colorf_t* c, float x0, float y0, float x1, float y1, float thickness);
     float(*text)(dc_t* dc, const colorf_t* color, font_t* font, float x, float y, const char* text, int count);
@@ -41,6 +41,6 @@ typedef struct dc_s { // draw commands/context
     mat4x4 mvp; // model * view * projection
 } dc_t;
 
-dc_t dc;
+extern dc_t dc;
 
 END_C

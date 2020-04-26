@@ -67,23 +67,23 @@
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">
     <AntPackage>
-      <AndroidAppLibName>ui.demo</AndroidAppLibName>
+      <AndroidAppLibName>demo</AndroidAppLibName>
     </AntPackage>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">
     <AntPackage>
-      <AndroidAppLibName>ui.demo</AndroidAppLibName>
+      <AndroidAppLibName>demo</AndroidAppLibName>
       <AntTarget>debug</AntTarget>
     </AntPackage>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">
     <AntPackage>
-      <AndroidAppLibName>ui.demo</AndroidAppLibName>
+      <AndroidAppLibName>demo</AndroidAppLibName>
     </AntPackage>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM'">
     <AntPackage>
-      <AndroidAppLibName>ui.demo</AndroidAppLibName>
+      <AndroidAppLibName>demo</AndroidAppLibName>
       <AntTarget>debug</AntTarget>
     </AntPackage>
   </ItemDefinitionGroup>
@@ -112,7 +112,7 @@
     <Content Include="res\values\strings.xml" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="ui.demo.vcxproj" />
+    <ProjectReference Include="..\msvc\demo.vcxproj" />
   </ItemGroup>
   <Import Project="$(AndroidTargetsPath)\Android.targets" />
   <ImportGroup Label="ExtensionTargets" />

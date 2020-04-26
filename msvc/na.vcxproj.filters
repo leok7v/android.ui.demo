@@ -1,0 +1,39 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="..\droid\app_droid.c">
+      <Filter>droid</Filter>
+    </ClCompile>
+    <ClCompile Include="..\droid\droid_jni.c">
+      <Filter>droid</Filter>
+    </ClCompile>
+    <ClCompile Include="..\droid\droid_keys.c">
+      <Filter>droid</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\rt.c">
+      <Filter>src</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="droid">
+      <UniqueIdentifier>{938debf5-db12-4b42-a90d-7703557ff702}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="inc">
+      <UniqueIdentifier>{058b27ef-af7b-457d-bb80-7bdd5459bcdb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src">
+      <UniqueIdentifier>{40799e1b-7400-4dad-ad16-73a4d1d8c742}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\inc\rt.h">
+      <Filter>inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\droid\droid_jni.h">
+      <Filter>droid</Filter>
+    </ClInclude>
+    <ClInclude Include="..\droid\droid_keys.h">
+      <Filter>droid</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>

@@ -26,7 +26,7 @@ static void rect(dc_t* dc, const colorf_t* color, float x, float y, float w, flo
 static void ring(dc_t* dc, const colorf_t* color, float x, float y, float radius, float inner);
 static void bblt(dc_t* dc, const bitmap_t* bitmap, float x, float y);
 static void luma(dc_t* dc, const colorf_t* color, bitmap_t* bitmap, float x, float y);
-static void quad(dc_t* dc, const colorf_t* color, bitmap_t* bitmap, quadf_t* quads, int count);
+static void tex4(dc_t* dc, const colorf_t* color, bitmap_t* bitmap, quadf_t* quads, int count);
 static void poly(dc_t* dc, const colorf_t* color, const pointf_t* vertices, int count);
 static void line(dc_t* dc, const colorf_t* c, float x0, float y0, float x1, float y1, float thickness);
 static float text(dc_t* dc, const colorf_t* color, font_t* font, float x, float y, const char* text, int count);
@@ -45,7 +45,7 @@ dc_t dc = {
     ring,
     bblt,
     luma,
-    quad,
+    tex4,
     poly,
     line,
     text,
@@ -227,7 +227,7 @@ static void luma(dc_t* dc, const colorf_t* color, bitmap_t* bitmap, float x, flo
     gl_check(glDrawArrays(GL_TRIANGLE_FAN, 0, 4));
 }
 
-static void quad(dc_t* dc, const colorf_t* color, bitmap_t* bitmap, quadf_t* quads, int count) {
+static void tex4(dc_t* dc, const colorf_t* color, bitmap_t* bitmap, quadf_t* quads, int count) {
     use_program(shaders.luma);
     gl_check(glUniformMatrix4fv(shaders.luma_mvp, 1, false, (GLfloat*)dc->mvp));
     gl_check(glUniform4fv(shaders.luma_rgba, 1, (GLfloat*)color));
@@ -290,7 +290,7 @@ static float text(dc_t* dc, const colorf_t* c, font_t* f, float x, float y, cons
         quadf_t q2 = {q.x1, q.y1, q.s1, q.t1}; quads[k++] = q2;
         quadf_t q3 = {q.x0, q.y1, q.s0, q.t1}; quads[k++] = q3;
     }
-    dc->quad(dc, c, &f->atlas, quads, n * 4);
+    dc->tex4(dc, c, &f->atlas, quads, n);
     return x;
 }
 
