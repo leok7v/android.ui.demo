@@ -17,6 +17,8 @@
 
 BEGIN_C
 
+static uint32_t gl_version; // 0x0003002 for 3.2
+
 static void init(dc_t* dc);
 static void viewport(dc_t* dc, float x, float y, float w, float h);
 static void dispose(dc_t* dc);
@@ -53,11 +55,11 @@ dc_t dc = {
     stadium,
 };
 
-static void init(dc_t* dc) {
+static uint32_t get_gl_version() {
     const char* version = (const char*)glGetString(GL_VERSION); (void)version;
     int major = 0;
     int minor = 0;
-#if defined(GL_MAJOR_VERSION) && defined(GL_MINOR_VERSION) // GLES3
+#if defined(GL_MAJOR_VERSION) && defined(GL_MINOR_VERSION) // only in GLES3
     glGetIntegerv(GL_MAJOR_VERSION, &major);
     glGetIntegerv(GL_MINOR_VERSION, &minor);
     bool got_version = glGetError() == 0;
@@ -71,7 +73,14 @@ static void init(dc_t* dc) {
         while (*p != 0 && !isdigit(*p)) { p++; }
         if (p != 0) { sscanf(p, "%d.%d", &major, &minor); }
     }
-//  traceln("GL_VERSION=%d.%d %s", major, minor, version);
+    if (major < 1) {
+        traceln("unsupported GL_VERSION=%d.%d %s", major, minor, version); exit(1);
+    }
+    return major << 16 | minor;
+}
+
+static void init(dc_t* dc) {
+    gl_version = get_gl_version();
     gl_check(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST));
     gl_check(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST));
     gl_check(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
