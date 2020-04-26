@@ -31,6 +31,10 @@
 
 BEGIN_C
 
+#if !(ANDROID_API > 0)
+#pragma message("Invalid ANDROID_API '" __STR(ANDROID_API)) "'"
+#endif
+
 typedef struct glue_s glue_t;
 
 static void  app_quit(app_t* app);
@@ -247,8 +251,14 @@ static int init_display(glue_t* glue) {
     uint32_t format = AHARDWAREBUFFER_FORMAT_R8G8B8A8_UNORM;
     ANativeWindow_setBuffersGeometry(glue->window, 0, 0, format);
     EGLSurface surface = eglCreateWindowSurface(display, config, glue->window, null);
-    const EGLint context_attributes[] = { EGL_CONTEXT_CLIENT_VERSION, 3, EGL_NONE };
-    EGLContext context = eglCreateContext(display, config, null, context_attributes);
+    EGLContext context = EGL_NO_CONTEXT;
+    for (int gles = 3; gles >= 2; gles--) {
+        EGLint context_attributes[] = { EGL_CONTEXT_CLIENT_VERSION, gles, EGL_NONE };
+        context = eglCreateContext(display, config, null, context_attributes);
+    }
+    if (context == EGL_NO_CONTEXT) {
+        traceln("eglCreateContext() failed"); exit(1);
+    }
     if (eglMakeCurrent(display, surface, surface, context) == EGL_FALSE) {
         traceln("eglMakeCurrent() failed");
         return -1;
@@ -840,16 +850,24 @@ static void init_looper(glue_t* glue, ANativeActivity* na) {
 
 static void init_accelerometer(glue_t* glue) {
     assert(glue->sensor_manager == null);
+#if ANDROID_API >= 26
     glue->sensor_manager = ASensorManager_getInstanceForPackage("app-droid");
+#else
+    #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+    glue->sensor_manager = ASensorManager_getInstance();
+    #pragma GCC diagnostic warning "-Wdeprecated-declarations"
+#endif
     assert(glue->accelerometer_sensor == null);
     glue->accelerometer_sensor = ASensorManager_getDefaultSensor(glue->sensor_manager,
         ASENSOR_TYPE_ACCELEROMETER);
     assert(glue->sensor_event_queue == null);
     glue->sensor_event_queue = ASensorManager_createEventQueue(glue->sensor_manager,
         glue->looper, LOOPER_ID_ACCEL, looper_callback, &glue->accel_poll_source);
+#if ANDROID_API >= 26
     int us = ASensor_getMinDelay(glue->accelerometer_sensor); // microseconds
     ASensorEventQueue_registerSensor(glue->sensor_event_queue,
         glue->accelerometer_sensor, us, 0); // 0 means "streaming"
+#endif
 }
 
 static void init_state(glue_t* glue, const void* data, int bytes) {
