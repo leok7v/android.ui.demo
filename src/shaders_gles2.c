@@ -10,10 +10,11 @@
 */
 #include "shaders.h"
 #include "glh.h"
+#include "rt.h"
 #include <GLES/gl.h>
 #include <GLES3/gl3.h>
 
-BEGIN_C
+begin_c
 
 // to move to gles 3.2:
 //  #version 320 es
@@ -244,4 +245,4 @@ void shaders_dispose() { // glDeleteProgram(0) is legal NOOP
     memset(&shaders, 0, sizeof(shaders));
 }
 
-END_C
+end_c

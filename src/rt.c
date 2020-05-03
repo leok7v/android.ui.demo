@@ -10,7 +10,7 @@
    language governing permissions and limitations under the License.
 */
 
-BEGIN_C
+begin_c
 
 static int logln(const char* filename, int line, const char* function, const char* format, va_list vl) {
     int r = 0;
@@ -56,4 +56,4 @@ int strzt(char* text, int count, int call) {
     return call;
 }
 
-END_C
+end_c

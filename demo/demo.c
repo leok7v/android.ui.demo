@@ -11,12 +11,13 @@
 #include "app.h"
 #include "dc.h"
 #include "button.h"
+#include "button.h"
 #include "slider.h"
 #include "toast.h"
 #include "screen_writer.h"
 #include "shaders.h"
 
-BEGIN_C
+begin_c
 
 static const char* SLIDER1_LABEL = "Slider1: %-3d";
 static const char* SLIDER2_LABEL = "Slider2: %-3d";
@@ -28,7 +29,7 @@ enum {
     HORIZONTAL_GAP_PT   =   8
 };
 
-typedef struct application_s {
+typedef struct {
     app_t* a;
     int font_height_px;
     font_t font;    // default UI font
@@ -54,36 +55,36 @@ typedef struct application_s {
     int  slider2_maximum;
     int  slider2_current;
     char slider2_label[64];
-} application_t;
+} demo_t;
 
 static inline_c float pt2px(app_t* a, float pt) { return pt * a->xdpi / 72.0f; }
 
-static void init_button(application_t* app, button_t* b, float x, float y, int key_flags, int key,
+static void init_button(demo_t* d, button_t* b, float x, float y, int key_flags, int key,
                                const char* mnemonic, const char* label, void (*click)(button_t* ui)) {
-    app_t* a = app->a;
-    const float lw = font_text_width(&app->font, label, -1) + app->font.em;
+    app_t* a = d->a;
+    const float lw = font_text_width(&d->font, label, -1) + d->font.em;
     const float bw = max(lw, pt2px(a, MIN_BUTTON_WIDTH_PT));
-    const float bh = app->font.height * app->a->theme.ui_height;
-    button_init(b, &app->ui_content, app, key_flags, key, mnemonic, label, x, y, bw, bh);
-    b->ui.that = app;
+    const float bh = d->font.height * d->a->theme.ui_height;
+    button_init(b, &d->ui_content, d, key_flags, key, mnemonic, label, x, y, bw, bh);
+    b->ui.that = d;
     b->click = click;
 }
 
 static void slider_notify(slider_t* s) {
-    application_t* app = (application_t*)s->ui.a->that;
-    if (s == &app->slider1) {
-        snprintf0(app->slider1_label, SLIDER1_LABEL, app->slider1_current);
-    } else if (s == &app->slider2) {
-        snprintf0(app->slider2_label, SLIDER2_LABEL, app->slider2_current);
+    demo_t* d = (demo_t*)s->ui.a->that;
+    if (s == &d->slider1) {
+        snprintf0(d->slider1_label, SLIDER1_LABEL, d->slider1_current);
+    } else if (s == &d->slider2) {
+        snprintf0(d->slider2_label, SLIDER2_LABEL, d->slider2_current);
     }
 }
 
-static void init_slider(application_t* app, slider_t* s, float x, float y, const char* label,
+static void init_slider(demo_t* d, slider_t* s, float x, float y, const char* label,
                         int* minimum, int* maximum, int* current) {
-    float fh = app->font.height;
-    float w = font_text_width(&app->font, label, -1) + app->font.em * 2;
-    slider_init(s, &app->ui_content, app, label, x, y, w, fh, minimum, maximum, current);
-    s->ui.that = app;
+    float fh = d->font.height;
+    float w = font_text_width(&d->font, label, -1) + d->font.em * 2;
+    slider_init(s, &d->ui_content, d, label, x, y, w, fh, minimum, maximum, current);
+    s->ui.that = d;
     s->notify = slider_notify;
 }
 
@@ -92,18 +93,18 @@ static void textures_mouse(ui_t* ui, int flags, float x, float y) {
 }
 
 static void test(ui_t* ui) {
-    application_t* app = (application_t*)ui->a->that;
+    demo_t* d = (demo_t*)ui->a->that;
     const float w = ui->w;
     const float h = ui->h;
     pointf_t vertices0[] = { {1, 1}, {1 + 99, 1},  {1, 1 + 99} };
     pointf_t vertices1[] = { {w - 2, h - 2}, {w - 2, h - 2 - 99},  {w - 2 - 99, h - 2} };
     dc.poly(&dc, colors.red,   vertices0, countof(vertices0));
     dc.poly(&dc, colors.green, vertices1, countof(vertices1));
-    dc.fill(&dc, colors.black, 100, 100, app->bitmaps[2].w, app->bitmaps[2].h);
-    dc.bblt(&dc, &app->bitmaps[2], 100, 100);
+    dc.fill(&dc, colors.black, 100, 100, d->bitmaps[2].w, d->bitmaps[2].h);
+    dc.bblt(&dc, &d->bitmaps[2], 100, 100);
     colorf_t green = *colors.green;
     green.a = 0.75; // translucent
-    dc.luma(&dc, &green, &app->font.atlas, 100, 100);
+    dc.luma(&dc, &green, &d->font.atlas, 100, 100);
     dc.rect(&dc, colors.white, 100, 100, w - 200, h - 200, 4);
     float x = w / 2;
     float y = h / 2;
@@ -112,8 +113,8 @@ static void test(ui_t* ui) {
     dc.ring(&dc, colors.white, x, y, r, r / 2);
     colorf_t c = *colors.green; c.a = 0.50;
     dc.fill(&dc, &c, x - r / 2, y - r / 2, r, r);
-    dc.text(&dc, colors.white, &app->font, 500, 500, "Hello World", strlen("Hello World"));
-    dc.text(&dc, colors.white, &app->font, 560, 560, "ABC", strlen("ABC"));
+    dc.text(&dc, colors.white, &d->font, 500, 500, "Hello World", strlen("Hello World"));
+    dc.text(&dc, colors.white, &d->font, 560, 560, "ABC", strlen("ABC"));
     dc.line(&dc, colors.red, w / 2 - 100, h / 2, w / 2 + 100, h / 2 + 100, 10);
     c = *colors_nc.dirty_gold;  c.a = 0.75;
     dc.line(&dc, &c, 0, 0, w, h, 4);
@@ -132,17 +133,17 @@ static void test(ui_t* ui) {
 }
 
 static void content_mouse(ui_t* ui, int mouse_action, float x, float y) {
-    application_t* app = (application_t*)ui->a->that;
-    if ((mouse_action & MOUSE_LBUTTON_UP) && app->testing) {
-        app->testing = false;
+    demo_t* d = (demo_t*)ui->a->that;
+    if ((mouse_action & MOUSE_LBUTTON_UP) && d->testing) {
+        d->testing = false;
         ui->a->invalidate(ui->a);
     }
 }
 
 static void content_draw(ui_t* ui) {
-    application_t* app = (application_t*)ui->a->that;
+    demo_t* d = (demo_t*)ui->a->that;
     dc.clear(&dc, colors_nc.dark_blue);
-    if (app->testing) {
+    if (d->testing) {
         test(ui);
     } else {
         ui->draw_children(ui);
@@ -150,8 +151,8 @@ static void content_draw(ui_t* ui) {
 }
 
 static void glyphs_draw(ui_t* ui) {
-    application_t* app = (application_t*)ui->a->that;
-    font_t* f = &app->font;
+    demo_t* d = (demo_t*)ui->a->that;
+    font_t* f = &d->font;
     float x = ui->x + 0.5;
     float y = ui->y + 0.5;
     dc.luma(&dc, colors.white, &f->atlas, x, y);
@@ -159,12 +160,12 @@ static void glyphs_draw(ui_t* ui) {
 }
 
 static void ascii_draw(ui_t* ui) {
-    application_t* app = (application_t*)ui->a->that;
+    demo_t* d = (demo_t*)ui->a->that;
     float x = ui->x + 0.5;
     float y = ui->y + 0.5;
     char text[97] = {};
     for (int i = 0; i < 96; i++) { text[i] = 32 + i; }
-    screen_writer_t sw = screen_writer(x, y, app->a->theme.font, colors.green);
+    screen_writer_t sw = screen_writer(x, y, d->a->theme.font, colors.green);
     for (int i = 0; i < countof(text); i += 24) {
         sw.println(&sw, "%-24.24s", &text[i]);
     }
@@ -172,10 +173,10 @@ static void ascii_draw(ui_t* ui) {
 }
 
 static void textures_draw(ui_t* ui) {
-    application_t* app = (application_t*)ui->a->that;
+    demo_t* d = (demo_t*)ui->a->that;
     dc.line(&dc, colors.white, 0.5, 0.5, 0.5, 240 + 2.5, 1);
-    for (int i = 0; i < countof(app->bitmaps); i++) {
-        bitmap_t* b = &app->bitmaps[i];
+    for (int i = 0; i < countof(d->bitmaps); i++) {
+        bitmap_t* b = &d->bitmaps[i];
         float x = i * (b->w + 1.5);
         dc.bblt(&dc, b, x + 1.5, 1.5);
         dc.line(&dc, colors.white, x + b->w + 1.5, 1.5, x + b->w + 1.5, b->h + 1.5, 1.5);
@@ -186,87 +187,87 @@ static void textures_draw(ui_t* ui) {
 }
 
 static void on_quit(button_t* b) {
-    application_t* app = (application_t*)b->ui.a->that;
-    app->a->quit(app->a);
+    demo_t* d = (demo_t*)b->ui.a->that;
+    d->a->quit(d->a);
 }
 
 static void on_exit(button_t* b) {
-    application_t* app = (application_t*)b->ui.a->that;
-    app->a->exit(app->a, 153); // gdb shows octal 0o231 exit status for some reason...
+    demo_t* d = (demo_t*)b->ui.a->that;
+    d->a->exit(d->a, 153); // gdb shows octal 0o231 exit status for some reason...
 }
 
 static void on_glyphs(button_t* b) {
-    application_t* app = (application_t*)b->ui.a->that;
-    b->ui.a->show_keyboard(b->ui.a, !app->ui_glyphs.hidden);
+    demo_t* d = (demo_t*)b->ui.a->that;
+    b->ui.a->show_keyboard(b->ui.a, !d->ui_glyphs.hidden);
 }
 
 static void on_test(button_t* b) {
     b->ui.a->invalidate(b->ui.a);
 }
 
-static void init_ui(application_t* app) {
-    ui_t* content = &app->ui_content;
-    app->a->root.init(content, &app->a->root, app, 0, 0, app->a->root.w, app->a->root.h);
-    float vgap = pt2px(app->a, VERTICAL_GAP_PT);
-    float hgap = pt2px(app->a, HORIZONTAL_GAP_PT);
-    float bh = app->font.height * 3 / 2; // button height
+static void init_ui(demo_t* d) {
+    ui_t* content = &d->ui_content;
+    d->a->root.init(content, &d->a->root, d, 0, 0, d->a->root.w, d->a->root.h);
+    float vgap = pt2px(d->a, VERTICAL_GAP_PT);
+    float hgap = pt2px(d->a, HORIZONTAL_GAP_PT);
+    float bh = d->font.height * 3 / 2; // button height
     float y = 240 + vgap;
-    init_button(app, &app->quit,   10, y, 0, 'q', "Q", "Quit", on_quit);      y += bh + vgap;
-    init_button(app, &app->exit,   10, y, 0, 'e', "E", "Exit(153)", on_exit); y += bh + vgap;
-    init_button(app, &app->test,   10, y, 0, 'x', "X", "Test", on_test);      y += bh + vgap;
-    init_button(app, &app->glyphs, 10, y, 0, 'x', "X", "Glyphs", on_glyphs);  y += bh + vgap;
-    int x = app->glyphs.ui.w + hgap * 4;
+    init_button(d, &d->quit,   10, y, 0, 'q', "Q", "Quit", on_quit);      y += bh + vgap;
+    init_button(d, &d->exit,   10, y, 0, 'e', "E", "Exit(153)", on_exit); y += bh + vgap;
+    init_button(d, &d->test,   10, y, 0, 'x', "X", "Test", on_test);      y += bh + vgap;
+    init_button(d, &d->glyphs, 10, y, 0, 'x', "X", "Glyphs", on_glyphs);  y += bh + vgap;
+    int x = d->glyphs.ui.w + hgap * 4;
     y = 240 + vgap;
-    app->slider1_minimum = 0;
-    app->slider1_maximum = 255;
-    app->slider1_current = 240;
-    snprintf0(app->slider1_label, SLIDER1_LABEL, app->slider1_current);
-    init_slider(app, &app->slider1, x, y, app->slider1_label, &app->slider1_minimum, &app->slider1_maximum, &app->slider1_current);
+    d->slider1_minimum = 0;
+    d->slider1_maximum = 255;
+    d->slider1_current = 240;
+    snprintf0(d->slider1_label, SLIDER1_LABEL, d->slider1_current);
+    init_slider(d, &d->slider1, x, y, d->slider1_label, &d->slider1_minimum, &d->slider1_maximum, &d->slider1_current);
     y += bh + vgap;
-    app->slider2_minimum = 0;
-    app->slider2_maximum = 1023;
-    app->slider2_current = 512;
-    snprintf0(app->slider2_label, SLIDER2_LABEL, app->slider2_current);
-    init_slider(app, &app->slider2, x, y, app->slider2_label, &app->slider2_minimum, &app->slider2_maximum, &app->slider2_current);
+    d->slider2_minimum = 0;
+    d->slider2_maximum = 1023;
+    d->slider2_current = 512;
+    snprintf0(d->slider2_label, SLIDER2_LABEL, d->slider2_current);
+    init_slider(d, &d->slider2, x, y, d->slider2_label, &d->slider2_minimum, &d->slider2_maximum, &d->slider2_current);
     y += bh + vgap;
-    content->init(&app->ui_glyphs, content, app, x, y, app->font.atlas.w, app->font.atlas.h);
-    app->ui_glyphs.draw = glyphs_draw;
-    app->ui_glyphs.hidden = true;
-    app->test.flip = &app->testing;
-    app->glyphs.flip = &app->ui_glyphs.hidden;
-    app->glyphs.inverse = true; // because flip point to hidden not to `shown` in the absence of that bit
-    y += app->font.atlas.h;
-    content->init(&app->ui_ascii, content, app, 0, y, app->font.em * 26, app->font.em * 4);
-    app->ui_ascii.draw = ascii_draw;
+    content->init(&d->ui_glyphs, content, d, x, y, d->font.atlas.w, d->font.atlas.h);
+    d->ui_glyphs.draw = glyphs_draw;
+    d->ui_glyphs.hidden = true;
+    d->test.flip = &d->testing;
+    d->glyphs.flip = &d->ui_glyphs.hidden;
+    d->glyphs.inverse = true; // because flip point to hidden not to `shown` in the absence of that bit
+    y += d->font.atlas.h;
+    content->init(&d->ui_ascii, content, d, 0, y, d->font.em * 26, d->font.em * 4);
+    d->ui_ascii.draw = ascii_draw;
     content->draw  = content_draw;
     content->mouse = content_mouse;
-    content->init(&app->ui_textures, content, app, 0, 0, 320 * 3 + 4, 240 + 2);
-    app->ui_textures.mouse = textures_mouse;
-    app->ui_textures.draw = textures_draw;
+    content->init(&d->ui_textures, content, d, 0, 0, 320 * 3 + 4, 240 + 2);
+    d->ui_textures.mouse = textures_mouse;
+    d->ui_textures.draw = textures_draw;
 }
 
-static void load_font(application_t* app) {
+static void load_font(demo_t* d) {
     int r = 0;
-    int hpx = (int)(pt2px(app->a, FONT_HEIGHT_PT) + 0.5); // font height in pixels
-    if (hpx != app->font.height) {
-        if (app->font.atlas.data != null) { font_dispose(&app->font); }
+    int hpx = (int)(pt2px(d->a, FONT_HEIGHT_PT) + 0.5); // font height in pixels
+    if (hpx != d->font.height) {
+        if (d->font.atlas.data != null) { font_dispose(&d->font); }
         // https://en.wikipedia.org/wiki/Liberation_fonts https://github.com/liberationfonts
         // https://github.com/liberationfonts/liberation-fonts/releases
         // Useful: https://www.glyphrstudio.com/online/ and https://convertio.co/otf-ttf/
         // https://github.com/googlefonts/noto-fonts/tree/master
-        r = font_load_asset(&app->font, app->a, "liberation-mono-bold-ascii.ttf", hpx, 32, 98);
+        r = font_load_asset(&d->font, d->a, "liberation-mono-bold-ascii.ttf", hpx, 32, 98);
         assert(r == 0); (void)r;
     }
-    r = bitmap_allocate_and_update_texture(&app->font.atlas);
+    r = bitmap_allocate_and_update_texture(&d->font.atlas);
     assert(r == 0);
     if (r != 0) { exit(r); } // fatal
 }
 
-static void init_theme(application_t* app) {
+static void init_theme(demo_t* d) {
     static colorf_t light_gray_alpha_0_60;
     light_gray_alpha_0_60 = *colors.light_gray; light_gray_alpha_0_60.a = 0.6;
-    theme_t* th = &app->a->theme;
-    th->font = &app->font;
+    theme_t* th = &d->a->theme;
+    th->font = &d->font;
     th->ui_height = 1.5; // 150% of font height in pixels for UI elements height
     th->color_text                = colors_nc.light_blue;
     th->color_background          = colors_nc.teal;
@@ -307,28 +308,33 @@ static int create_gl_program(app_t* a, const char* name, int *program) {
     return r;
 }
 
-static void resized(app_t* a) {
+static void resized(app_t* a, int x, int y, int w, int h) {
     // both model and view matricies are identity:
-    dc.viewport(&dc, a->root.x, a->root.y, a->root.w, a->root.h);
-    a->invalidate(a);
+    ui_t* root = &a->root;
+    root->x = x;
+    root->y = y;
+    root->w = w;
+    root->h = h;
+    dc.viewport(&dc, root->x, root->y, root->w, root->h);
+    // no need to call invalidate() caller will do it
 }
 
 static void shown(app_t* a, int w, int h) {
     a->root.w = w;
     a->root.h = h;
     dc.init(&dc);
-    resized(a);
-    application_t* app = (application_t*)a->that;
-    load_font(app);
+    resized(a, 0, 0, w, h);
+    demo_t* d = (demo_t*)a->that;
+    load_font(d);
     (void)create_gl_program;
-//  int r = create_gl_program(a, "main", &app->program_main);
+//  int r = create_gl_program(a, "main", &d->program_main);
     int r = shaders_init();
     assert(r == 0);
-    init_theme(app);
-    for (int i = 0; i < countof(app->bitmaps); i++) {
-        bitmap_allocate_and_update_texture(&app->bitmaps[i]);
+    init_theme(d);
+    for (int i = 0; i < countof(d->bitmaps); i++) {
+        bitmap_allocate_and_update_texture(&d->bitmaps[i]);
     }
-    init_ui(app);
+    init_ui(d);
 //  toast_t* t = toast(a);
 //  t->print(t, "resolution\n%.0fx%.0fpx", a->root.w, a->root.h);
 }
@@ -339,24 +345,24 @@ static void draw(app_t* a) {
 }
 
 static void hidden(app_t* a) {
-    application_t* app = (application_t*)a->that;
+    demo_t* d = (demo_t*)a->that;
     // Application/activity is detached from the window.
     // Window surface may be different next time application is shown()
     // On Android application may continue running.
 //  toast(a)->cancel(toast(a));
-    app->ui_textures.done(&app->ui_textures);
-    app->ui_glyphs.done(&app->ui_glyphs);
-    app->ui_ascii.done(&app->ui_ascii);
-    app->ui_content.done(&app->ui_content);
-    button_done(&app->quit);
-    button_done(&app->exit);
-    button_done(&app->glyphs);
-    button_done(&app->test);
-    slider_done(&app->slider1);
-    slider_done(&app->slider2);
-    bitmap_deallocate_texture(&app->font.atlas);
-    for (int i = 0; i < countof(app->bitmaps); i++) { bitmap_deallocate_texture(&app->bitmaps[i]); }
-//  shader_program_dispose(app->program_main);   app->program_main = 0;
+    d->ui_textures.done(&d->ui_textures);
+    d->ui_glyphs.done(&d->ui_glyphs);
+    d->ui_ascii.done(&d->ui_ascii);
+    d->ui_content.done(&d->ui_content);
+    button_done(&d->quit);
+    button_done(&d->exit);
+    button_done(&d->glyphs);
+    button_done(&d->test);
+    slider_done(&d->slider1);
+    slider_done(&d->slider2);
+    bitmap_deallocate_texture(&d->font.atlas);
+    for (int i = 0; i < countof(d->bitmaps); i++) { bitmap_deallocate_texture(&d->bitmaps[i]); }
+//  shader_program_dispose(d->program_main);   d->program_main = 0;
     shaders_dispose();
     dc.dispose(&dc);
 }
@@ -371,21 +377,23 @@ static void resume(app_t* a) {
 }
 
 static void init(app_t* a) { // init application
-    application_t* app = (application_t*)a->that;
-    a->root.that = &app;
-    if (app->bitmaps[0].data == null) {
-        bitmap_load_asset(&app->bitmaps[0], a, "cube-320x240.png");
-        bitmap_load_asset(&app->bitmaps[1], a, "geometry-320x240.png");
-        bitmap_load_asset(&app->bitmaps[2], a, "machine-320x240.png");
+    demo_t* d = (demo_t*)a->that;
+    a->root.that = &d;
+    app.root   = *ui_if;
+    app.root.a = a;
+    if (d->bitmaps[0].data == null) {
+        bitmap_load_asset(&d->bitmaps[0], a, "cube-320x240.png");
+        bitmap_load_asset(&d->bitmaps[1], a, "geometry-320x240.png");
+        bitmap_load_asset(&d->bitmaps[2], a, "machine-320x240.png");
     }
 }
 
 static void done(app_t* a) {
-    application_t* app = (application_t*)a->that;
-    for (int i = 0; i < countof(app->bitmaps); i++) {
-        bitmap_dispose(&app->bitmaps[i]);
+    demo_t* d = (demo_t*)a->that;
+    for (int i = 0; i < countof(d->bitmaps); i++) {
+        bitmap_dispose(&d->bitmaps[i]);
     }
-    font_dispose(&app->font);
+    font_dispose(&d->font);
 }
 
 static bool dispatch_keyboard_shortcuts(ui_t* p, int flags, int keycode) {
@@ -422,11 +430,25 @@ static void key(app_t* a, int flags, int keycode) {
     }
 }
 
-static application_t application;
+static void touch(app_t* a, int index, int action, int x, int y) {
+    if (index == 0) {
+        if (action & MOUSE_LBUTTON_DOWN) {
+            if (!ui_set_focus(&a->root, x, y)) {
+                a->focus(a, null); // kill focus if no focusable components were found
+            }
+        }
+        ui_dispatch_mouse(&a->root, action, x, y);
+        ui_dispatch_screen_mouse(&a->root, action, x, y);
+    } else {
+        // multi-touch gesture recognizer goes here
+    }
+}
+
+static demo_t demo;
 
 void app_init() {
-    app.that = &application;
-    application.a = &app;
+    demo.a      = &app;
+    app.that    = &demo;
     app.init    = init;
     app.shown   = shown;
     app.draw    = draw;
@@ -437,6 +459,7 @@ void app_init() {
     app.resume  = resume;
     app.done    = done;
     app.key     = key;
+    app.touch   = touch;
 }
 
-END_C
+end_c

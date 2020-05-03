@@ -9,11 +9,12 @@
    CONDITIONS OF ANY KIND, either express or implied. See the License for the specific
    language governing permissions and limitations under the License.
 */
-#include "color.h"
+#include "c.h"
 
-BEGIN_C
+begin_c
 
 typedef struct font_s font_t;
+typedef struct colorf_s colorf_t;
 
 typedef struct theme_s { // UI theme attributes
     font_t* font;
@@ -32,4 +33,4 @@ typedef struct theme_s { // UI theme attributes
     const colorf_t* color_toast_background;
 } theme_t;
 
-END_C
+end_c

@@ -14,7 +14,7 @@
 #include "font.h"
 #include "linmath.h"
 
-BEGIN_C
+begin_c
 
 typedef struct pointf_s { float x; float y; } packed pointf_t;
 typedef struct rectf_s  { float x; float y; float w; float h; } packed rectf_t;
@@ -43,4 +43,4 @@ typedef struct dc_s { // draw commands/context
 
 extern dc_t dc;
 
-END_C
+end_c

@@ -9,9 +9,9 @@
    CONDITIONS OF ANY KIND, either express or implied. See the License for the specific
    language governing permissions and limitations under the License.
 */
-#include "rt.h"
+#include "c.h"
 
-BEGIN_C
+begin_c
 
 enum { // gl_shader_source_t.type
     GL_SHADER_VERTEX = 0,
@@ -51,4 +51,4 @@ extern shaders_t shaders;
 int  shaders_init();
 void shaders_dispose();
 
-END_C
+end_c

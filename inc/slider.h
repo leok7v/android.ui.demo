@@ -11,7 +11,7 @@
 */
 #include "ui.h"
 
-BEGIN_C
+begin_c
 
 typedef struct slider_s slider_t;
 
@@ -33,4 +33,4 @@ void slider_init(slider_t* s, ui_t* parent, void* that,
 
 void slider_done(slider_t* s);
 
-END_C
+end_c

@@ -12,7 +12,7 @@
 #include "slider.h"
 #include "app.h"
 
-BEGIN_C
+begin_c
 
 static const char* SLIDER_DEC_LABEL = "[-]";
 static const char* SLIDER_INC_LABEL = "[+]";
@@ -235,4 +235,4 @@ void slider_done(slider_t* s) {
     }
 }
 
-END_C
+end_c

@@ -9,13 +9,13 @@
    CONDITIONS OF ANY KIND, either express or implied. See the License for the specific
    language governing permissions and limitations under the License.
 */
-#include "rt.h"
+#include "c.h"
 #include "bitmap.h"
 #include "color.h"
 #include "stb_inc.h"
 #include "stb_truetype.h" // for stbtt_fontinfo
 
-BEGIN_C
+begin_c
 
 typedef struct font_s {
     int   from;   // first glyph index
@@ -43,4 +43,4 @@ float font_text_width(font_t* f, const char* text, int count); // count == -1, u
 
 void font_dispose(font_t* font);
 
-END_C
+end_c

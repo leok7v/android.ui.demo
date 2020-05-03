@@ -15,7 +15,7 @@
 #include "stb_image.h"
 #include "glh.h"
 
-BEGIN_C
+begin_c
 
 static int load_asset(bitmap_t* b, app_t* a, const char* name) {
     int r = 0;
@@ -90,4 +90,4 @@ void bitmap_dispose(bitmap_t* b) {
     memset(b, 0, sizeof(*b));
 }
 
-END_C
+end_c

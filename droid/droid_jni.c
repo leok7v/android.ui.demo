@@ -9,9 +9,10 @@
    language governing permissions and limitations under the License.
 */
 #include "droid_jni.h"
+#include "rt.h"
 #include <jni.h>
 
-BEGIN_C
+begin_c
 
 // ANativeActivity.clazz is NativeActivity object handle.
 // IMPORTANT NOTE: This member is mis-named. It should really be named 'activity' instead of 'clazz',
@@ -238,4 +239,4 @@ void droid_jni_get_display_real_size(ANativeActivity* na, droid_display_metrics_
     }
 }
 
-END_C
+end_c

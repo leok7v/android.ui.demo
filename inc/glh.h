@@ -9,9 +9,9 @@
    CONDITIONS OF ANY KIND, either express or implied. See the License for the specific
    language governing permissions and limitations under the License.
 */
-#include "rt.h"
+#include "c.h"
 
-BEGIN_C
+begin_c
 
 #ifdef DEBUG
 #define gl_check(call) (call, gl_trace_errors_(__FILE__, __LINE__, __func__, #call, glGetError()))
@@ -35,4 +35,4 @@ const char* gl_strerror(int gle);
 int gl_trace_errors_(const char* file, int line, const char* func, const char* call, int gle); // returns last glGetError()
 int gl_trace_errors_return_int_(const char* file, int line, const char* func, int* r, const char* call, int result_of_call); // returns int result of call()
 
-END_C
+end_c

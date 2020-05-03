@@ -110,7 +110,9 @@
     <Content Include="assets\rgb.png" />
     <Content Include="res\drawable\ui.png" />
     <Content Include="res\values\strings.xml" />
-    <Content Include="res\values\styles.xml" />
+    <Content Include="res\values\styles.xml">
+      <SubType>Designer</SubType>
+    </Content>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\msvc\demo.vcxproj" />

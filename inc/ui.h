@@ -11,7 +11,7 @@
 */
 #include "dc.h"
 
-BEGIN_C
+begin_c
 
 typedef struct font_s font_t;
 
@@ -138,4 +138,4 @@ bool ui_set_focus(ui_t* ui, int x, int y); // returns true if focus was set
 void ui_dispatch_mouse(ui_t* ui, int mouse_flags, float x, float y); // x,y in ui coordinates
 void ui_dispatch_screen_mouse(ui_t* ui, int mouse_flags, float screen_x, float screen_y); // x,y screen coordinates
 
-END_C
+end_c

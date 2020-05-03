@@ -9,9 +9,9 @@
    CONDITIONS OF ANY KIND, either express or implied. See the License for the specific
    language governing permissions and limitations under the License.
 */
-#include "rt.h"
+#include "c.h"
 
-BEGIN_C
+begin_c
 
 typedef struct droid_key_text_string_s {
     char text[128];
@@ -20,4 +20,4 @@ typedef struct droid_key_text_string_s {
 droid_key_text_string_t droid_keys_text(int flags, int ch);
 int droid_keys_translate(int32_t key_code, int32_t meta_state, int32_t flags);
 
-END_C
+end_c

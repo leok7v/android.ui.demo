@@ -11,7 +11,7 @@
 #include "ui.h"
 #include "app.h"
 
-BEGIN_C
+begin_c
 
 static void ui_add(ui_t* container, ui_t* child, float x, float y, float w, float h) {
     assert(child != null);
@@ -157,4 +157,4 @@ static const ui_t ui_interface = {
 
 const ui_t* ui_if = &ui_interface;
 
-END_C
+end_c

@@ -9,10 +9,12 @@
    CONDITIONS OF ANY KIND, either express or implied. See the License for the specific
    language governing permissions and limitations under the License.
 */
-#include "rt.h"
+#include "c.h"
+#include <stdint.h>
+#include <stdbool.h>
 #include <android/native_activity.h>
 
-BEGIN_C // interfacce to unavoidable Android Java code via jni
+begin_c // interfacce to unavoidable Android Java code via jni
 
 typedef struct droid_display_metrics_s {
      int w; // pixels
@@ -35,4 +37,4 @@ bool droid_jni_vibrate_with_effect(ANativeActivity* na, const char* effect);
 
 bool droid_jni_show_keyboard(ANativeActivity* na, bool on, int flags);
 
-END_C
+end_c

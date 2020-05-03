@@ -35,5 +35,8 @@
     <ClInclude Include="..\droid\droid_keys.h">
       <Filter>droid</Filter>
     </ClInclude>
+    <ClInclude Include="..\inc\c.h">
+      <Filter>inc</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

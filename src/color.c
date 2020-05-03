@@ -11,7 +11,7 @@
 */
 #include "app.h"
 
-BEGIN_C
+begin_c
 
 colorf_t colorf_from_rgb(uint32_t argb) {
     colorf_t f = { ((argb >> 16) & 0xFF) / 255.0f, ((argb >>  8) & 0xFF) / 255.0f,
@@ -520,4 +520,4 @@ static const color_info_t color_nc_names_table[] = {
 const color_info_t* color_nc_names = color_nc_names_table;
 const int color_nc_names_count = countof(color_names_table);
 
-END_C
+end_c

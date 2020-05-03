@@ -27,7 +27,7 @@
 // https://github.com/aosp-mirror/platform_frameworks_base/blob/master/core/java/android/app/NativeActivity.java
 // https://github.com/aosp-mirror/platform_frameworks_base/blob/master/core/jni/android_app_NativeActivity.cpp
 
-BEGIN_C
+begin_c
 
 #if !(ANDROID_API > 0)
 #pragma message("Invalid ANDROID_API '" __STR(ANDROID_API)) "'"
@@ -59,6 +59,7 @@ app_t app = {
     /* resume:  */ null,
     /* done:    */ null,
     /* key:     */ null,
+    /* touch:   */ null,
     app_quit,
     app_exit,
     app_invalidate,
@@ -317,59 +318,52 @@ static int32_t handle_motion(glue_t* glue, AInputEvent* me) {
     app_t* a = glue->a;
     int x = AMotionEvent_getX(me, 0);
     int y = AMotionEvent_getY(me, 0);
-    int32_t action = AMotionEvent_getAction(me);
-    int32_t index = (action & AMOTION_EVENT_ACTION_POINTER_INDEX_MASK) >> 8; // fragile. >> 8 assumes AMOTION_EVENT_ACTION_POINTER_INDEX_MASK = 0xFF00
-    action = action & AMOTION_EVENT_ACTION_MASK;
+    int32_t act   = AMotionEvent_getAction(me);
+    int32_t index = (act & AMOTION_EVENT_ACTION_POINTER_INDEX_MASK) >> 8; // fragile. >> 8 assumes AMOTION_EVENT_ACTION_POINTER_INDEX_MASK = 0xFF00
+    act = act & AMOTION_EVENT_ACTION_MASK;
+    int action = 0;
+    int flags = a->mouse_flags;
+    switch (act) {
+        case AMOTION_EVENT_ACTION_DOWN        : action = MOUSE_LBUTTON_DOWN; flags |=  MOUSE_LBUTTON_FLAG; break;
+        case AMOTION_EVENT_ACTION_UP          : action = MOUSE_LBUTTON_UP;   flags &= ~MOUSE_LBUTTON_FLAG; break;
+        case AMOTION_EVENT_ACTION_HOVER_MOVE  : action = MOUSE_MOVE; break;
+        case AMOTION_EVENT_ACTION_POINTER_DOWN: break; // touch event, "index" is "finger index"
+        case AMOTION_EVENT_ACTION_POINTER_UP  : break;
+        case AMOTION_EVENT_ACTION_SCROLL      : traceln("TODO: AMOTION_EVENT_ACTION_SCROLL"); break; // mouse wheel generates it
+        default: break;
+    }
     if (index == 0) {
-        int mouse_action = 0;
-        int mouse_flags = a->mouse_flags;
-        switch (action) {
-            case AMOTION_EVENT_ACTION_DOWN        : mouse_action = MOUSE_LBUTTON_DOWN; mouse_flags |=  MOUSE_LBUTTON_FLAG; break;
-            case AMOTION_EVENT_ACTION_UP          : mouse_action = MOUSE_LBUTTON_UP;   mouse_flags &= ~MOUSE_LBUTTON_FLAG; break;
-            case AMOTION_EVENT_ACTION_HOVER_MOVE  : mouse_action = MOUSE_MOVE; break;
-            case AMOTION_EVENT_ACTION_POINTER_DOWN: break; // touch event, "index" is "finger index"
-            case AMOTION_EVENT_ACTION_POINTER_UP  : break;
-            case AMOTION_EVENT_ACTION_SCROLL      : traceln("TODO: AMOTION_EVENT_ACTION_SCROLL"); break; // mouse wheel generates it
-            default: break;
-        }
-        a->mouse_flags = mouse_flags;
+        a->mouse_flags = flags;
         a->last_mouse_x = x;
         a->last_mouse_y = y;
-        if (mouse_action & MOUSE_LBUTTON_DOWN) {
-            if (!ui_set_focus(&a->root, x, y)) {
-                a->focus(a, null); // kill focus if no focusable components were found
-            }
-        }
-        ui_dispatch_mouse(&a->root, mouse_action, x, y);
-        ui_dispatch_screen_mouse(&a->root, mouse_action, x, y);
-    } else {
-        traceln("TODO: touch event [%d] x,y=%d,%d", index, x, y);
     }
+    assertion(a->touch != null, "touch() cannot be null");
+    a->touch(a, index, action, x, y);
     return 1;
 }
 
 static int32_t handle_key(glue_t* glue, AInputEvent* ke) {
     assert(AInputEvent_getType(ke) == AINPUT_EVENT_TYPE_KEY);
     int32_t key_code = AKeyEvent_getKeyCode(ke);
-    int32_t action = AKeyEvent_getAction(ke);
+    int32_t act = AKeyEvent_getAction(ke);
     int32_t rc = 1;
-    switch (action) {
+    switch (act) {
         case AKEY_EVENT_ACTION_UP      : break;
         case AKEY_EVENT_ACTION_DOWN    : break;
         case AKEY_EVENT_ACTION_MULTIPLE: rc = AKeyEvent_getRepeatCount(ke); break;
-        default: traceln("unknown action: %d", action);
+        default: traceln("unknown action: %d", act);
     }
     int meta_state = AKeyEvent_getMetaState(ke);
     int flags = KEYBOARD_KEY_PRESSED;
     int kc = droid_keys_translate(key_code, meta_state, flags);
     if (kc != 0) {
-        switch (action) {
+        switch (act) {
             case AKEY_EVENT_ACTION_DOWN: flags |= KEYBOARD_KEY_PRESSED;  flags &= ~KEYBOARD_KEY_RELEASED; break;
             case AKEY_EVENT_ACTION_UP:   flags |= KEYBOARD_KEY_RELEASED; flags &= ~KEYBOARD_KEY_PRESSED; break;
             default: break;
         }
         app_t* a = glue->a;
-        if (action == AKEY_EVENT_ACTION_MULTIPLE) {
+        if (act == AKEY_EVENT_ACTION_MULTIPLE) {
             for (int i = 0; i < rc; i++) { a->key(a, flags | KEYBOARD_KEY_REPEAT, kc); }
         } else {
             a->key(a, flags, kc);
@@ -508,13 +502,8 @@ static void on_input_queued_destroyed(ANativeActivity* na, AInputQueue* queue) {
 static void on_content_rect_changed(ANativeActivity* na, const ARect* rc) {
     glue_t* glue = (glue_t*)na->instance;
     app_t* a = glue->a;
-    ui_t* root = &a->root;
-    root->x = rc->left;
-    root->y = rc->top;
-    root->w = rc->right - rc->left;
-    root->h = rc->bottom - rc->top;
-    dc.viewport(&dc, root->x, root->y, root->w, root->h);
-    if (a->resized != null) { a->resized(a); }
+    assertion(a->resized != null, "resized() cannot be null");
+    a->resized(a, rc->left, rc->top, rc->right - rc->left, rc->bottom - rc->top);
     app_invalidate(a);
 }
 
@@ -864,8 +853,6 @@ static void create_activitiy(glue_t* glue, ANativeActivity* na, void* data, size
     assert(glue->a = &app);
     assert(app.glue == glue);
     assert(app.focused == null);
-    app.root = *ui_if;
-    app.root.a = glue->a;
     na->instance = glue;
     glue->destroy_requested = false;
     glue->na = na;
@@ -881,7 +868,8 @@ static void create_activitiy(glue_t* glue, ANativeActivity* na, void* data, size
     init_looper(glue, na);
     init_accelerometer(glue);
     init_timer_thread(glue);
-    if (app.init != null) { app.init(&app); }
+    assertion(app.init != null, "init() cannot be null");
+    app.init(&app);
 }
 
 static glue_t glue;
@@ -902,4 +890,4 @@ static_init(app_android) {
     glue.a = &app;
 }
 
-END_C
+end_c

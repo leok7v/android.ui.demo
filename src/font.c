@@ -12,7 +12,7 @@
 #include "app.h"
 #include "stb_rect_pack.h"
 
-BEGIN_C
+begin_c
 
 static int32_t next_power_of_2(int32_t n) {
     n--; n |= n >> 1; n |= n >> 2; n |= n >> 4; n |= n >> 8; n |= n >> 16;
@@ -149,4 +149,4 @@ float font_text_width(font_t* f, const char* text, int count) {
     return x;
 }
 
-END_C
+end_c

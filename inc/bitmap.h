@@ -9,9 +9,9 @@
    CONDITIONS OF ANY KIND, either express or implied. See the License for the specific
    language governing permissions and limitations under the License.
 */
-#include "rt.h"
+#include "c.h"
 
-BEGIN_C
+begin_c
 
 typedef struct bitmap_s bitmap_t;
 
@@ -20,7 +20,7 @@ typedef struct bitmap_s {
     int h;
     int comp;  // components per pixel 1 (grey), 2(grey+alpha), 3 (rgb), 4(rgba)
     int ti;    // texture index in OpenGL 0 if not texture attached
-    byte* data;
+    void* data;
 } bitmap_t;
 
 typedef struct app_s app_t;
@@ -37,4 +37,4 @@ int bitmap_load_asset(bitmap_t* b, app_t* a, const char* name);
 
 void bitmap_dispose(bitmap_t* b);
 
-END_C
+end_c

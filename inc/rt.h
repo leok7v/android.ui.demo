@@ -33,6 +33,7 @@
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 #include <arpa/inet.h>
+#include "c.h"
 
 #if defined(__GNUC__) || defined(__clang__)
 #pragma GCC diagnostic error "-Wall"
@@ -69,14 +70,6 @@ typedef uint8_t byte;
 #define assert(e) do { if (!(e)) { _assert_(__FILE__, __LINE__, __func__, #e); } } while (0)
 
 #define static_init(foo) __attribute__((constructor)) static void init_ ## foo ##_constructor(void)
-
-#ifdef __cplusplus
-#define BEGIN_C extern "C" {
-#define END_C } // extern "C"
-#else
-#define BEGIN_C
-#define END_C
-#endif
 
 int _traceln_(const char* filename, int line, const char* function, const char* format, ...);
 int _assertion_(const char* filename, int line, const char* function, const char* a, const char* format, ...);

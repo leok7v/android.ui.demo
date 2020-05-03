@@ -12,7 +12,7 @@
 #include "button.h"
 #include "app.h"
 
-BEGIN_C
+begin_c
 
 static float checkbox_draw(ui_t* ui, pointf_t pt, bool on) {
     button_t* b = (button_t*)ui;
@@ -130,4 +130,4 @@ void button_done(button_t* b) {
     }
 }
 
-END_C
+end_c

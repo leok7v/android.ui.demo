@@ -12,7 +12,7 @@
 #include "app.h"
 #include "screen_writer.h"
 
-BEGIN_C
+begin_c
 
 static const uint64_t TOAST_TIME_IN_NS = 2750LL * NS_IN_MS; // 2.75s
 
@@ -144,4 +144,4 @@ toast_t* toast(app_t* a) {
     return &toast;
 }
 
-END_C
+end_c

@@ -9,10 +9,11 @@
    language governing permissions and limitations under the License.
 */
 #include "glh.h"
+#include "rt.h"
 #include <GLES/gl.h>
 #include <GLES3/gl3.h>
 
-BEGIN_C
+begin_c
 
 #ifdef DEBUG
 #define gl_error() glGetError()
@@ -144,4 +145,4 @@ static_init(glh) {
     assert(sizeof(GLsizeiptr) == sizeof(GLsizeiptr));
 }
 
-END_C
+end_c

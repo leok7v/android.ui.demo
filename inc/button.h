@@ -11,7 +11,7 @@
 */
 #include "ui.h"
 
-BEGIN_C
+begin_c
 
 typedef struct button_s button_t;
 
@@ -40,4 +40,4 @@ void button_init(button_t* b, ui_t* parent, void* that,
 
 void button_done(button_t* b);
 
-END_C
+end_c

@@ -15,7 +15,7 @@
 #include <GLES/gl.h>
 #include <GLES3/gl3.h>
 
-BEGIN_C
+begin_c
 
 static uint32_t gl_version; // 0x0003002 for 3.2
 
@@ -331,4 +331,4 @@ static void orthographic_projection_2d(mat4x4 m, float x, float y, float w, floa
     m[3][3] = 1;
 }
 
-END_C
+end_c

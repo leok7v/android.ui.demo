@@ -25,6 +25,7 @@
     <ClInclude Include="..\inc\app.h" />
     <ClInclude Include="..\inc\bitmap.h" />
     <ClInclude Include="..\inc\button.h" />
+    <ClInclude Include="..\inc\c.h" />
     <ClInclude Include="..\inc\color.h" />
     <ClInclude Include="..\inc\dc.h" />
     <ClInclude Include="..\inc\font.h" />

@@ -116,5 +116,8 @@
     <ClInclude Include="..\ext\stb_truetype.h">
       <Filter>ext</Filter>
     </ClInclude>
+    <ClInclude Include="..\inc\c.h">
+      <Filter>inc</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

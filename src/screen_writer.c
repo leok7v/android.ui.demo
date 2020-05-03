@@ -14,7 +14,7 @@
 #include "font.h"
 #include "ui.h"
 
-BEGIN_C
+begin_c
 
 static void screen_writer_draw_text(screen_writer_t* sw, const char* format, va_list vl, bool line_feed) {
     assert(sw != null && format != null);
@@ -53,4 +53,4 @@ screen_writer_t screen_writer(float x, float y, font_t* f, const colorf_t* c) {
     return tp;
 }
 
-END_C
+end_c

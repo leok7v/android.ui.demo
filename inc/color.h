@@ -11,7 +11,7 @@
 */
 #include "rt.h"
 
-BEGIN_C
+begin_c
 
 typedef struct colorf_s { float r, g, b, a; } packed colorf_t;
 
@@ -206,4 +206,4 @@ extern const colors_nc_t colors_nc;
 extern const color_info_t* color_nc_names;
 extern const int color_nc_names_count;
 
-END_C
+end_c

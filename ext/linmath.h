@@ -1,4 +1,4 @@
-#include "rt.h" // based on https://github.com/datenwolf/linmath.h
+#include "c.h" // based on https://github.com/datenwolf/linmath.h
 // massaged to C99 and more consistent code style
 // removed rogue inlining - depend on gcc, clang and llvm global inlining optimization instead
 // made into single file hreader style library
@@ -15,7 +15,7 @@
 // The types are *deliberately* named like the types in GLSL. In fact they are meant to
 // be used for the client side computations and passing to same typed GLSL uniforms.
 
-BEGIN_C
+begin_c
 
 #ifdef LINMATH_IMPLEMENTATION
 #define linmat_implements(code) code
@@ -545,4 +545,4 @@ void mat4x4_arcball(mat4x4 R, mat4x4 M, vec2 _a, vec2 _b, float s) linmat_implem
     mat4x4_rotate(R, M, c_[0], c_[1], c_[2], angle);
 })
 
-END_C
+end_c

@@ -27,6 +27,7 @@
   <ItemGroup>
     <ClInclude Include="..\droid\droid_jni.h" />
     <ClInclude Include="..\droid\droid_keys.h" />
+    <ClInclude Include="..\inc\c.h" />
     <ClInclude Include="..\inc\rt.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

@@ -10,11 +10,10 @@
    language governing permissions and limitations under the License.
 */
 
-#include "font.h"
 #include "theme.h"
 #include "ui.h"
 
-BEGIN_C
+begin_c
 
 enum { // vibration_effect
     DEFAULT_AMPLITUDE = -1,
@@ -31,13 +30,14 @@ typedef struct app_s {
     void (*init)(app_t* a);    // called on start of application/activity
     void (*shown)(app_t* a, int w, int h); // window (w x h) has been shown (attached)
     void (*draw)(app_t* a);    // called to paint content of the application
-    void (*resized)(app_t* a); // window has been resized or rotated need new projection matrix
+    void (*resized)(app_t* a, int x, int y, int w, int h); // viewport has been resized or rotated; needs new projection matrix
     void (*hidden)(app_t* a);  // called when application is hidden (loses window attachment)
     void (*pause)(app_t* a);   // e.g. when "adb shell input keyevent KEYCODE_SLEEP|KEYCODE_POWER"
     void (*stop)(app_t* a);    // after pause() -> stop() or resume()
     void (*resume)(app_t* a);  // e.g. when "adb shell input keyevent KEYCODE_WAKE"
     void (*done)(app_t* a);    // after pause() hidden() and stop()
     void (*key)(app_t* a, int flags, int keycode); // dispatch keyboard
+    void (*touch)(app_t* a, int index, int action, int x, int y); // index == finger for multitouch
     // actions that application code can call:
     void (*quit)(app_t* app);           // quit application/activity (on Android it will now exit process)
     void (*exit)(app_t* app, int code); // trying to exit application gracefully with specified return code
@@ -63,10 +63,9 @@ typedef struct app_s {
     ui_t  root;
     ui_t* focused; // ui that has keyboard focus or null
     int keyboard_flags; // last keyboard flags (CTRL, SHIFT, ALT, SYM, FN, NUMLOCK, CAPSLOCK)
-    int mouse_flags;    // last mouse button flags
+    int mouse_flags;    // last mouse button flags (for finger index == 0)
     int last_mouse_x;   // last mouse screen coordinates
     int last_mouse_y;
-    int trace_flags;
     uint64_t time_in_nanoseconds; // since application start update on each event or animation
     theme_t theme;
 } app_t;
@@ -90,4 +89,4 @@ enum { // logging level
     LOG_SILENT  = 8
 };
 
-END_C
+end_c

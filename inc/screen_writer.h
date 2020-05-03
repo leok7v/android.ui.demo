@@ -9,9 +9,9 @@
    CONDITIONS OF ANY KIND, either express or implied. See the License for the specific
    language governing permissions and limitations under the License.
 */
-#include "rt.h"
+#include "c.h"
 
-BEGIN_C
+begin_c
 
 typedef struct font_s font_t;
 typedef struct colorf_s colorf_t;
@@ -29,4 +29,4 @@ typedef struct screen_writer_s {
 
 screen_writer_t screen_writer(float x, float y, font_t* f, const colorf_t* c);
 
-END_C
+end_c
