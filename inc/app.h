@@ -28,14 +28,16 @@ typedef struct app_s app_t;
 
 typedef struct app_s {
     // app callbacks (modeled after Android activity lifecycle):
-    void (*init)(app_t* a);    // called on application/activity start up
-    void (*shown)(app_t* a);   // called on when window has been shown (attached)
+    void (*init)(app_t* a);    // called on start of application/activity
+    void (*shown)(app_t* a, int w, int h); // window (w x h) has been shown (attached)
+    void (*draw)(app_t* a);    // called to paint content of the application
     void (*resized)(app_t* a); // window has been resized or rotated need new projection matrix
     void (*hidden)(app_t* a);  // called when application is hidden (loses window attachment)
     void (*pause)(app_t* a);   // e.g. when "adb shell input keyevent KEYCODE_SLEEP|KEYCODE_POWER"
     void (*stop)(app_t* a);    // after pause() -> stop() or resume()
     void (*resume)(app_t* a);  // e.g. when "adb shell input keyevent KEYCODE_WAKE"
     void (*done)(app_t* a);    // after pause() hidden() and stop()
+    void (*key)(app_t* a, int flags, int keycode); // dispatch keyboard
     // actions that application code can call:
     void (*quit)(app_t* app);           // quit application/activity (on Android it will now exit process)
     void (*exit)(app_t* app, int code); // trying to exit application gracefully with specified return code

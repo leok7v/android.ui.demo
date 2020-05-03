@@ -313,7 +313,10 @@ static void resized(app_t* a) {
     a->invalidate(a);
 }
 
-static void shown(app_t* a) {
+static void shown(app_t* a, int w, int h) {
+    a->root.w = w;
+    a->root.h = h;
+    dc.init(&dc);
     resized(a);
     application_t* app = (application_t*)a->that;
     load_font(app);
@@ -328,6 +331,11 @@ static void shown(app_t* a) {
     init_ui(app);
 //  toast_t* t = toast(a);
 //  t->print(t, "resolution\n%.0fx%.0fpx", a->root.w, a->root.h);
+}
+
+static void draw(app_t* a) {
+    assertion(!a->root.hidden, "there is no meaningful reason to hide root");
+    a->root.draw(&a->root);
 }
 
 static void hidden(app_t* a) {
@@ -380,6 +388,40 @@ static void done(app_t* a) {
     font_dispose(&app->font);
 }
 
+static bool dispatch_keyboard_shortcuts(ui_t* p, int flags, int keycode) {
+    if (p->kind == UI_KIND_BUTTON && !p->hidden) {
+        button_t* b = (button_t*)p;
+        int kc = isalpha(keycode) ? tolower(keycode) : keycode;
+        int k = isalpha(b->key) ? tolower(b->key) : b->key;
+        if (!p->hidden && b->key_flags == flags && k == kc) {
+            // TODO: (Leo) if 3 (or more) states checkboxes are required this is the place to do it.
+            //       b->flip = (b->flip + 1) % b->flip_wrap_around;
+            if (b->flip != null) { *b->flip = !*b->flip; }
+            b->click(b);
+            return true; // stop search
+        }
+    }
+    ui_t* c = p->children;
+    while (c != null) {
+        if (!c->hidden) {
+            if (dispatch_keyboard_shortcuts(c, flags, keycode)) { return true; }
+        }
+        c = c->next;
+    }
+    return false;
+}
+
+static void key(app_t* a, int flags, int keycode) {
+    a->keyboard_flags = flags;
+    if (a->focused != null && a->focused->keyboard != null) {
+        a->focused->keyboard(a->focused, flags, keycode);
+    }
+    if (flags & KEYBOARD_KEY_PRESSED) {
+        int f = flags & ~(KEYBOARD_KEY_PRESSED|KEYBOARD_SHIFT|KEYBOARD_NUMLOCK|KEYBOARD_CAPSLOCK);
+        dispatch_keyboard_shortcuts(&a->root, f, keycode);
+    }
+}
+
 static application_t application;
 
 void app_init() {
@@ -387,12 +429,14 @@ void app_init() {
     application.a = &app;
     app.init    = init;
     app.shown   = shown;
+    app.draw    = draw;
     app.resized = resized;
     app.hidden  = hidden;
     app.pause   = paused;
     app.stop    = stop;
     app.resume  = resume;
     app.done    = done;
+    app.key     = key;
 }
 
 END_C

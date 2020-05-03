@@ -9,8 +9,6 @@
    language governing permissions and limitations under the License.
 */
 #include "app.h"
-#include "ui.h"
-#include "button.h"
 #include "droid_keys.h"
 #include "droid_jni.h" // interface to Java only code (going via binder is too involving)
 #include <EGL/egl.h>
@@ -53,12 +51,14 @@ static int   log_vprintf(int level, const char* tag, const char* location, const
 app_t app = {
     /* init:    */ null,
     /* shown:   */ null,
+    /* draw:    */ null,
     /* resized: */ null,
     /* hidden:  */ null,
     /* pause:   */ null,
     /* stop:    */ null,
     /* resume:  */ null,
     /* done:    */ null,
+    /* key:     */ null,
     app_quit,
     app_exit,
     app_invalidate,
@@ -175,7 +175,6 @@ static int log_vprintf(int level, const char* tag, const char* location, const c
     return __android_log_vprint(level, tag, f, vl);
 }
 
-
 #define case_return(id) case id: return #id;
 
 static const char* id2str(int id) {
@@ -288,38 +287,12 @@ static void focus(app_t* app, ui_t* ui) {
     }
 }
 
-static bool dispatch_keyboard_shortcuts(ui_t* p, int flags, int keycode) {
-    if (p->kind == UI_KIND_BUTTON && !p->hidden) {
-        button_t* b = (button_t*)p;
-        int kc = isalpha(keycode) ? tolower(keycode) : keycode;
-        int k = isalpha(b->key) ? tolower(b->key) : b->key;
-        if (!p->hidden && b->key_flags == flags && k == kc) {
-            // TODO: (Leo) if 3 (or more) states checkboxes are required this is the place to do it.
-            //       b->flip = (b->flip + 1) % b->flip_wrap_around;
-            if (b->flip != null) { *b->flip = !*b->flip; }
-            b->click(b);
-            return true; // stop search
-        }
-    }
-    ui_t* c = p->children;
-    while (c != null) {
-        if (!c->hidden) {
-            if (dispatch_keyboard_shortcuts(c, flags, keycode)) { return true; }
-        }
-        c = c->next;
-    }
-    return false;
-}
-
 static void draw_frame(glue_t* glue) {
     if (glue->display != null) {
-        app_t* a = glue->a;
-        if (!a->root.hidden && a->root.draw != null) {
-            a->root.draw(&a->root);
-            // eglSwapBuffers performs an implicit flush operation on the context (glFlush for an OpenGL ES)
-            bool swapped = eglSwapBuffers(glue->display, glue->surface);
-            assertion(swapped, "eglSwapBuffers() failed"); (void)swapped;
-        }
+        ((app_t*)glue->a)->draw((app_t*)glue->a);
+        // eglSwapBuffers performs an implicit flush operation on the context (glFlush for an OpenGL ES)
+        bool swapped = eglSwapBuffers(glue->display, glue->surface);
+        assertion(swapped, "eglSwapBuffers() failed"); (void)swapped;
     }
 }
 
@@ -337,18 +310,6 @@ static void term_display(glue_t* glue) {
     glue->display = EGL_NO_DISPLAY;
     glue->context = EGL_NO_CONTEXT;
     glue->surface = EGL_NO_SURFACE;
-}
-
-static void dispatch_keycode(glue_t* glue, int flags, int keycode) {
-    app_t* a = glue->a;
-    a->keyboard_flags = flags;
-    if (a->focused != null && a->focused->keyboard != null) {
-        a->focused->keyboard(a->focused, flags, keycode);
-    }
-    if (flags & KEYBOARD_KEY_PRESSED) {
-        int f = flags & ~(KEYBOARD_KEY_PRESSED|KEYBOARD_SHIFT|KEYBOARD_NUMLOCK|KEYBOARD_CAPSLOCK);
-        dispatch_keyboard_shortcuts(&a->root, f, keycode);
-    }
 }
 
 static int32_t handle_motion(glue_t* glue, AInputEvent* me) {
@@ -407,10 +368,11 @@ static int32_t handle_key(glue_t* glue, AInputEvent* ke) {
             case AKEY_EVENT_ACTION_UP:   flags |= KEYBOARD_KEY_RELEASED; flags &= ~KEYBOARD_KEY_PRESSED; break;
             default: break;
         }
+        app_t* a = glue->a;
         if (action == AKEY_EVENT_ACTION_MULTIPLE) {
-            for (int i = 0; i < rc; i++) { dispatch_keycode(glue, flags | KEYBOARD_KEY_REPEAT, kc); }
+            for (int i = 0; i < rc; i++) { a->key(a, flags | KEYBOARD_KEY_REPEAT, kc); }
         } else {
-            dispatch_keycode(glue, flags, kc);
+            a->key(a, flags, kc);
         }
     }
     return 1;
@@ -480,10 +442,8 @@ static void on_native_window_created(ANativeActivity* na, ANativeWindow* window)
     assert(glue->window == null && window != null);
     glue->window = window;
     init_display(glue);
-    a->root.w = ANativeWindow_getWidth(window);
-    a->root.h = ANativeWindow_getHeight(window);
-    dc.init(&dc);
-    if (a->shown != null) { a->shown(a); }
+    assertion(a->shown != null, "shown() cannot be null");
+    a->shown(a, ANativeWindow_getWidth(window), ANativeWindow_getHeight(window));
     a->invalidate(a);
 }
 
