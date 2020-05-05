@@ -1,4 +1,6 @@
 #include "c.h" // based on https://github.com/datenwolf/linmath.h
+#include <math.h>
+#include <string.h>
 // massaged to C99 and more consistent code style
 // removed rogue inlining - depend on gcc, clang and llvm global inlining optimization instead
 // made into single file hreader style library
