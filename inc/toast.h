@@ -14,19 +14,7 @@
 
 begin_c
 
-typedef struct toast_s toast_t;
-
-typedef struct toast_s {
-    ui_t ui;
-    uint64_t nanoseconds; // time to keep toast on screen
-    void (*print)(toast_t* t, const char* format, ...);
-    void (*cancel)(toast_t* t);
-    // implementation:
-    char text[1024];
-    timer_callback_t toast_timer_callback;
-    uint64_t toast_start_time; // time toast started to be shown
-} toast_t;
-
-toast_t* toast(app_t* a); // returns pointer to toast single instance
+void toast_print(float seconds, const char* format, ...);
+void toast_cancel();
 
 end_c

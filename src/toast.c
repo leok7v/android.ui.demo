@@ -16,24 +16,39 @@ begin_c
 
 static const uint64_t TOAST_TIME_IN_NS = 2750LL * NS_IN_MS; // 2.75s
 
-static void toast_timer_callback(timer_callback_t* timer_callback) {
+typedef struct toast_s toast_t;
+
+typedef struct toast_s {
+    ui_t ui;
+    uint64_t nanoseconds; // time to keep toast on screen
+    void (*print)(toast_t* t, const char* format, ...);
+    void (*cancel)(toast_t* t);
+    // implementation:
+    char text[1024];
+    timer_callback_t toast_timer_callback;
+    uint64_t toast_start_time; // time toast started to be shown
+} toast_t;
+
+static toast_t* toast(app_t* a); // returns pointer to toast single instance
+
+static void timer_callback(timer_callback_t* timer_callback) {
     app_t* a = (app_t*)timer_callback->that;
     a->invalidate(a);
 }
 
-static void toast_add(toast_t* t) {
+static void add(toast_t* t) {
     app_t* a = t->ui.a;
     assert(t->toast_timer_callback.id == 0);
     t->toast_timer_callback.id = 0;
     t->toast_timer_callback.that = a;
     t->toast_timer_callback.ns = t->nanoseconds + 1;
-    t->toast_timer_callback.callback = toast_timer_callback;
+    t->toast_timer_callback.callback = timer_callback;
     t->toast_timer_callback.last_fired = 0;
     a->timer_add(a, &t->toast_timer_callback);
     a->root.add(&a->root, &t->ui, 0, 0, 0, 0);
 }
 
-static void toast_cancel(toast_t* t) {
+static void cancel(toast_t* t) {
     // It is not an error to cancel inactive toast:
     if (t->toast_timer_callback.id != 0) {
         app_t* a = t->ui.a;
@@ -48,7 +63,7 @@ static void toast_cancel(toast_t* t) {
     }
 }
 
-static int toast_measure(toast_t* t, float *w, float *h) {
+static int measure(toast_t* t, float *w, float *h) {
     font_t* f = t->ui.a->theme.font;
     int n = 1;
     char* s = t->text;
@@ -66,11 +81,11 @@ static int toast_measure(toast_t* t, float *w, float *h) {
     return n;
 }
 
-static void toast_render(toast_t* t) {
+static void render(toast_t* t) {
     app_t* a = t->ui.a;
     float w = 0;
     float h = 0;
-    int n = toast_measure(t, &w, &h);
+    int n = measure(t, &w, &h);
     font_t* f = a->theme.font;
     w += f->em * 2;
     h += f->em * 2;
@@ -92,7 +107,7 @@ static void toast_render(toast_t* t) {
     }
 }
 
-static void toast_draw(ui_t* ui) {
+static void draw(ui_t* ui) {
     toast_t* t = ui->that;
     app_t* a = ui->a;
     if (t->text[0] != 0) {
@@ -101,15 +116,15 @@ static void toast_draw(ui_t* ui) {
         } else {
             int64_t time_on_screen = a->time_in_nanoseconds - t->toast_start_time;
             if (time_on_screen > t->nanoseconds) { // nanoseconds
-                toast_cancel(t);
+                cancel(t);
             } else {
-                toast_render(t);
+                render(t);
             }
         }
     }
 }
 
-static void toast_print(toast_t* t, const char* format, ...) {
+static void print(toast_t* t, const char* format, ...) {
     if (t->toast_timer_callback.id != 0) { t->cancel(t); }
     assertion(t->ui.parent == null, "parent=%d expected null", t->ui.parent);
     assertion(t->toast_timer_callback.id == 0, "timer should not be active");
@@ -120,18 +135,17 @@ static void toast_print(toast_t* t, const char* format, ...) {
     va_end(vl);
     assert(t->text[0] != 0);
     t->ui.hidden = false;
-    toast_add(t);
+    add(t);
     t->ui.a->invalidate(t->ui.a);
 }
 
-toast_t* toast(app_t* a) {
+static toast_t* toast(app_t* a) {
     static toast_t toast;
     if (toast.ui.a == null) {
-        toast.cancel = toast_cancel;
-        toast.print = toast_print;
+        toast.cancel = cancel;
+        toast.print = print;
         toast.ui.a = a;
         toast.ui = a->root;
-        toast.nanoseconds = TOAST_TIME_IN_NS;
         toast.ui.children = null;
         toast.ui.parent = null;
         toast.ui.focus  = false;
@@ -139,9 +153,21 @@ toast_t* toast(app_t* a) {
         toast.ui.decor  = true;
         toast.ui.kind = UI_KIND_DECOR;
         toast.ui.that = &toast;
-        toast.ui.draw = toast_draw;
+        toast.ui.draw = draw;
     }
     return &toast;
+}
+
+void toast_print(float seconds, const char* format, ...) {
+    uint64_t ns = seconds == 0 ? TOAST_TIME_IN_NS : (uint64_t)(seconds * NS_IN_SEC);
+    toast_t* t = toast(&app);
+    t->nanoseconds = ns;
+    t->print(t, "resolution\n%.0fx%.0fpx", app.root.w, app.root.h);
+}
+
+void toast_cancel() {
+    toast_t* t = toast(&app);
+    t->cancel(t);
 }
 
 end_c

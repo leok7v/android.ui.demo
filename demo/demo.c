@@ -34,7 +34,6 @@ typedef struct {
     int font_height_px;
     font_t font;    // default UI font
 //  int program_main;
-    toast_t* toast;
     bitmap_t bitmaps[3];
     button_t quit;
     button_t exit;
@@ -348,8 +347,7 @@ static void shown(app_t* a, int w, int h) {
         bitmap_allocate_and_update_texture(&d->bitmaps[i]);
     }
     init_ui(d);
-//  toast_t* t = toast(a);
-//  t->print(t, "resolution\n%.0fx%.0fpx", a->root.w, a->root.h);
+    toast_print(0, "resolution\n%.0fx%.0fpx", a->root.w, a->root.h);
 }
 
 static void draw(app_t* a) {
@@ -362,7 +360,7 @@ static void hidden(app_t* a) {
     // Application/activity is detached from the window.
     // Window surface may be different next time application is shown()
     // On Android application may continue running.
-//  toast(a)->cancel(toast(a));
+    toast_cancel();
     d->ui_textures.done(&d->ui_textures);
     d->ui_glyphs.done(&d->ui_glyphs);
     d->ui_ascii.done(&d->ui_ascii);
