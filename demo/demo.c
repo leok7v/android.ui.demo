@@ -11,7 +11,7 @@
 #include "app.h"
 #include "dc.h"
 #include "button.h"
-#include "button.h"
+#include "checkbox.h"
 #include "slider.h"
 #include "toast.h"
 #include "screen_writer.h"
@@ -38,8 +38,8 @@ typedef struct {
     bitmap_t bitmaps[3];
     button_t quit;
     button_t exit;
-    button_t glyphs;
-    button_t test;
+    checkbox_t glyphs;
+    checkbox_t test;
     bool testing; // testing draw commands primitives
     slider_t slider1;
     slider_t slider2;
@@ -60,14 +60,25 @@ typedef struct {
 static inline_c float pt2px(app_t* a, float pt) { return pt * a->xdpi / 72.0f; }
 
 static void init_button(demo_t* d, button_t* b, float x, float y, int key_flags, int key,
-                               const char* mnemonic, const char* label, void (*click)(button_t* ui)) {
+                               const char* mnemonic, const char* label, void (*click)(ui_t*)) {
     app_t* a = d->a;
     const float lw = font_text_width(&d->font, label, -1) + d->font.em;
     const float bw = max(lw, pt2px(a, MIN_BUTTON_WIDTH_PT));
     const float bh = d->font.height * d->a->theme.ui_height;
     button_init(b, &d->ui_content, d, key_flags, key, mnemonic, label, x, y, bw, bh);
-    b->ui.that = d;
-    b->click = click;
+    b->btn.ui.that = d;
+    b->btn.click = click;
+}
+
+static void init_checkbox(demo_t* d, checkbox_t* cbx, float x, float y, int key_flags, int key,
+                               const char* mnemonic, const char* label, void (*click)(ui_t*)) {
+    app_t* a = d->a;
+    const float lw = font_text_width(&d->font, label, -1) + d->font.em;
+    const float bw = max(lw, pt2px(a, MIN_BUTTON_WIDTH_PT));
+    const float bh = d->font.height * d->a->theme.ui_height;
+    checkbox_init(cbx, &d->ui_content, d, key_flags, key, mnemonic, label, x, y, bw, bh);
+    cbx->btn.ui.that = d;
+    cbx->btn.click = click;
 }
 
 static void slider_notify(slider_t* s) {
@@ -186,23 +197,25 @@ static void textures_draw(ui_t* ui) {
     ui->draw_children(ui);
 }
 
-static void on_quit(button_t* b) {
-    demo_t* d = (demo_t*)b->ui.a->that;
-    d->a->quit(d->a);
+static void on_quit(ui_t* ui) {
+    app_t* a = ui->a;
+    a->quit(a);
 }
 
-static void on_exit(button_t* b) {
-    demo_t* d = (demo_t*)b->ui.a->that;
-    d->a->exit(d->a, 153); // gdb shows octal 0o231 exit status for some reason...
+static void on_exit(ui_t* ui) {
+    app_t* a = ui->a;
+    a->exit(a, 153); // gdb shows octal 0o231 exit status for some reason...
 }
 
-static void on_glyphs(button_t* b) {
-    demo_t* d = (demo_t*)b->ui.a->that;
-    b->ui.a->show_keyboard(b->ui.a, !d->ui_glyphs.hidden);
+static void on_glyphs(ui_t* ui) {
+    app_t* a = ui->a;
+    demo_t* d = (demo_t*)a->that;
+    a->show_keyboard(a, !d->ui_glyphs.hidden);
 }
 
-static void on_test(button_t* b) {
-    b->ui.a->invalidate(b->ui.a);
+static void on_test(ui_t* b) {
+//  app_t* a = ui->a;
+//  b->btn.ui.a->invalidate(b->btn.ui.a); // no need to call invalidate here
 }
 
 static void init_ui(demo_t* d) {
@@ -212,11 +225,11 @@ static void init_ui(demo_t* d) {
     float hgap = pt2px(d->a, HORIZONTAL_GAP_PT);
     float bh = d->font.height * 3 / 2; // button height
     float y = 240 + vgap;
-    init_button(d, &d->quit,   10, y, 0, 'q', "Q", "Quit", on_quit);      y += bh + vgap;
-    init_button(d, &d->exit,   10, y, 0, 'e', "E", "Exit(153)", on_exit); y += bh + vgap;
-    init_button(d, &d->test,   10, y, 0, 'x', "X", "Test", on_test);      y += bh + vgap;
-    init_button(d, &d->glyphs, 10, y, 0, 'x', "X", "Glyphs", on_glyphs);  y += bh + vgap;
-    int x = d->glyphs.ui.w + hgap * 4;
+    init_button(d, &d->quit,     10, y, 0, 'q', "Q", "Quit",      on_quit);   y += bh + vgap;
+    init_button(d, &d->exit,     10, y, 0, 'e', "E", "Exit(153)", on_exit);   y += bh + vgap;
+    init_checkbox(d, &d->test,   10, y, 0, 'x', "X", "Test",      on_test);   y += bh + vgap;
+    init_checkbox(d, &d->glyphs, 10, y, 0, 'x', "X", "Glyphs",    on_glyphs); y += bh + vgap;
+    const int x = d->glyphs.btn.ui.w + hgap * 4;
     y = 240 + vgap;
     d->slider1_minimum = 0;
     d->slider1_maximum = 255;
@@ -233,9 +246,9 @@ static void init_ui(demo_t* d) {
     content->init(&d->ui_glyphs, content, d, x, y, d->font.atlas.w, d->font.atlas.h);
     d->ui_glyphs.draw = glyphs_draw;
     d->ui_glyphs.hidden = true;
-    d->test.flip = &d->testing;
-    d->glyphs.flip = &d->ui_glyphs.hidden;
-    d->glyphs.inverse = true; // because flip point to hidden not to `shown` in the absence of that bit
+    d->test.btn.flip = &d->testing;
+    d->glyphs.btn.flip = &d->ui_glyphs.hidden;
+    d->glyphs.btn.inverse = true; // because flip point to hidden not to `shown` in the absence of that bit
     y += d->font.atlas.h;
     content->init(&d->ui_ascii, content, d, 0, y, d->font.em * 26, d->font.em * 4);
     d->ui_ascii.draw = ascii_draw;
@@ -356,8 +369,8 @@ static void hidden(app_t* a) {
     d->ui_content.done(&d->ui_content);
     button_done(&d->quit);
     button_done(&d->exit);
-    button_done(&d->glyphs);
-    button_done(&d->test);
+    checkbox_done(&d->glyphs);
+    checkbox_done(&d->test);
     slider_done(&d->slider1);
     slider_done(&d->slider2);
     bitmap_deallocate_texture(&d->font.atlas);
@@ -396,20 +409,21 @@ static void done(app_t* a) {
     font_dispose(&d->font);
 }
 
-static bool dispatch_keyboard_shortcuts(ui_t* p, int flags, int keycode) {
-    if (p->kind == UI_KIND_BUTTON && !p->hidden) {
-        button_t* b = (button_t*)p;
+static bool dispatch_keyboard_shortcuts(ui_t* ui, int flags, int keycode) {
+    if (ui->kind == UI_KIND_BUTTON && !ui->hidden) {
+        btn_t* b = (btn_t*)ui;
         int kc = isalpha(keycode) ? tolower(keycode) : keycode;
         int k = isalpha(b->key) ? tolower(b->key) : b->key;
-        if (!p->hidden && b->key_flags == flags && k == kc) {
+        if (!ui->hidden && b->key_flags == flags && k == kc) {
             // TODO: (Leo) if 3 (or more) states checkboxes are required this is the place to do it.
             //       b->flip = (b->flip + 1) % b->flip_wrap_around;
             if (b->flip != null) { *b->flip = !*b->flip; }
-            b->click(b);
+            ui->a->invalidate(ui->a);
+            b->click(&b->ui);
             return true; // stop search
         }
     }
-    ui_t* c = p->children;
+    ui_t* c = ui->children;
     while (c != null) {
         if (!c->hidden) {
             if (dispatch_keyboard_shortcuts(c, flags, keycode)) { return true; }

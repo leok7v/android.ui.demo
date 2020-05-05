@@ -20,7 +20,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\bitmap.c" />
+    <ClCompile Include="..\src\btn.c" />
     <ClCompile Include="..\src\button.c" />
+    <ClCompile Include="..\src\checkbox.c" />
     <ClCompile Include="..\src\color.c" />
     <ClCompile Include="..\src\dc.c" />
     <ClCompile Include="..\src\font.c" />
@@ -42,8 +44,10 @@
     <ClInclude Include="..\ext\stb_truetype.h" />
     <ClInclude Include="..\inc\app.h" />
     <ClInclude Include="..\inc\bitmap.h" />
+    <ClInclude Include="..\inc\btn.h" />
     <ClInclude Include="..\inc\button.h" />
     <ClInclude Include="..\inc\c.h" />
+    <ClInclude Include="..\inc\checkbox.h" />
     <ClInclude Include="..\inc\color.h" />
     <ClInclude Include="..\inc\dc.h" />
     <ClInclude Include="..\inc\font.h" />

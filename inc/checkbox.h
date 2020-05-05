@@ -13,16 +13,17 @@
 
 begin_c
 
-typedef struct button_s button_t;
+typedef struct checkbox_s checkbox_t;
 
-typedef struct button_s {
+typedef struct checkbox_s {
     btn_t btn;
-} button_t;
+} checkbox_t;
 
-void button_init(button_t* b, ui_t* parent, void* that, int key_flags, int key,
-                 const char* mnemonic, const char* label,
+void checkbox_init(checkbox_t* b, ui_t* parent, void* that,
+                 int key_flags, int key, const char* mnemonic,
+                 const char* label,
                  float x, float y, float w, float h);
 
-void button_done(button_t* b);
+void checkbox_done(checkbox_t* b);
 
 end_c

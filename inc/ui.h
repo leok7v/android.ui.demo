@@ -10,6 +10,7 @@
    language governing permissions and limitations under the License.
 */
 #include "dc.h"
+#include "theme.h"
 
 begin_c
 

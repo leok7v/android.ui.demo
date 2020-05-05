@@ -9,13 +9,35 @@
    CONDITIONS OF ANY KIND, either express or implied. See the License for the specific
    language governing permissions and limitations under the License.
 */
-#include "button.h"
+#include "checkbox.h"
 #include "app.h"
 
 begin_c
 
+static float checkbox_draw(ui_t* ui, pointf_t pt, bool on) {
+    btn_t* b = &((checkbox_t*)ui)->btn;
+    font_t* f = b->ui.a->theme.font;
+    const float em = f->em;
+    const float R = em * 3 / 4;
+    const float r = em / 2;
+    const colorf_t* light = on ? colors_dk.light_blue : colors_dk.light_gray;
+    const colorf_t* dark  = on ? colors_dk.dark_blue  : colors_dk.dark_gray;
+    dc.fill(&dc, dark, pt.x, pt.y - em, em, em);
+    float y = pt.y - em + r;
+    if (on) {
+        dc.ring(&dc, dark, pt.x, y, r, 0);
+        dc.ring(&dc, light, pt.x + em, y, R, 0);
+    } else {
+        dc.ring(&dc, dark, pt.x + em, y, r, 0);
+        dc.ring(&dc, light, pt.x, y, R, 0);
+    }
+    return pt.x + 2 * em;
+}
+
 static void button_draw(ui_t* ui) {
-    btn_t* b = &((button_t*)ui)->btn;
+    // modern touch UI checkbox usually does NOT have label or keyboard shortcut
+    // but `old` style checkbox may still be drivven from keyboard and be a focus
+    btn_t* b = &((checkbox_t*)ui)->btn;
     theme_t* theme = &ui->a->theme;
     const colorf_t* color = b->bitset & BUTTON_STATE_PRESSED ? theme->color_background_pressed : theme->color_background;
     pointf_t pt = ui->screen_xy(ui);
@@ -41,7 +63,7 @@ static void button_draw(ui_t* ui) {
     float baseline = f->baseline;
     pt.y += (int)(baseline + (ui->h - fh) / 2);
     pt.x += em;
-    assertion(b->flip == null, "use checkbox_t instead of button_t flip buttons");
+    if (b->flip != null) { pt.x = checkbox_draw(ui, pt, (*b->flip != 0) ^ (b->inverse != 0)); }
     dc.text(&dc, theme->color_text, f, pt.x, pt.y, b->label, (int)strlen(b->label));
     if (m >= 0) { // draw highlighted mnemonic
         copy[m] = 0;
@@ -50,15 +72,16 @@ static void button_draw(ui_t* ui) {
     }
 }
 
-void button_init(button_t* b, ui_t* parent, void* that, int key_flags, int key,
-                 const char* mnemonic, const char* label,
+void checkbox_init(checkbox_t* cbx, ui_t* parent, void* that,
+                 int key_flags, int key, const char* mnemonic,
+                 const char* label,
                  float x, float y, float w, float h) {
-    btn_init(&b->btn, parent, that, key_flags, key, mnemonic, label, x, y, w, h);
-    b->btn.ui.draw = button_draw;
+    btn_init(&cbx->btn, parent, that, key_flags, key, mnemonic, label, x, y, w, h);
+    cbx->btn.ui.draw = button_draw;
 }
 
-void button_done(button_t* b) {
-    btn_done(&b->btn);
+void checkbox_done(checkbox_t* cbx) {
+    btn_done(&cbx->btn);
 }
 
 end_c

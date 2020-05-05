@@ -46,6 +46,12 @@
     <ClCompile Include="..\src\ui.c">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\btn.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\checkbox.c">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="ext">
@@ -117,6 +123,12 @@
       <Filter>ext</Filter>
     </ClInclude>
     <ClInclude Include="..\inc\c.h">
+      <Filter>inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\inc\btn.h">
+      <Filter>inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\inc\checkbox.h">
       <Filter>inc</Filter>
     </ClInclude>
   </ItemGroup>
