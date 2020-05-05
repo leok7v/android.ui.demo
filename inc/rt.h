@@ -74,9 +74,9 @@ typedef uint8_t byte;
 int _traceln_(const char* filename, int line, const char* function, const char* format, ...);
 int _assertion_(const char* filename, int line, const char* function, const char* a, const char* format, ...);
 int _assert_(const char* filename, int line, const char* function, const char* a);
-int strzt(char* text, int count, int call); // make sure truncated string is zero terminated after call()
+int _ensure_zero_terminated_(char* text, int count, int call); // zero terminate truncated string after call()
 
 #define traceln(...) (_traceln_(__FILE__, __LINE__, __func__, __VA_ARGS__))
 
-#define vsnprintf0(text, f, vl) (strzt((text), countof(text), vsnprintf((text), countof(text) - 1, f, vl)))
-#define snprintf0(text, f, ...) (strzt((text), countof(text), snprintf((text), countof(text) - 1, f, ##__VA_ARGS__)))
+#define vsnprintf0(text, f, vl) (_ensure_zero_terminated_((text), countof(text), vsnprintf((text), countof(text) - 1, f, vl)))
+#define snprintf0(text, f, ...) (_ensure_zero_terminated_((text), countof(text), snprintf((text), countof(text) - 1, f, ##__VA_ARGS__)))

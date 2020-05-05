@@ -14,13 +14,13 @@ begin_c
 
 static int logln(const char* filename, int line, const char* function, const char* format, va_list vl) {
     int r = 0;
-    if (app.logln != null) {
+    if (app->logln != null) {
         const char* file = strrchr(filename, '/');
         if (file == null) { file = strrchr(filename, '\\'); }
         if (file == null) { file = filename; } else { file++; }
         char location[1024];
         snprintf0(location, "%s(%d) \t%s ", file, line, function);
-        r = app.logln(LOG_INFO, "@!@", location, format, vl);
+        r = app->logln(LOG_INFO, "@!@", location, format, vl);
     }
     return r;
 }
@@ -50,8 +50,8 @@ int _assert_(const char* filename, int line, const char* function, const char* a
     return r;
 }
 
-int strzt(char* text, int count, int call) {
-    // [v]snprintf() does NOT zero terminate result on overflow/truncate
+int _ensure_zero_terminated_(char* text, int count, int call) {
+    // [v]snprintf() and alike do NOT zero terminate result on overflow/truncate
     text[count - 1] = 0; // make sure it is zero terminated
     return call;
 }

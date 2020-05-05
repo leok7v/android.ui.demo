@@ -160,13 +160,13 @@ static toast_t* toast(app_t* a) {
 
 void toast_print(float seconds, const char* format, ...) {
     uint64_t ns = seconds == 0 ? TOAST_TIME_IN_NS : (uint64_t)(seconds * NS_IN_SEC);
-    toast_t* t = toast(&app);
+    toast_t* t = toast(app);
     t->nanoseconds = ns;
-    t->print(t, "resolution\n%.0fx%.0fpx", app.root.w, app.root.h);
+    t->print(t, "resolution\n%.0fx%.0fpx", app->root.w, app->root.h);
 }
 
 void toast_cancel() {
-    toast_t* t = toast(&app);
+    toast_t* t = toast(app);
     t->cancel(t);
 }
 

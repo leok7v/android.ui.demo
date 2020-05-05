@@ -48,6 +48,7 @@ static void  show_keyboard(app_t* app, bool on);
 static void  enqueue_command(glue_t* glue, int8_t command);
 static int   log_vprintf(int level, const char* tag, const char* location, const char* format, va_list vl);
 
+#if 0
 app_t app = {
     /* init:    */ null,
     /* shown:   */ null,
@@ -72,6 +73,7 @@ app_t app = {
     show_keyboard,
     log_vprintf
 };
+#endif
 
 enum {
     // Looper data ID of commands coming from the app's main thread, which
@@ -850,9 +852,9 @@ static void init_callbacks(ANativeActivityCallbacks* cb) {
 
 static void create_activitiy(glue_t* glue, ANativeActivity* na, void* data, size_t bytes) {
     assert(glue->na == null);
-    assert(glue->a = &app);
-    assert(app.glue == glue);
-    assert(app.focused == null);
+    assert(glue->a = app);
+    assert(app->glue == glue);
+    assert(app->focused == null);
     na->instance = glue;
     glue->destroy_requested = false;
     glue->na = na;
@@ -868,11 +870,28 @@ static void create_activitiy(glue_t* glue, ANativeActivity* na, void* data, size
     init_looper(glue, na);
     init_accelerometer(glue);
     init_timer_thread(glue);
-    assertion(app.init != null, "init() cannot be null");
-    app.init(&app);
+    assertion(app->init != null, "init() cannot be null");
+    app->init(app);
 }
 
 static glue_t glue;
+app_t* app;
+
+static_init(app_droid) {
+    app->quit          = app_quit;
+    app->exit          = app_exit;
+    app->invalidate    = app_invalidate;
+    app->focus         = focus;
+    app->timer_add     = timer_add;
+    app->timer_remove  = timer_remove;
+    app->asset_map     = asset_map;
+    app->asset_unmap   = asset_unmap;
+    app->vibrate       = vibrate;
+    app->show_keyboard = show_keyboard;
+    app->logln         = log_vprintf;
+    app->glue = &glue;
+    glue.a = app;
+}
 
 void ANativeActivity_onCreate(ANativeActivity* na, void* data, size_t bytes) {
     traceln("pid/tid=%d/%d na=%p saved_state=%p[%d]", getpid(), gettid(), na, data, bytes);
@@ -883,11 +902,22 @@ void ANativeActivity_onCreate(ANativeActivity* na, void* data, size_t bytes) {
         create_activitiy(&glue, na, data, bytes);
     }
 }
-
-static_init(app_android) {
-    app_init(&app);
-    app.glue = &glue;
-    glue.a = &app;
+/*
+static_init(app_droid) {
+//  app_init(app);
+    app->quit          = app_quit;
+    app->exit          = app_exit;
+    app->invalidate    = app_invalidate;
+    app->focus         = focus;
+    app->timer_add     = timer_add;
+    app->timer_remove  = timer_remove;
+    app->asset_map     = asset_map;
+    app->asset_unmap   = asset_unmap;
+    app->vibrate       = vibrate;
+    app->show_keyboard = show_keyboard;
+    app->logln         = log_vprintf;
+    app->glue = &glue;
+    glue.a = app;
 }
-
+*/
 end_c

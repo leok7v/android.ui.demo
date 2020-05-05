@@ -79,7 +79,22 @@ static uint32_t get_gl_version() {
     return major << 16 | minor;
 }
 
+static void check_type_assumptions() {
+    assert(sizeof(GLuint)     == sizeof(uint32_t));
+    assert(sizeof(GLint)      == sizeof(int32_t));
+    assert(sizeof(GLushort)   == sizeof(uint16_t));
+    assert(sizeof(GLshort)    == sizeof(int16_t));
+    assert(sizeof(GLfloat)    == sizeof(float));
+    assert(sizeof(GLchar)     == sizeof(char));
+    assert(sizeof(GLbyte)     == sizeof(char));
+    assert(sizeof(GLubyte)    == sizeof(byte));
+    assert(sizeof(GLsizei)    == sizeof(int));
+    assert(sizeof(GLintptr)   == sizeof(uintptr_t));
+    assert(sizeof(GLsizeiptr) == sizeof(GLsizeiptr));
+}
+
 static void init(dc_t* dc) {
+    check_type_assumptions();
     gl_version = get_gl_version();
     gl_check(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST));
     gl_check(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST));

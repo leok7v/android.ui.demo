@@ -70,13 +70,7 @@ typedef struct app_s {
     theme_t theme;
 } app_t;
 
-// app_init() MUST be implemented by application. It is called before main()
-// application must load main ui font (e.g. from resources) and assign to app_t.font field
-// application is expected to fill some of the callbacks that will be called later.
-
-extern app_t app;
-
-void app_init();
+extern app_t* app;
 
 enum { // logging level
     LOG_DEFAULT = 1,

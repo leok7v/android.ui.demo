@@ -131,18 +131,4 @@ int gl_trace_errors_return_int_(const char* file, int line, const char* func,
     return r;
 }
 
-static_init(glh) {
-    assert(sizeof(GLuint)     == sizeof(uint32_t));
-    assert(sizeof(GLint)      == sizeof(int32_t));
-    assert(sizeof(GLushort)   == sizeof(uint16_t));
-    assert(sizeof(GLshort)    == sizeof(int16_t));
-    assert(sizeof(GLfloat)    == sizeof(float));
-    assert(sizeof(GLchar)     == sizeof(char));
-    assert(sizeof(GLbyte)     == sizeof(char));
-    assert(sizeof(GLubyte)    == sizeof(byte));
-    assert(sizeof(GLsizei)    == sizeof(int));
-    assert(sizeof(GLintptr)   == sizeof(uintptr_t));
-    assert(sizeof(GLsizeiptr) == sizeof(GLsizeiptr));
-}
-
 end_c

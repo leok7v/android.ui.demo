@@ -30,7 +30,7 @@ enum {
 };
 
 typedef struct {
-    app_t* a;
+    app_t a;
     int font_height_px;
     font_t font;    // default UI font
 //  int program_main;
@@ -60,10 +60,10 @@ static inline_c float pt2px(app_t* a, float pt) { return pt * a->xdpi / 72.0f; }
 
 static void init_button(demo_t* d, button_t* b, float x, float y, int key_flags, int key,
                                const char* mnemonic, const char* label, void (*click)(ui_t*)) {
-    app_t* a = d->a;
+    app_t* a = &d->a;
     const float lw = font_text_width(&d->font, label, -1) + d->font.em;
     const float bw = max(lw, pt2px(a, MIN_BUTTON_WIDTH_PT));
-    const float bh = d->font.height * d->a->theme.ui_height;
+    const float bh = d->font.height * d->a.theme.ui_height;
     button_init(b, &d->ui_content, d, key_flags, key, mnemonic, label, x, y, bw, bh);
     b->btn.ui.that = d;
     b->btn.click = click;
@@ -71,10 +71,10 @@ static void init_button(demo_t* d, button_t* b, float x, float y, int key_flags,
 
 static void init_checkbox(demo_t* d, checkbox_t* cbx, float x, float y, int key_flags, int key,
                                const char* mnemonic, const char* label, void (*click)(ui_t*)) {
-    app_t* a = d->a;
+    app_t* a = &d->a;
     const float lw = font_text_width(&d->font, label, -1) + d->font.em;
     const float bw = max(lw, pt2px(a, MIN_BUTTON_WIDTH_PT));
-    const float bh = d->font.height * d->a->theme.ui_height;
+    const float bh = d->font.height * d->a.theme.ui_height;
     checkbox_init(cbx, &d->ui_content, d, key_flags, key, mnemonic, label, x, y, bw, bh);
     cbx->btn.ui.that = d;
     cbx->btn.click = click;
@@ -175,7 +175,7 @@ static void ascii_draw(ui_t* ui) {
     float y = ui->y + 0.5;
     char text[97] = {};
     for (int i = 0; i < 96; i++) { text[i] = 32 + i; }
-    screen_writer_t sw = screen_writer(x, y, d->a->theme.font, colors.green);
+    screen_writer_t sw = screen_writer(x, y, d->a.theme.font, colors.green);
     for (int i = 0; i < countof(text); i += 24) {
         sw.println(&sw, "%-24.24s", &text[i]);
     }
@@ -219,9 +219,9 @@ static void on_test(ui_t* b) {
 
 static void init_ui(demo_t* d) {
     ui_t* content = &d->ui_content;
-    d->a->root.init(content, &d->a->root, d, 0, 0, d->a->root.w, d->a->root.h);
-    float vgap = pt2px(d->a, VERTICAL_GAP_PT);
-    float hgap = pt2px(d->a, HORIZONTAL_GAP_PT);
+    d->a.root.init(content, &d->a.root, d, 0, 0, d->a.root.w, d->a.root.h);
+    float vgap = pt2px(&d->a, VERTICAL_GAP_PT);
+    float hgap = pt2px(&d->a, HORIZONTAL_GAP_PT);
     float bh = d->font.height * 3 / 2; // button height
     float y = 240 + vgap;
     init_button(d, &d->quit,     10, y, 0, 'q', "Q", "Quit",      on_quit);   y += bh + vgap;
@@ -260,14 +260,14 @@ static void init_ui(demo_t* d) {
 
 static void load_font(demo_t* d) {
     int r = 0;
-    int hpx = (int)(pt2px(d->a, FONT_HEIGHT_PT) + 0.5); // font height in pixels
+    int hpx = (int)(pt2px(&d->a, FONT_HEIGHT_PT) + 0.5); // font height in pixels
     if (hpx != d->font.height) {
         if (d->font.atlas.data != null) { font_dispose(&d->font); }
         // https://en.wikipedia.org/wiki/Liberation_fonts https://github.com/liberationfonts
         // https://github.com/liberationfonts/liberation-fonts/releases
         // Useful: https://www.glyphrstudio.com/online/ and https://convertio.co/otf-ttf/
         // https://github.com/googlefonts/noto-fonts/tree/master
-        r = font_load_asset(&d->font, d->a, "liberation-mono-bold-ascii.ttf", hpx, 32, 98);
+        r = font_load_asset(&d->font, &d->a, "liberation-mono-bold-ascii.ttf", hpx, 32, 98);
         assert(r == 0); (void)r;
     }
     r = bitmap_allocate_and_update_texture(&d->font.atlas);
@@ -278,7 +278,7 @@ static void load_font(demo_t* d) {
 static void init_theme(demo_t* d) {
     static colorf_t light_gray_alpha_0_60;
     light_gray_alpha_0_60 = *colors.light_gray; light_gray_alpha_0_60.a = 0.6;
-    theme_t* th = &d->a->theme;
+    theme_t* th = &d->a.theme;
     th->font = &d->font;
     th->ui_height = 1.5; // 150% of font height in pixels for UI elements height
     th->color_text                = colors_nc.light_blue;
@@ -390,8 +390,8 @@ static void resume(app_t* a) {
 static void init(app_t* a) { // init application
     demo_t* d = (demo_t*)a->that;
     a->root.that = &d;
-    app.root   = *ui_if;
-    app.root.a = a;
+    app->root    = *ui_if;
+    app->root.a  = a;
     if (d->bitmaps[0].data == null) {
         bitmap_load_asset(&d->bitmaps[0], a, "cube-320x240.png");
         bitmap_load_asset(&d->bitmaps[1], a, "geometry-320x240.png");
@@ -458,20 +458,20 @@ static void touch(app_t* a, int index, int action, int x, int y) {
 
 static demo_t demo;
 
-void app_init() {
-    demo.a      = &app;
-    app.that    = &demo;
-    app.init    = init;
-    app.shown   = shown;
-    app.draw    = draw;
-    app.resized = resized;
-    app.hidden  = hidden;
-    app.pause   = paused;
-    app.stop    = stop;
-    app.resume  = resume;
-    app.done    = done;
-    app.key     = key;
-    app.touch   = touch;
+static_init(demo) {
+    app = &demo.a;
+    app->that    = &demo;
+    app->init    = init;
+    app->shown   = shown;
+    app->draw    = draw;
+    app->resized = resized;
+    app->hidden  = hidden;
+    app->pause   = paused;
+    app->stop    = stop;
+    app->resume  = resume;
+    app->done    = done;
+    app->key     = key;
+    app->touch   = touch;
 }
 
 end_c
