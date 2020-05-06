@@ -27,8 +27,8 @@ begin_c
 
 // all functions 0 in success or last glGetError() if failed
 
-int gl_allocate_texture(int *ti);
-int gl_update_texture(int ti, int w, int h, int bpp, const void* data); // bpp - bytes per pixel
+int gl_allocate(int *ti);
+int gl_update(int ti, int w, int h, int bpp, const void* data); // bpp - bytes per pixel
 int gl_delete_texture(int ti);
 
 const char* gl_strerror(int gle);

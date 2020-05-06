@@ -13,28 +13,30 @@
 
 begin_c
 
-typedef struct bitmap_s bitmap_t;
+/* texture_t is super simple holder for GL texture2D with a data buffer in main CPU RAM */
 
-typedef struct bitmap_s {
+typedef struct texture_s texture_t;
+
+typedef struct texture_s {
     int w;
     int h;
     int comp;  // components per pixel 1 (grey), 2(grey+alpha), 3 (rgb), 4(rgba)
     int ti;    // texture index in OpenGL 0 if not texture attached
     void* data;
-} bitmap_t;
+} texture_t;
 
 typedef struct app_s app_t;
 
-int bitmap_allocate_texture(bitmap_t* b);
+int texture_allocate(texture_t* b);
 
-int bitmap_deallocate_texture(bitmap_t* b);
+int texture_deallocate(texture_t* b);
 
-int bitmap_update_texture(bitmap_t* b);
+int texture_update(texture_t* b);
 
-int bitmap_allocate_and_update_texture(bitmap_t* b);
+int texture_allocate_and_update(texture_t* b);
 
-int bitmap_load_asset(bitmap_t* b, app_t* a, const char* name);
+int texture_load_asset(texture_t* b, app_t* a, const char* name);
 
-void bitmap_dispose(bitmap_t* b);
+void texture_dispose(texture_t* b);
 
 end_c

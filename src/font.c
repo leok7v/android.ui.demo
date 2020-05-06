@@ -127,9 +127,9 @@ int font_find_glyph_index(font_t* f, int unicode_codepoint) {
 }
 
 void font_dispose(font_t* f) {
-    assertion(f->atlas.ti == 0, "font_deallocate_texture() must be called on hidden() before font_dispose()");
+    assertion(f->atlas.ti == 0, "font_deallocate() must be called on hidden() before font_dispose()");
     // Plan B: just in case font_dispose() called while window is still not hidden()
-    if (f->atlas.ti != 0) { bitmap_deallocate_texture(&f->atlas); }
+    if (f->atlas.ti != 0) { texture_deallocate(&f->atlas); }
     deallocate(f->atlas.data);
     deallocate(f->chars);
     memset(f, 0, sizeof(*f));

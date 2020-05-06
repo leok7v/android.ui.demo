@@ -10,10 +10,10 @@
    language governing permissions and limitations under the License.
 */
 #include "c.h"
-#include "bitmap.h"
 #include "color.h"
 #include "stb_inc.h"
 #include "stb_truetype.h" // for stbtt_fontinfo
+#include "texture.h"
 
 begin_c
 
@@ -28,7 +28,7 @@ typedef struct font_s {
     // internal implementation details:
     stbtt_fontinfo fi;
     void* chars;  // per character info
-    bitmap_t atlas;
+    texture_t atlas;
 } font_t;
 
 typedef struct app_s app_t;

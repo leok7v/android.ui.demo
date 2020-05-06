@@ -26,9 +26,9 @@ static void clear(dc_t* dc, const colorf_t* color);
 static void fill(dc_t* dc, const colorf_t* color, float x, float y, float w, float h);
 static void rect(dc_t* dc, const colorf_t* color, float x, float y, float w, float h, float width);
 static void ring(dc_t* dc, const colorf_t* color, float x, float y, float radius, float inner);
-static void bblt(dc_t* dc, const bitmap_t* bitmap, float x, float y);
-static void luma(dc_t* dc, const colorf_t* color, bitmap_t* bitmap, float x, float y);
-static void tex4(dc_t* dc, const colorf_t* color, bitmap_t* bitmap, quadf_t* quads, int count);
+static void bblt(dc_t* dc, const texture_t* bitmap, float x, float y);
+static void luma(dc_t* dc, const colorf_t* color, texture_t* bitmap, float x, float y);
+static void tex4(dc_t* dc, const colorf_t* color, texture_t* bitmap, quadf_t* quads, int count);
 static void poly(dc_t* dc, const colorf_t* color, const pointf_t* vertices, int count);
 static void line(dc_t* dc, const colorf_t* c, float x0, float y0, float x1, float y1, float thickness);
 static float text(dc_t* dc, const colorf_t* color, font_t* font, float x, float y, const char* text, int count);
@@ -214,7 +214,7 @@ static void stadium(dc_t* dc, const colorf_t* c, float x, float y, float w, floa
     dc->fill(dc, c, x, y0, w, h - r2);
 }
 
-static void bblt(dc_t* dc, const bitmap_t* bitmap, float x, float y) {
+static void bblt(dc_t* dc, const texture_t* bitmap, float x, float y) {
     const int w = bitmap->w;
     const int h = bitmap->h;
     const GLfloat vertices[] = {
@@ -232,7 +232,7 @@ static void bblt(dc_t* dc, const bitmap_t* bitmap, float x, float y) {
     gl_check(glDrawArrays(GL_TRIANGLE_FAN, 0, 4));
 }
 
-static void luma(dc_t* dc, const colorf_t* color, bitmap_t* bitmap, float x, float y) {
+static void luma(dc_t* dc, const colorf_t* color, texture_t* bitmap, float x, float y) {
     const float w = bitmap->w;
     const float h = bitmap->h;
     GLfloat vertices[] = {
@@ -251,7 +251,7 @@ static void luma(dc_t* dc, const colorf_t* color, bitmap_t* bitmap, float x, flo
     gl_check(glDrawArrays(GL_TRIANGLE_FAN, 0, 4));
 }
 
-static void tex4(dc_t* dc, const colorf_t* color, bitmap_t* bitmap, quadf_t* quads, int count) {
+static void tex4(dc_t* dc, const colorf_t* color, texture_t* bitmap, quadf_t* quads, int count) {
     use_program(shaders.luma);
     gl_check(glUniformMatrix4fv(shaders.luma_mvp, 1, false, (GLfloat*)dc->mvp));
     gl_check(glUniform4fv(shaders.luma_rgba, 1, (GLfloat*)color));

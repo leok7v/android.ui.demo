@@ -34,7 +34,7 @@ typedef struct {
     int font_height_px;
     font_t font;    // default UI font
 //  int program_main;
-    bitmap_t bitmaps[3];
+    texture_t bitmaps[3];
     button_t quit;
     button_t exit;
     checkbox_t glyphs;
@@ -186,7 +186,7 @@ static void textures_draw(ui_t* ui) {
     demo_t* d = (demo_t*)ui->a->that;
     dc.line(&dc, colors.white, 0.5, 0.5, 0.5, 240 + 2.5, 1);
     for (int i = 0; i < countof(d->bitmaps); i++) {
-        bitmap_t* b = &d->bitmaps[i];
+        texture_t* b = &d->bitmaps[i];
         float x = i * (b->w + 1.5);
         dc.bblt(&dc, b, x + 1.5, 1.5);
         dc.line(&dc, colors.white, x + b->w + 1.5, 1.5, x + b->w + 1.5, b->h + 1.5, 1.5);
@@ -272,7 +272,7 @@ static void load_font(demo_t* d) {
         r = font_load_asset(&d->font, &d->a, "liberation-mono-bold-ascii.ttf", hpx, 32, 98);
         assert(r == 0); (void)r;
     }
-    r = bitmap_allocate_and_update_texture(&d->font.atlas);
+    r = texture_allocate_and_update(&d->font.atlas);
     assert(r == 0);
     if (r != 0) { exit(r); } // fatal
 }
@@ -346,7 +346,7 @@ static void shown(app_t* a, int w, int h) {
     assert(r == 0);
     init_theme(d);
     for (int i = 0; i < countof(d->bitmaps); i++) {
-        bitmap_allocate_and_update_texture(&d->bitmaps[i]);
+        texture_allocate_and_update(&d->bitmaps[i]);
     }
     init_ui(d);
     toast_print(0, "resolution\n%.0fx%.0fpx", a->root.w, a->root.h);
@@ -373,8 +373,8 @@ static void hidden(app_t* a) {
     checkbox_done(&d->test);
     slider_done(&d->slider1);
     slider_done(&d->slider2);
-    bitmap_deallocate_texture(&d->font.atlas);
-    for (int i = 0; i < countof(d->bitmaps); i++) { bitmap_deallocate_texture(&d->bitmaps[i]); }
+    texture_deallocate(&d->font.atlas);
+    for (int i = 0; i < countof(d->bitmaps); i++) { texture_deallocate(&d->bitmaps[i]); }
 //  shader_program_dispose(d->program_main);   d->program_main = 0;
     shaders_dispose();
     dc.dispose(&dc);
@@ -395,16 +395,16 @@ static void init(app_t* a) { // init application
     app->root    = *ui_if;
     app->root.a  = a;
     if (d->bitmaps[0].data == null) {
-        bitmap_load_asset(&d->bitmaps[0], a, "cube-320x240.png");
-        bitmap_load_asset(&d->bitmaps[1], a, "geometry-320x240.png");
-        bitmap_load_asset(&d->bitmaps[2], a, "machine-320x240.png");
+        texture_load_asset(&d->bitmaps[0], a, "cube-320x240.png");
+        texture_load_asset(&d->bitmaps[1], a, "geometry-320x240.png");
+        texture_load_asset(&d->bitmaps[2], a, "machine-320x240.png");
     }
 }
 
 static void done(app_t* a) {
     demo_t* d = (demo_t*)a->that;
     for (int i = 0; i < countof(d->bitmaps); i++) {
-        bitmap_dispose(&d->bitmaps[i]);
+        texture_dispose(&d->bitmaps[i]);
     }
     font_dispose(&d->font);
 }

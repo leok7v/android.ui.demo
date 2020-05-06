@@ -9,7 +9,6 @@
    CONDITIONS OF ANY KIND, either express or implied. See the License for the specific
    language governing permissions and limitations under the License.
 */
-#include "bitmap.h"
 #include "color.h"
 #include "font.h"
 #include "linmath.h"
@@ -30,9 +29,9 @@ typedef struct dc_s { // draw commands/context
     void (*fill)(dc_t* dc, const colorf_t* color, float x, float y, float w, float h);
     void (*rect)(dc_t* dc, const colorf_t* color, float x, float y, float w, float h, float thickness);
     void (*ring)(dc_t* dc, const colorf_t* color, float x, float y, float radius, float inner);
-    void (*bblt)(dc_t* dc, const bitmap_t* bitmap, float x, float y);
-    void (*luma)(dc_t* dc, const colorf_t* color, bitmap_t* bitmap, float x, float y);
-    void (*tex4)(dc_t* dc, const colorf_t* color, bitmap_t* bitmap, quadf_t* quads, int count);
+    void (*bblt)(dc_t* dc, const texture_t* bitmap, float x, float y);
+    void (*luma)(dc_t* dc, const colorf_t* color, texture_t* bitmap, float x, float y);
+    void (*tex4)(dc_t* dc, const colorf_t* color, texture_t* bitmap, quadf_t* quads, int count);
     void (*poly)(dc_t* dc, const colorf_t* color, const pointf_t* vertices, int count); // filled with TRIANGLE_FAN
     void (*line)(dc_t* dc, const colorf_t* c, float x0, float y0, float x1, float y1, float thickness);
     float(*text)(dc_t* dc, const colorf_t* color, font_t* font, float x, float y, const char* text, int count);

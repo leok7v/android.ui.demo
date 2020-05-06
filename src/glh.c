@@ -33,7 +33,7 @@ static int init_texture(int ti) {
     return r;
 }
 
-int gl_allocate_texture(int *ti) {
+int gl_allocate(int *ti) {
     int r = 0;
     assertion(*ti == 0, "is texture already allocated ti=%d?", *ti);
     if (*ti != 0) {
@@ -53,7 +53,7 @@ int gl_allocate_texture(int *ti) {
     return r;
 }
 
-int gl_update_texture(int ti, int w, int h, int bpp, const void* data) {
+int gl_update(int ti, int w, int h, int bpp, const void* data) {
     int r = 0;
     int c = bpp - 1;
     static const int formats[] = { GL_ALPHA, GL_LUMINANCE_ALPHA, GL_RGB, GL_RGBA };

@@ -8,16 +8,15 @@
    CONDITIONS OF ANY KIND, either express or implied. See the License for the specific
    language governing permissions and limitations under the License.
 */
-#include "bitmap.h"
 #include "app.h"
 #include "dc.h"
+#include "glh.h"
 #include "stb_inc.h"
 #include "stb_image.h"
-#include "glh.h"
 
 begin_c
 
-static int load_asset(bitmap_t* b, app_t* a, const char* name) {
+static int load_asset(texture_t* b, app_t* a, const char* name) {
     int r = 0;
     const void* data = null;
     int bytes = 0;
@@ -46,7 +45,7 @@ static int load_asset(bitmap_t* b, app_t* a, const char* name) {
     return r;
 }
 
-int bitmap_load_asset(bitmap_t* b, app_t* a, const char* name) {
+int texture_load_asset(texture_t* b, app_t* a, const char* name) {
     assertion(b->data == null && b->ti == 0,
               "bitmap already has data=%p or texture=0x%08X",
               b->data, b->ti);
@@ -56,36 +55,36 @@ int bitmap_load_asset(bitmap_t* b, app_t* a, const char* name) {
     } else {
         memset(b, 0, sizeof(*b));
         r = load_asset(b, a, name);
-        if (r != 0) { bitmap_dispose(b); }
+        if (r != 0) { texture_dispose(b); }
     }
     return r;
 }
 
-int bitmap_allocate_texture(bitmap_t* b) {
+int texture_allocate(texture_t* b) {
     assertion(b->ti == 0, "texture already attached to bitmap ti=%d", b->ti);
-    return b->ti != 0 ? EINVAL : gl_allocate_texture(&b->ti);
+    return b->ti != 0 ? EINVAL : gl_allocate(&b->ti);
 }
 
-int bitmap_deallocate_texture(bitmap_t* b) {
+int texture_deallocate(texture_t* b) {
     assertion(b->ti != 0, "texture was not attached to bitmap");
     int r = b->ti != 0 ? gl_delete_texture(b->ti) : EINVAL;
     b->ti = 0;
     return r;
 }
 
-int bitmap_update_texture(bitmap_t* b) {
-    return gl_update_texture(b->ti, b->w, b->h, b->comp, b->data);
+int texture_update(texture_t* b) {
+    return gl_update(b->ti, b->w, b->h, b->comp, b->data);
 }
 
-int bitmap_allocate_and_update_texture(bitmap_t* b) {
+int texture_allocate_and_update(texture_t* b) {
     assert(b->data != null && b->w > 0 && b->h > 0 && b->comp > 0);
-    int r = bitmap_allocate_texture(b);
-    return r != 0 ? r : bitmap_update_texture(b);
+    int r = texture_allocate(b);
+    return r != 0 ? r : texture_update(b);
 }
 
-void bitmap_dispose(bitmap_t* b) {
-    assertion(b->ti == 0, "bitmap_deallocate_texture() must be called on hidden() before bitmap_dispose()");
-    if (b->ti != 0) { bitmap_deallocate_texture(b); }
+void texture_dispose(texture_t* b) {
+    assertion(b->ti == 0, "texture_deallocate() must be called on hidden() before texture_dispose()");
+    if (b->ti != 0) { texture_deallocate(b); }
     if (b->data != null) { deallocate(b->data); }
     memset(b, 0, sizeof(*b));
 }

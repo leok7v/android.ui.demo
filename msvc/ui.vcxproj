@@ -19,7 +19,6 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\src\bitmap.c" />
     <ClCompile Include="..\src\btn.c" />
     <ClCompile Include="..\src\button.c" />
     <ClCompile Include="..\src\checkbox.c" />
@@ -34,6 +33,7 @@
     <ClCompile Include="..\src\slider.c" />
     <ClCompile Include="..\src\stb_font.c" />
     <ClCompile Include="..\src\stb_image.c" />
+    <ClCompile Include="..\src\texture.c" />
     <ClCompile Include="..\src\toast.c" />
     <ClCompile Include="..\src\ui.c" />
   </ItemGroup>
@@ -43,7 +43,6 @@
     <ClInclude Include="..\ext\stb_rect_pack.h" />
     <ClInclude Include="..\ext\stb_truetype.h" />
     <ClInclude Include="..\inc\app.h" />
-    <ClInclude Include="..\inc\bitmap.h" />
     <ClInclude Include="..\inc\btn.h" />
     <ClInclude Include="..\inc\button.h" />
     <ClInclude Include="..\inc\c.h" />
@@ -57,6 +56,7 @@
     <ClInclude Include="..\inc\shaders.h" />
     <ClInclude Include="..\inc\slider.h" />
     <ClInclude Include="..\inc\stb_inc.h" />
+    <ClInclude Include="..\inc\texture.h" />
     <ClInclude Include="..\inc\theme.h" />
     <ClInclude Include="..\inc\toast.h" />
     <ClInclude Include="..\inc\ui.h" />
