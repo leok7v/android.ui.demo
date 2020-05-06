@@ -80,3 +80,5 @@ int _ensure_zero_terminated_(char* text, int count, int call); // zero terminate
 
 #define vsnprintf0(text, f, vl) (_ensure_zero_terminated_((text), countof(text), vsnprintf((text), countof(text) - 1, f, vl)))
 #define snprintf0(text, f, ...) (_ensure_zero_terminated_((text), countof(text), snprintf((text), countof(text) - 1, f, ##__VA_ARGS__)))
+
+#define stringify(x) #x
