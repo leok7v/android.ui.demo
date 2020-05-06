@@ -24,7 +24,7 @@ static const char* SLIDER2_LABEL = "Slider2: %-3d";
 
 enum {
     FONT_HEIGHT_PT      =  10, // pt = point = 1/72 inch
-    MIN_BUTTON_WIDTH_PT =  90,
+    MIN_BUTTON_WIDTH_PT =  60,
     VERTICAL_GAP_PT     =   8,
     HORIZONTAL_GAP_PT   =   8
 };
@@ -228,7 +228,16 @@ static void init_ui(demo_t* d) {
     init_button(d, &d->exit,     10, y, 0, 'e', "E", "Exit(153)", on_exit);   y += bh + vgap;
     init_checkbox(d, &d->test,   10, y, 0, 'x', "X", "Test",      on_test);   y += bh + vgap;
     init_checkbox(d, &d->glyphs, 10, y, 0, 'x', "X", "Glyphs",    on_glyphs); y += bh + vgap;
-    const int x = d->glyphs.btn.ui.w + hgap * 4;
+    // ascii and ui_textures views
+    content->init(&d->ui_ascii, content, d, 0, y, d->font.em * 26, d->font.em * 4);
+    d->ui_ascii.draw = ascii_draw;
+    content->draw  = content_draw;
+    content->mouse = content_mouse;
+    content->init(&d->ui_textures, content, d, 0, 0, 320 * 3 + 4, 240 + 2);
+    d->ui_textures.mouse = textures_mouse;
+    d->ui_textures.draw = textures_draw;
+    // sliders
+    const int x = d->glyphs.btn.ui.w + hgap;
     y = 240 + vgap;
     d->slider1_minimum = 0;
     d->slider1_maximum = 255;
@@ -249,13 +258,6 @@ static void init_ui(demo_t* d) {
     d->glyphs.btn.flip = &d->ui_glyphs.hidden;
     d->glyphs.btn.inverse = true; // because flip point to hidden not to `shown` in the absence of that bit
     y += d->font.atlas.h;
-    content->init(&d->ui_ascii, content, d, 0, y, d->font.em * 26, d->font.em * 4);
-    d->ui_ascii.draw = ascii_draw;
-    content->draw  = content_draw;
-    content->mouse = content_mouse;
-    content->init(&d->ui_textures, content, d, 0, 0, 320 * 3 + 4, 240 + 2);
-    d->ui_textures.mouse = textures_mouse;
-    d->ui_textures.draw = textures_draw;
 }
 
 static void load_font(demo_t* d) {
@@ -432,13 +434,17 @@ static bool dispatch_keyboard_shortcuts(ui_t* ui, int flags, int keycode) {
 }
 
 static void key(app_t* a, int flags, int keycode) {
-    a->keyboard_flags = flags;
-    if (a->focused != null && a->focused->keyboard != null) {
-        a->focused->keyboard(a->focused, flags, keycode);
-    }
-    if (flags & KEYBOARD_KEY_PRESSED) {
-        int f = flags & ~(KEYBOARD_KEY_PRESSED|KEYBOARD_SHIFT|KEYBOARD_NUMLOCK|KEYBOARD_CAPSLOCK);
-        dispatch_keyboard_shortcuts(&a->root, f, keycode);
+    if (keycode == KEY_CODE_BACK) {
+        a->quit(a);
+    } else {
+        a->keyboard_flags = flags;
+        if (a->focused != null && a->focused->keyboard != null) {
+            a->focused->keyboard(a->focused, flags, keycode);
+        }
+        if (flags & KEYBOARD_KEY_PRESSED) {
+            int f = flags & ~(KEYBOARD_KEY_PRESSED|KEYBOARD_SHIFT|KEYBOARD_NUMLOCK|KEYBOARD_CAPSLOCK);
+            dispatch_keyboard_shortcuts(&a->root, f, keycode);
+        }
     }
 }
 
@@ -456,22 +462,25 @@ static void touch(app_t* a, int index, int action, int x, int y) {
     }
 }
 
-static demo_t demo;
+static demo_t demo = {
+    /* a = */ {
+        init,
+        shown,
+        draw,
+        resized,
+        hidden,
+        paused,
+        stop,
+        resume,
+        done,
+        key,
+        touch
+    }
+};
 
 static_init(demo) {
     app = &demo.a;
     app->that    = &demo;
-    app->init    = init;
-    app->shown   = shown;
-    app->draw    = draw;
-    app->resized = resized;
-    app->hidden  = hidden;
-    app->pause   = paused;
-    app->stop    = stop;
-    app->resume  = resume;
-    app->done    = done;
-    app->key     = key;
-    app->touch   = touch;
 }
 
 end_c

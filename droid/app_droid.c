@@ -30,50 +30,10 @@
 begin_c
 
 #if !(ANDROID_API > 0)
-#pragma message("Invalid ANDROID_API '" __STR(ANDROID_API)) "'"
+#pragma message("Invalid ANDROID_API '" stringify(ANDROID_API)) "'"
 #endif
 
 typedef struct glue_s glue_t;
-
-static void  app_quit(app_t* app);
-static void  app_exit(app_t* app, int code);
-static void  app_invalidate(app_t* app);
-static void  focus(app_t* app, ui_t * ui);
-static int   timer_add(app_t* app, timer_callback_t* tcb);
-static void  timer_remove(app_t* app, timer_callback_t* tcb);
-static void* asset_map(app_t* a, const char* name, const void* *data, int* bytes);
-static void  asset_unmap(app_t* a, void* asset, const void* data, int bytes);
-static void  vibrate(app_t* a, int vibration_effect);
-static void  show_keyboard(app_t* app, bool on);
-static void  enqueue_command(glue_t* glue, int8_t command);
-static int   log_vprintf(int level, const char* tag, const char* location, const char* format, va_list vl);
-
-#if 0
-app_t app = {
-    /* init:    */ null,
-    /* shown:   */ null,
-    /* draw:    */ null,
-    /* resized: */ null,
-    /* hidden:  */ null,
-    /* pause:   */ null,
-    /* stop:    */ null,
-    /* resume:  */ null,
-    /* done:    */ null,
-    /* key:     */ null,
-    /* touch:   */ null,
-    app_quit,
-    app_exit,
-    app_invalidate,
-    focus,
-    timer_add,
-    timer_remove,
-    asset_map,
-    asset_unmap,
-    vibrate,
-    show_keyboard,
-    log_vprintf
-};
-#endif
 
 enum {
     // Looper data ID of commands coming from the app's main thread, which
@@ -163,7 +123,7 @@ typedef struct glue_s {
     pthread_cond_signal(&(cond));              \
     pthread_mutex_unlock(&(mutex))
 
-static int log_vprintf(int level, const char* tag, const char* location, const char* format, va_list vl) {
+static int logln(int level, const char* tag, const char* location, const char* format, va_list vl) {
     char fmt[1024];
     const char* f = format;
     if (location != null) {
@@ -203,6 +163,22 @@ static uint64_t time_monotonic_ns() {
     struct timespec tm = {};
     clock_gettime(CLOCK_MONOTONIC, &tm);
     return NS_IN_SEC * (int64_t)tm.tv_sec + tm.tv_nsec;
+}
+
+static void enqueue_command(glue_t* glue, int8_t command) {
+    if (write(glue->write_pipe, &command, sizeof(command)) != sizeof(command)) {
+        traceln("Failure writing a command: %s", strerror(errno));
+    }
+    ALooper_wake(glue->looper);
+}
+
+static int8_t dequeue_command(glue_t* glue) {
+    int8_t command;
+    if (read(glue->read_pipe, &command, sizeof(command)) == sizeof(command)) {
+        return command;
+    } else {
+        return -1;
+    }
 }
 
 static void* asset_map(app_t* a, const char* name, const void* *data, int *bytes) {
@@ -462,18 +438,19 @@ static void on_configuration_changed(ANativeActivity* na) {
 }
 
 static void on_low_memory(ANativeActivity* na) {
+    // TODO: pass it to the application
 }
 
 static void on_native_window_resized(ANativeActivity* na, ANativeWindow* window) {
     glue_t* glue = (glue_t*)na->instance;
     assert(glue->window == window);
-    app_invalidate(glue->a); // enqueue redraw command
+    glue->a->invalidate(glue->a); // enqueue redraw command
 }
 
 static void on_native_window_redraw_needed(ANativeActivity* na, ANativeWindow* window) {
     glue_t* glue = (glue_t*)na->instance;
     assert(glue->window == window);
-    app_invalidate(glue->a); // enqueue redraw command
+    glue->a->invalidate(glue->a); // enqueue redraw command
 }
 
 static int looper_callback(int fd, int events, void* data) {
@@ -506,20 +483,20 @@ static void on_content_rect_changed(ANativeActivity* na, const ARect* rc) {
     app_t* a = glue->a;
     assertion(a->resized != null, "resized() cannot be null");
     a->resized(a, rc->left, rc->top, rc->right - rc->left, rc->bottom - rc->top);
-    app_invalidate(a);
+    a->invalidate(a);
 }
 
-static void app_invalidate(app_t* app) {
+static void invalidate(app_t* app) {
     glue_t* glue = (glue_t*)app->glue;
     enqueue_command(glue, COMMAND_REDRAW);
 }
 
-static void app_quit(app_t* app) {
+static void quit(app_t* app) {
     glue_t* glue = (glue_t*)app->glue;
     ANativeActivity_finish(glue->na);
 }
 
-static void app_exit(app_t* app, int code) {
+static void exit_(app_t* app, int code) {
     glue_t* glue = (glue_t*)app->glue;
     glue->exit_code = code;
     glue->exit_requested = 1;
@@ -659,28 +636,11 @@ static void show_keyboard(app_t* app, bool on) {
 static void process_input(glue_t* glue, android_poll_source_t* source) {
     AInputEvent* ie = null;
     while (AInputQueue_getEvent(glue->input_queue, &ie) >= 0) {
-        if (AInputQueue_preDispatchEvent(glue->input_queue, ie)) {
-            continue;
+        if (!AInputQueue_preDispatchEvent(glue->input_queue, ie)) {
+            glue->a->time_in_nanoseconds = time_monotonic_ns() - glue->start_time_in_ns;
+            int32_t handled = handle_input(glue, ie);
+            AInputQueue_finishEvent(glue->input_queue, ie, handled);
         }
-        glue->a->time_in_nanoseconds = time_monotonic_ns() - glue->start_time_in_ns;
-        int32_t handled = handle_input(glue, ie);
-        AInputQueue_finishEvent(glue->input_queue, ie, handled);
-    }
-}
-
-static void enqueue_command(glue_t* glue, int8_t command) {
-    if (write(glue->write_pipe, &command, sizeof(command)) != sizeof(command)) {
-        traceln("Failure writing a command: %s", strerror(errno));
-    }
-    ALooper_wake(glue->looper);
-}
-
-static int8_t dequeue_command(glue_t* glue) {
-    int8_t command;
-    if (read(glue->read_pipe, &command, sizeof(command)) == sizeof(command)) {
-        return command;
-    } else {
-        return -1;
     }
 }
 
@@ -874,13 +834,10 @@ static void create_activitiy(glue_t* glue, ANativeActivity* na, void* data, size
     app->init(app);
 }
 
-static glue_t glue;
-app_t* app;
-
-static_init(app_droid) {
-    app->quit          = app_quit;
-    app->exit          = app_exit;
-    app->invalidate    = app_invalidate;
+static void init_vtable(glue_t* glue) {
+    app->quit          = quit;
+    app->exit          = exit_;
+    app->invalidate    = invalidate;
     app->focus         = focus;
     app->timer_add     = timer_add;
     app->timer_remove  = timer_remove;
@@ -888,12 +845,16 @@ static_init(app_droid) {
     app->asset_unmap   = asset_unmap;
     app->vibrate       = vibrate;
     app->show_keyboard = show_keyboard;
-    app->logln         = log_vprintf;
-    app->glue = &glue;
-    glue.a = app;
+    app->logln         = logln;
+    app->glue = glue;
+    glue->a = app;
 }
 
+app_t* app;
+
 void ANativeActivity_onCreate(ANativeActivity* na, void* data, size_t bytes) {
+    static glue_t glue;
+    if (glue.a == null) { init_vtable(&glue); }
     traceln("pid/tid=%d/%d na=%p saved_state=%p[%d]", getpid(), gettid(), na, data, bytes);
     if (glue.na != null) {
         traceln("attempt to instantiate two activities - refused");
@@ -902,22 +863,5 @@ void ANativeActivity_onCreate(ANativeActivity* na, void* data, size_t bytes) {
         create_activitiy(&glue, na, data, bytes);
     }
 }
-/*
-static_init(app_droid) {
-//  app_init(app);
-    app->quit          = app_quit;
-    app->exit          = app_exit;
-    app->invalidate    = app_invalidate;
-    app->focus         = focus;
-    app->timer_add     = timer_add;
-    app->timer_remove  = timer_remove;
-    app->asset_map     = asset_map;
-    app->asset_unmap   = asset_unmap;
-    app->vibrate       = vibrate;
-    app->show_keyboard = show_keyboard;
-    app->logln         = log_vprintf;
-    app->glue = &glue;
-    glue.a = app;
-}
-*/
+
 end_c
