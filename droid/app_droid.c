@@ -251,17 +251,17 @@ static int init_display(glue_t* glue) {
     return 0;
 }
 
-static void focus(app_t* app, ui_t* ui) {
+static void focus(app_t* app, ui_t* u) {
     // ui can be null, thus cannot used ui->a
-    if (ui == app->focused) {
+    if (u == app->focused) {
         // already focused
-    } else if (ui == null || ui->focusable) {
+    } else if (u == null || u->focusable) {
         if (app->focused != null && app->focused->focus != null) {
             app->focused->focus(app->focused, false);
         }
-        app->focused = ui;
-        if (ui != null && ui->focus != null) {
-            ui->focus(ui, true);
+        app->focused = u;
+        if (u != null && u->focus != null) {
+            u->focus(u, true);
         }
     }
 }

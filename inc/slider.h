@@ -16,8 +16,8 @@ begin_c
 typedef struct slider_s slider_t;
 
 typedef struct slider_s {
-    ui_t ui; // if ui.focusable - slider has [+]/[-] buttons, otherwise it is buttonless progress indicator
-    void (*notify)(slider_t* ui); // on [+]/[-] click, Ctrl+Click (+/- 10), Shift+Click  (+/- 100), Ctrl+Shift+Click  (+/- 1000)
+    ui_t u; // if u.focusable - slider has [+]/[-] buttons, otherwise it is buttonless progress indicator
+    void (*notify)(slider_t* u); // on [+]/[-] click, Ctrl+Click (+/- 10), Shift+Click  (+/- 100), Ctrl+Shift+Click  (+/- 1000)
     int* minimum; // may be changed by caller on the fly, thus pointer
     int* maximum;
     int* current;

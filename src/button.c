@@ -14,12 +14,12 @@
 
 begin_c
 
-static void button_draw(ui_t* ui) {
-    btn_t* b = &((button_t*)ui)->btn;
-    theme_t* theme = &ui->a->theme;
+static void button_draw(ui_t* u) {
+    btn_t* b = &((button_t*)u)->btn;
+    theme_t* theme = &u->a->theme;
     const colorf_t* color = b->bitset & BUTTON_STATE_PRESSED ? theme->color_background_pressed : theme->color_background;
-    pointf_t pt = ui->screen_xy(ui);
-    dc.fill(&dc, color, pt.x, pt.y, ui->w, ui->h);
+    pointf_t pt = u->screen_xy(u);
+    dc.fill(&dc, color, pt.x, pt.y, u->w, u->h);
     int k = (int)strlen(b->label) + 1;
     const char* mn = b->mnemonic;
     char letter[2] = {};
@@ -39,7 +39,7 @@ static void button_draw(ui_t* ui) {
     float fh = f->height;
     float em = f->em;
     float baseline = f->baseline;
-    pt.y += (int)(baseline + (ui->h - fh) / 2);
+    pt.y += (int)(baseline + (u->h - fh) / 2);
     pt.x += em;
     assertion(b->flip == null, "use checkbox_t instead of button_t flip buttons");
     dc.text(&dc, theme->color_text, f, pt.x, pt.y, b->label, (int)strlen(b->label));
@@ -54,7 +54,7 @@ void button_init(button_t* b, ui_t* parent, void* that, int key_flags, int key,
                  const char* mnemonic, const char* label,
                  float x, float y, float w, float h) {
     btn_init(&b->btn, parent, that, key_flags, key, mnemonic, label, x, y, w, h);
-    b->btn.ui.draw = button_draw;
+    b->btn.u.draw = button_draw;
 }
 
 void button_done(button_t* b) {

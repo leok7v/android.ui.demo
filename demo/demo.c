@@ -65,7 +65,7 @@ static void init_button(demo_t* d, button_t* b, float x, float y, int key_flags,
     const float bw = max(lw, pt2px(a, MIN_BUTTON_WIDTH_PT));
     const float bh = d->font.height * d->a.theme.ui_height;
     button_init(b, &d->ui_content, d, key_flags, key, mnemonic, label, x, y, bw, bh);
-    b->btn.ui.that = d;
+    b->btn.u.that = d;
     b->btn.click = click;
 }
 
@@ -76,12 +76,12 @@ static void init_checkbox(demo_t* d, checkbox_t* cbx, float x, float y, int key_
     const float bw = max(lw, pt2px(a, MIN_BUTTON_WIDTH_PT));
     const float bh = d->font.height * d->a.theme.ui_height;
     checkbox_init(cbx, &d->ui_content, d, key_flags, key, mnemonic, label, x, y, bw, bh);
-    cbx->btn.ui.that = d;
+    cbx->btn.u.that = d;
     cbx->btn.click = click;
 }
 
 static void slider_notify(slider_t* s) {
-    demo_t* d = (demo_t*)s->ui.a->that;
+    demo_t* d = (demo_t*)s->u.a->that;
     if (s == &d->slider1) {
         snprintf0(d->slider1_label, SLIDER1_LABEL, d->slider1_current);
     } else if (s == &d->slider2) {
@@ -94,18 +94,19 @@ static void init_slider(demo_t* d, slider_t* s, float x, float y, const char* la
     float fh = d->font.height;
     float w = font_text_width(&d->font, label, -1) + d->font.em * 2;
     slider_init(s, &d->ui_content, d, label, x, y, w, fh, minimum, maximum, current);
-    s->ui.that = d;
+    s->u.that = d;
     s->notify = slider_notify;
 }
 
-static void textures_mouse(ui_t* ui, int flags, float x, float y) {
+static bool textures_mouse(ui_t* u, int flags, float x, float y) {
     if (flags & MOUSE_LBUTTON_UP) { traceln("click at %.1f %.1f", x, y); }
+    return false;
 }
 
-static void test(ui_t* ui) {
-    demo_t* d = (demo_t*)ui->a->that;
-    const float w = ui->w;
-    const float h = ui->h;
+static void test(ui_t* u) {
+    demo_t* d = (demo_t*)u->a->that;
+    const float w = u->w;
+    const float h = u->h;
     pointf_t vertices0[] = { {1, 1}, {1 + 99, 1},  {1, 1 + 99} };
     pointf_t vertices1[] = { {w - 2, h - 2}, {w - 2, h - 2 - 99},  {w - 2 - 99, h - 2} };
     dc.poly(&dc, colors.red,   vertices0, countof(vertices0));
@@ -142,48 +143,57 @@ static void test(ui_t* ui) {
     dc.stadium(&dc, colors_nc.dirty_gold, x, y, 400, 200, r);
 }
 
-static void content_mouse(ui_t* ui, int mouse_action, float x, float y) {
-    demo_t* d = (demo_t*)ui->a->that;
+static bool content_mouse(ui_t* u, int mouse_action, float x, float y) {
+    demo_t* d = (demo_t*)u->a->that;
+    bool consumed = false;
     if ((mouse_action & MOUSE_LBUTTON_UP) && d->testing) {
         d->testing = false;
-        ui->a->invalidate(ui->a);
+        u->a->invalidate(u->a);
+        consumed = true;
     }
+    return consumed;
 }
 
-static void content_draw(ui_t* ui) {
-    demo_t* d = (demo_t*)ui->a->that;
+static bool content_keyboard(ui_t* u, int flags, int ch) {
+    bool consumed = false;
+    if (ch == KEY_CODE_BACK) { u->a->quit(u->a); consumed = true; }
+    return consumed;
+}
+
+static void content_draw(ui_t* u) {
+    demo_t* d = (demo_t*)u->a->that;
     dc.clear(&dc, colors_nc.dark_blue);
     if (d->testing) {
-        test(ui);
+        test(u);
     } else {
-        ui->draw_children(ui);
+        u->draw_children(u);
     }
 }
 
-static void glyphs_draw(ui_t* ui) {
-    demo_t* d = (demo_t*)ui->a->that;
+static void glyphs_draw(ui_t* u) {
+    demo_t* d = (demo_t*)u->a->that;
     font_t* f = &d->font;
-    float x = ui->x + 0.5;
-    float y = ui->y + 0.5;
+    float x = u->x + 0.5;
+    float y = u->y + 0.5;
     dc.luma(&dc, colors.white, &f->atlas, x, y);
-    ui->draw_children(ui);
+    u->draw_children(u);
 }
 
-static void ascii_draw(ui_t* ui) {
-    demo_t* d = (demo_t*)ui->a->that;
-    float x = ui->x + 0.5;
-    float y = ui->y + 0.5;
+static void ascii_draw(ui_t* u) {
+    demo_t* d = (demo_t*)u->a->that;
+    float x = u->x + 0.5;
+    float y = u->y + 0.5;
     char text[97] = {};
     for (int i = 0; i < 96; i++) { text[i] = 32 + i; }
     screen_writer_t sw = screen_writer(x, y, d->a.theme.font, colors.green);
     for (int i = 0; i < countof(text); i += 24) {
         sw.println(&sw, "%-24.24s", &text[i]);
     }
-    ui->draw_children(ui);
+    u->draw_children(u);
 }
 
-static void textures_draw(ui_t* ui) {
-    demo_t* d = (demo_t*)ui->a->that;
+static void textures_draw(ui_t* u) {
+    demo_t* d = (demo_t*)u->a->that;
     dc.line(&dc, colors.white, 0.5, 0.5, 0.5, 240 + 2.5, 1);
     for (int i = 0; i < countof(d->bitmaps); i++) {
         texture_t* b = &d->bitmaps[i];
@@ -191,35 +201,35 @@ static void textures_draw(ui_t* ui) {
         dc.bblt(&dc, b, x + 1.5, 1.5);
         dc.line(&dc, colors.white, x + b->w + 1.5, 1.5, x + b->w + 1.5, b->h + 1.5, 1.5);
     }
-    dc.line(&dc, colors.white, 0.5, 1.5, ui->w, 1.5, 1);
-    dc.line(&dc, colors.white, 0.5, 240 + 2.5, ui->w, 240 + 2.5, 1);
-    ui->draw_children(ui);
+    dc.line(&dc, colors.white, 0.5, 1.5, u->w, 1.5, 1);
+    dc.line(&dc, colors.white, 0.5, 240 + 2.5, u->w, 240 + 2.5, 1);
+    u->draw_children(u);
 }
 
-static void on_quit(ui_t* ui) {
-    app_t* a = ui->a;
+static void on_quit(ui_t* u) {
+    app_t* a = u->a;
     a->quit(a);
 }
 
-static void on_exit(ui_t* ui) {
-    app_t* a = ui->a;
+static void on_exit(ui_t* u) {
+    app_t* a = u->a;
     a->exit(a, 153); // gdb shows octal 0o231 exit status for some reason...
 }
 
-static void on_glyphs(ui_t* ui) {
-    app_t* a = ui->a;
+static void on_glyphs(ui_t* u) {
+    app_t* a = u->a;
     demo_t* d = (demo_t*)a->that;
     a->show_keyboard(a, !d->ui_glyphs.hidden);
 }
 
 static void on_test(ui_t* b) {
-//  app_t* a = ui->a;
+//  app_t* a = u->a;
 //  b->btn.ui.a->invalidate(b->btn.ui.a); // no need to call invalidate here
 }
 
 static void init_ui(demo_t* d) {
     ui_t* content = &d->ui_content;
-    d->a.root.init(content, &d->a.root, d, 0, 0, d->a.root.w, d->a.root.h);
+    ui_if->init(content, &d->a.root, d, 0, 0, d->a.root.w, d->a.root.h);
     float vgap = pt2px(&d->a, VERTICAL_GAP_PT);
     float hgap = pt2px(&d->a, HORIZONTAL_GAP_PT);
     float bh = d->font.height * 3 / 2; // button height
@@ -233,11 +243,12 @@ static void init_ui(demo_t* d) {
     d->ui_ascii.draw = ascii_draw;
     content->draw  = content_draw;
     content->mouse = content_mouse;
+    content->keyboard = content_keyboard;
     content->init(&d->ui_textures, content, d, 0, 0, 320 * 3 + 4, 240 + 2);
     d->ui_textures.mouse = textures_mouse;
     d->ui_textures.draw = textures_draw;
     // sliders
-    const int x = d->glyphs.btn.ui.w + hgap;
+    const int x = d->glyphs.btn.u.w + hgap;
     y = 240 + vgap;
     d->slider1_minimum = 0;
     d->slider1_maximum = 255;
@@ -409,57 +420,58 @@ static void done(app_t* a) {
     font_dispose(&d->font);
 }
 
-static bool dispatch_keyboard_shortcuts(ui_t* ui, int flags, int keycode) {
-    if (ui->kind == UI_KIND_BUTTON && !ui->hidden) {
-        btn_t* b = (btn_t*)ui;
+static bool dispatch_keyboard_shortcuts(ui_t* u, int flags, int keycode) {
+    bool consumed = false;
+    if (u->kind == UI_KIND_BUTTON && !u->hidden) {
+        btn_t* b = (btn_t*)u;
         int kc = isalpha(keycode) ? tolower(keycode) : keycode;
         int k = isalpha(b->key) ? tolower(b->key) : b->key;
-        if (!ui->hidden && b->key_flags == flags && k == kc) {
+        if (!u->hidden && b->key_flags == flags && k == kc) {
             // TODO: (Leo) if 3 (or more) states checkboxes are required this is the place to do it.
             //       b->flip = (b->flip + 1) % b->flip_wrap_around;
             if (b->flip != null) { *b->flip = !*b->flip; }
-            ui->a->invalidate(ui->a);
-            b->click(&b->ui);
+            u->a->invalidate(u->a);
+            b->click(&b->u);
             return true; // stop search
         }
     }
-    ui_t* c = ui->children;
-    while (c != null) {
+    ui_t* c = u->children;
+    while (c != null && !consumed) {
         if (!c->hidden) {
-            if (dispatch_keyboard_shortcuts(c, flags, keycode)) { return true; }
+            consumed = dispatch_keyboard_shortcuts(c, flags, keycode);
         }
         c = c->next;
     }
-    return false;
+    return consumed;
 }
 
-static void key(app_t* a, int flags, int keycode) {
-    if (keycode == KEY_CODE_BACK) {
-        a->quit(a);
-    } else {
-        a->keyboard_flags = flags;
-        if (a->focused != null && a->focused->keyboard != null) {
-            a->focused->keyboard(a->focused, flags, keycode);
-        }
-        if (flags & KEYBOARD_KEY_PRESSED) {
-            int f = flags & ~(KEYBOARD_KEY_PRESSED|KEYBOARD_SHIFT|KEYBOARD_NUMLOCK|KEYBOARD_CAPSLOCK);
-            dispatch_keyboard_shortcuts(&a->root, f, keycode);
-        }
+static bool key(app_t* a, int flags, int keycode) {
+    bool consumed = false;
+    a->keyboard_flags = flags;
+    if (a->focused != null && a->focused->keyboard != null) {
+        consumed = a->focused->keyboard(a->focused, flags, keycode);
     }
+    if (flags & KEYBOARD_KEY_PRESSED) {
+        int f = flags & ~(KEYBOARD_KEY_PRESSED|KEYBOARD_SHIFT|KEYBOARD_NUMLOCK|KEYBOARD_CAPSLOCK);
+        dispatch_keyboard_shortcuts(&a->root, f, keycode);
+    }
+    return consumed;
 }
 
-static void touch(app_t* a, int index, int action, int x, int y) {
+static bool touch(app_t* a, int index, int action, int x, int y) {
+    bool consumed = false;
     if (index == 0) {
         if (action & MOUSE_LBUTTON_DOWN) {
             if (!ui_set_focus(&a->root, x, y)) {
                 a->focus(a, null); // kill focus if no focusable components were found
             }
         }
-        ui_dispatch_mouse(&a->root, action, x, y);
         ui_dispatch_screen_mouse(&a->root, action, x, y);
+        consumed = ui_dispatch_mouse(&a->root, action, x, y);
     } else {
         // multi-touch gesture recognizer goes here
     }
+    return consumed;
 }
 
 static demo_t demo = {

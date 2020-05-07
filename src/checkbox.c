@@ -14,7 +14,7 @@
 
 begin_c
 
-static float checkbox_draw(ui_t* ui, pointf_t pt, bool on) {
+static float checkbox_draw(ui_t* u, pointf_t pt, bool on) {
     btn_t* b = &((checkbox_t*)ui)->btn;
     font_t* f = b->ui.a->theme.font;
     const float em = f->em;
@@ -34,7 +34,7 @@ static float checkbox_draw(ui_t* ui, pointf_t pt, bool on) {
     return pt.x + 2 * em;
 }
 
-static void button_draw(ui_t* ui) {
+static void button_draw(ui_t* u) {
     // modern touch UI checkbox usually does NOT have label or keyboard shortcut
     // but `old` style checkbox may still be drivven from keyboard and be a focus
     btn_t* b = &((checkbox_t*)ui)->btn;

@@ -24,8 +24,8 @@ enum {
 };
 
 typedef struct btn_s {
-    ui_t ui;
-    void (*click)(ui_t* ui);
+    ui_t u;
+    void (*click)(ui_t* u);
     int key_flags; /* keyboard shortcut flags zero or KEYBOARD_ALT|KEYBOARD_CTRL|KEYBOARD_SHIFT */
     int key;       /* keyboard shortcut */
     const char* mnemonic; /* e.g. "Alt+F5" can be null */

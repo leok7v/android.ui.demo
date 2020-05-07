@@ -14,28 +14,31 @@
 
 begin_c
 
-static void btn_draw(ui_t* ui) {
+static void btn_draw(ui_t* u) {
     assertion(false, "btn is abstract should not be used directly");
 }
 
-static void btn_mouse(ui_t* ui, int mouse_action, float x, float y) {
+static bool btn_mouse(ui_t* u, int mouse_action, float x, float y) {
     btn_t* b = (btn_t*)ui;
     app_t* a = ui->a;
+    bool consumed = false;
     if (mouse_action & MOUSE_LBUTTON_DOWN) {
         b->bitset |= BUTTON_STATE_PRESSED;
         a->invalidate(a);
-    }
-    if (mouse_action & MOUSE_LBUTTON_UP) {
+        consumed = true;
+    } else if (mouse_action & MOUSE_LBUTTON_UP) {
         // TODO: (Leo) if we need 3 (or more) state flip this is the place to do it. b->flip = (b->flip + 1) % b->checkbox_wrap_around;
         if (b->flip  != null) { *b->flip = !*b->flip; }
         if (b->click != null) { b->click(ui); }
         a->vibrate(a, EFFECT_CLICK);
         b->bitset &= ~BUTTON_STATE_PRESSED;
         a->invalidate(a);
+        consumed = true;
     }
+    return consumed;
 }
 
-static void btn_screen_mouse(ui_t* ui, int mouse_action, float x, float y) {
+static void btn_screen_mouse(ui_t* u, int mouse_action, float x, float y) {
     btn_t* b = (btn_t*)ui;
     pointf_t pt = ui->screen_xy(ui);
     bool inside = pt.x <= x && x < pt.x + ui->w && pt.y <= y && y < pt.y + ui->h;
@@ -44,7 +47,6 @@ static void btn_screen_mouse(ui_t* ui, int mouse_action, float x, float y) {
         ui->a->invalidate(ui->a);
     }
 }
-
 
 void btn_init(btn_t* b, ui_t* parent, void* that, int key_flags, int key,
               const char* mnemonic, const char* label,

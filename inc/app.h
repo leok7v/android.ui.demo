@@ -36,14 +36,14 @@ typedef struct app_s {
     void (*stop)(app_t* a);    // after pause() -> stop() or resume()
     void (*resume)(app_t* a);  // e.g. when "adb shell input keyevent KEYCODE_WAKE"
     void (*done)(app_t* a);    // after pause() hidden() and stop()
-    void (*key)(app_t* a, int flags, int keycode); // dispatch keyboard
-    void (*touch)(app_t* a, int index, int action, int x, int y); // index == finger for multitouch
+    bool (*key)(app_t* a, int flags, int keycode); // dispatch keyboard, return true if consumed
+    bool (*touch)(app_t* a, int index, int action, int x, int y); // index == finger for multitouch
     // actions that application code can call:
     void (*quit)(app_t* app);           // quit application/activity (on Android it will now exit process)
     void (*exit)(app_t* app, int code); // trying to exit application gracefully with specified return code
     void (*invalidate)(app_t* app);     // make application redraw once
     // ui:
-    void (*focus)(app_t* app, ui_t* ui); // set application keyboard focus on particular ui element or null
+    void (*focus)(app_t* app, ui_t* u); // set application keyboard focus on particular ui element or null
     // timers:
     int  (*timer_add)(app_t* a, timer_callback_t* tcb); // returns timer id > 0 or 0 if fails (too many timers)
     void (*timer_remove)(app_t* a, timer_callback_t* tcb);
