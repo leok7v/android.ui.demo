@@ -8,7 +8,6 @@
    CONDITIONS OF ANY KIND, either express or implied. See the License for the specific
    language governing permissions and limitations under the License.
 */
-#include "ui.h"
 #include "slider.h"
 #include "app.h"
 
@@ -19,18 +18,18 @@ static const char* SLIDER_INC_LABEL = "[+]";
 
 static void slider_notify(slider_t* s) {
     s->notify(s);
-    s->ui.a->invalidate(s->ui.a); // after notify because notify may do something to layout etc...
+    s->u.a->invalidate(s->u.a); // after notify because notify may do something to layout etc...
 }
 
 static int slider_scale(slider_t* s) {
     enum { CTRL_SHIFT = KEYBOARD_CTRL|KEYBOARD_SHIFT };
-    return (s->ui.a->keyboard_flags & CTRL_SHIFT) == CTRL_SHIFT     ? 1000 :
-           (s->ui.a->keyboard_flags & CTRL_SHIFT) == KEYBOARD_SHIFT ?  100 :
-           (s->ui.a->keyboard_flags & CTRL_SHIFT) == KEYBOARD_CTRL  ?   10 : 1;
+    return (s->u.a->keyboard_flags & CTRL_SHIFT) == CTRL_SHIFT     ? 1000 :
+           (s->u.a->keyboard_flags & CTRL_SHIFT) == KEYBOARD_SHIFT ?  100 :
+           (s->u.a->keyboard_flags & CTRL_SHIFT) == KEYBOARD_CTRL  ?   10 : 1;
 }
 
 static int slider_dec_inc(slider_t* s, float x, float y) {
-    theme_t* theme = &s->ui.a->theme;
+    theme_t* theme = &s->u.a->theme;
     const float em4 = theme->font->em / 4;
     const float dec_width = font_text_width(theme->font, SLIDER_DEC_LABEL, -1) + em4;
     const float inc_width = font_text_width(theme->font, SLIDER_INC_LABEL, -1) + em4;
@@ -38,7 +37,7 @@ static int slider_dec_inc(slider_t* s, float x, float y) {
         if (s->minimum != null && s->maximum != null && s->current != null && *s->minimum < *s->current) {
             return -1;
         }
-    } else if (s->ui.w - inc_width <= x && x <= s->ui.w) {
+    } else if (s->u.w - inc_width <= x && x <= s->u.w) {
         if (s->minimum != null && s->maximum != null && s->current != null && *s->current < *s->maximum) {
             return +1;
         }
@@ -62,11 +61,11 @@ static bool slider_click_inc_dec(slider_t* s, int direction, int d) {
 
 static void slider_autorepeat(timer_callback_t* tcb) {
     slider_t* s = (slider_t*)tcb->that;
-    if ((s->ui.a->mouse_flags & MOUSE_LBUTTON_FLAG) == 0 && tcb->id > 0) {
-        s->ui.a->timer_remove(s->ui.a, tcb);
+    if ((s->u.a->mouse_flags & MOUSE_LBUTTON_FLAG) == 0 && tcb->id > 0) {
+        s->u.a->timer_remove(s->u.a, tcb);
     } else {
-        const int x = s->ui.a->last_mouse_x - s->ui.x;
-        const int y = s->ui.a->last_mouse_y - s->ui.y;
+        const int x = s->u.a->last_mouse_x - s->u.x;
+        const int y = s->u.a->last_mouse_y - s->u.y;
         if (slider_click_inc_dec(s, slider_dec_inc(s, x, y), slider_scale(s))) {
             slider_notify(s);
         }
@@ -75,20 +74,20 @@ static void slider_autorepeat(timer_callback_t* tcb) {
 
 static void slider_start_autorepeat(timer_callback_t* tcb) {
     slider_t* s = (slider_t*)tcb->that;
-    s->ui.a->timer_remove(s->ui.a, tcb);
-    if ((s->ui.a->mouse_flags & MOUSE_LBUTTON_FLAG) != 0) {
+    s->u.a->timer_remove(s->u.a, tcb);
+    if ((s->u.a->mouse_flags & MOUSE_LBUTTON_FLAG) != 0) {
         s->timer_callback.callback = slider_autorepeat;
         s->timer_callback.ns = (1000ULL * NS_IN_MS) / 30; // 30 times per second
-        s->ui.a->timer_add(s->ui.a, tcb);
+        s->u.a->timer_add(s->u.a, tcb);
     }
 }
 
 static bool slider_mouse(ui_t* u, int mouse_action, float x, float y) {
-    slider_t* s = (slider_t*)ui;
+    slider_t* s = (slider_t*)u;
     app_t* a = u->a;
     theme_t* theme = &u->a->theme;
     bool consumed = false;
-    if (s->ui.focusable && (mouse_action & MOUSE_LBUTTON_DOWN) != 0) {
+    if (s->u.focusable && (mouse_action & MOUSE_LBUTTON_DOWN) != 0) {
         bool changed = slider_click_inc_dec(s, slider_dec_inc(s, x, y), slider_scale(s));
         if (changed) {
             if (s->timer_callback.id <= 0) {
@@ -100,7 +99,7 @@ static bool slider_mouse(ui_t* u, int mouse_action, float x, float y) {
             slider_notify(s);
             consumed = true;
         }
-    } else if (s->ui.focusable && (a->mouse_flags & MOUSE_LBUTTON_FLAG)) { // drag with mouse button down
+    } else if (s->u.focusable && (a->mouse_flags & MOUSE_LBUTTON_FLAG)) { // drag with mouse button down
         const float em4 = theme->font->em / 4;
         const float dec_width = font_text_width(theme->font, SLIDER_DEC_LABEL, -1) + em4;
         const float inc_width = font_text_width(theme->font, SLIDER_INC_LABEL, -1) + em4;
@@ -126,7 +125,7 @@ static bool slider_mouse(ui_t* u, int mouse_action, float x, float y) {
 }
 
 static void slider_screen_mouse(ui_t* u, int mouse_action, float x, float y) {
-    slider_t* s = (slider_t*)ui;
+    slider_t* s = (slider_t*)u;
     app_t* a = u->a;
     if (((a->mouse_flags & MOUSE_LBUTTON_FLAG) == 0 || (mouse_action & MOUSE_LBUTTON_UP) != 0) && s->timer_callback.id != 0) {
         a->timer_remove(u->a, &s->timer_callback);
@@ -155,7 +154,7 @@ static int slider_dec_inc_key(slider_t* s, int flags, int ch) {
 
 static bool slider_keyboard(ui_t* u, int flags, int ch) {
     bool consumed = false;
-    slider_t* s = (slider_t*)ui;
+    slider_t* s = (slider_t*)u;
     int dx = slider_dec_inc_key(s, flags, ch);
     if (dx != 0) {
         int v = *s->current + dx;
@@ -175,7 +174,7 @@ static void slider_draw(ui_t* u) {
     app_t* a = u->a;
     theme_t* theme = &a->theme;
     assertion(*s->maximum - *s->minimum > 0, "range must be positive [%d..%d]", *s->minimum, *s->maximum);
-    const pointf_t pt = u->screen_xy(i);
+    const pointf_t pt = u->screen_xy(u);
     font_t* f = theme->font;
     const float fh = f->height;
     const float em4 = f->em / 4;
@@ -188,7 +187,7 @@ static void slider_draw(ui_t* u) {
     if (s->label != null) {
         dc.text(&dc, theme->color_text, f, x + dec_width, y, s->label, (int)strlen(s->label));
     }
-    if (s->ui.focusable) {
+    if (s->u.focusable) {
         dc.text(&dc, theme->color_background, f, x, y, SLIDER_DEC_LABEL, (int)strlen(SLIDER_DEC_LABEL));
         dc.text(&dc, theme->color_background, f, x + u->w - inc_width, y, SLIDER_INC_LABEL, (int)strlen(SLIDER_INC_LABEL));
     }
@@ -204,7 +203,7 @@ static void slider_draw(ui_t* u) {
         dc.fill(&dc, theme->color_slider, x, y, w, h);
         dc.fill(&dc, theme->color_background, x + w, y, indicator_width - w, h);
     }
-    if (a->focused == ui) { // for focused slider highlight +/= with mnemonics color:
+    if (a->focused == u) { // for focused slider highlight +/= with mnemonics color:
         x = pt.x;
         y = pt.y + (int)(baseline + (u->h - fh) / 2);
         dc.text(&dc, theme->color_mnemonic, f, x + f->em, y, SLIDER_DEC_LABEL + 1, 1);
@@ -219,31 +218,31 @@ void slider_init(slider_t* s, ui_t* parent, void* that,
     const float em4 = theme->font->em / 4;
     const float dec_width = font_text_width(theme->font, SLIDER_DEC_LABEL, -1) + em4;
     const float inc_width = font_text_width(theme->font, SLIDER_INC_LABEL, -1) + em4;
-    s->ui = *parent;
-    s->ui.that = that;
-    s->ui.parent = null;
-    s->ui.children = null;
-    s->ui.next = null;
-    s->ui.focusable = true; // default: with buttons
-    s->ui.hidden = false;
+    s->u = *parent;
+    s->u.that = that;
+    s->u.parent = null;
+    s->u.children = null;
+    s->u.next = null;
+    s->u.focusable = true; // default: with buttons
+    s->u.hidden = false;
     s->notify = null;
     s->label = label;
     s->minimum = minimum;
     s->maximum = maximum;
     s->current = current;
-    assert((void*)s == (void*)&s->ui);
-    parent->add(parent, &s->ui, x, y, dec_width + w + inc_width, h);
-    assert(s->ui.parent == parent);
-    s->ui.kind = UI_KIND_SLIDER;
-    s->ui.draw = slider_draw;
-    s->ui.mouse = slider_mouse;
-    s->ui.keyboard = slider_keyboard;
-    s->ui.screen_mouse = slider_screen_mouse;
+    assert((void*)s == (void*)&s->u);
+    parent->add(parent, &s->u, x, y, dec_width + w + inc_width, h);
+    assert(s->u.parent == parent);
+    s->u.kind = UI_KIND_SLIDER;
+    s->u.draw = slider_draw;
+    s->u.mouse = slider_mouse;
+    s->u.keyboard = slider_keyboard;
+    s->u.screen_mouse = slider_screen_mouse;
 }
 
 void slider_done(slider_t* s) {
     if (s != null) {
-        s->ui.parent->remove(s->ui.parent, &s->ui);
+        s->u.parent->remove(s->u.parent, &s->u);
         memset(s, 0, sizeof(*s));
     }
 }

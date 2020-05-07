@@ -30,7 +30,6 @@
     <ClCompile Include="..\src\rt.c" />
     <ClCompile Include="..\src\screen_writer.c" />
     <ClCompile Include="..\src\shaders_gles2.c" />
-    <ClCompile Include="..\src\slider.c" />
     <ClCompile Include="..\src\stb_font.c" />
     <ClCompile Include="..\src\stb_image.c" />
     <ClCompile Include="..\src\texture.c" />
@@ -54,7 +53,6 @@
     <ClInclude Include="..\inc\rt.h" />
     <ClInclude Include="..\inc\screen_writer.h" />
     <ClInclude Include="..\inc\shaders.h" />
-    <ClInclude Include="..\inc\slider.h" />
     <ClInclude Include="..\inc\stb_inc.h" />
     <ClInclude Include="..\inc\texture.h" />
     <ClInclude Include="..\inc\theme.h" />

@@ -20,8 +20,10 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\demo\demo.c" />
+    <ClCompile Include="..\demo\slider.c" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\demo\slider.h" />
     <ClInclude Include="..\inc\app.h" />
     <ClInclude Include="..\inc\bitmap.h" />
     <ClInclude Include="..\inc\btn.h" />
@@ -121,7 +123,7 @@
       <CppLanguageStandard>c++11</CppLanguageStandard>
       <CLanguageStandard>c11</CLanguageStandard>
       <PrecompiledHeaderCompileAs>CompileAsC</PrecompiledHeaderCompileAs>
-      <AdditionalIncludeDirectories>..\inc;..\ext;..\droid;$(VS_NdkRoot)\sysroot\usr\include\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\inc;..\ext;..\demo;$(VS_NdkRoot)\sysroot\usr\include\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <LibraryDependencies>%(LibraryDependencies);GLESv1_CM;GLESv2;GLESv3;EGL;m;</LibraryDependencies>
@@ -143,7 +145,7 @@
       <CppLanguageStandard>c++11</CppLanguageStandard>
       <CLanguageStandard>c11</CLanguageStandard>
       <PrecompiledHeaderCompileAs>CompileAsC</PrecompiledHeaderCompileAs>
-      <AdditionalIncludeDirectories>..\inc;..\ext;..\droid;$(VS_NdkRoot)\sysroot\usr\include\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\inc;..\ext;..\demo;$(VS_NdkRoot)\sysroot\usr\include\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>None</DebugInformationFormat>
     </ClCompile>
     <Link>
@@ -167,7 +169,7 @@
       <CLanguageStandard>c11</CLanguageStandard>
       <PrecompiledHeaderCompileAs>CompileAsC</PrecompiledHeaderCompileAs>
       <EnableNeonCodegen>true</EnableNeonCodegen>
-      <AdditionalIncludeDirectories>..\inc;..\ext;..\droid;$(VS_NdkRoot)\sysroot\usr\include\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\inc;..\ext;..\demo;$(VS_NdkRoot)\sysroot\usr\include\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <LibraryDependencies>%(LibraryDependencies);GLESv1_CM;GLESv2;GLESv3;EGL;m;</LibraryDependencies>
@@ -190,7 +192,7 @@
       <CLanguageStandard>c11</CLanguageStandard>
       <PrecompiledHeaderCompileAs>CompileAsC</PrecompiledHeaderCompileAs>
       <EnableNeonCodegen>true</EnableNeonCodegen>
-      <AdditionalIncludeDirectories>..\inc;..\ext;..\droid;$(VS_NdkRoot)\sysroot\usr\include\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\inc;..\ext;..\demo;$(VS_NdkRoot)\sysroot\usr\include\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>None</DebugInformationFormat>
     </ClCompile>
     <Link>

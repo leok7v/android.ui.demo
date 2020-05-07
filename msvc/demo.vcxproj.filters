@@ -4,6 +4,9 @@
     <ClCompile Include="..\demo\demo.c">
       <Filter>demo</Filter>
     </ClCompile>
+    <ClCompile Include="..\demo\slider.c">
+      <Filter>demo</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="inc">
@@ -67,6 +70,9 @@
     </ClInclude>
     <ClInclude Include="..\inc\checkbox.h">
       <Filter>inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\demo\slider.h">
+      <Filter>demo</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

@@ -15,8 +15,8 @@
 begin_c
 
 static float checkbox_draw(ui_t* u, pointf_t pt, bool on) {
-    btn_t* b = &((checkbox_t*)ui)->btn;
-    font_t* f = b->ui.a->theme.font;
+    btn_t* b = &((checkbox_t*)u)->btn;
+    font_t* f = b->u.a->theme.font;
     const float em = f->em;
     const float R = em * 3 / 4;
     const float r = em / 2;
@@ -37,11 +37,11 @@ static float checkbox_draw(ui_t* u, pointf_t pt, bool on) {
 static void button_draw(ui_t* u) {
     // modern touch UI checkbox usually does NOT have label or keyboard shortcut
     // but `old` style checkbox may still be drivven from keyboard and be a focus
-    btn_t* b = &((checkbox_t*)ui)->btn;
-    theme_t* theme = &ui->a->theme;
+    btn_t* b = &((checkbox_t*)u)->btn;
+    theme_t* theme = &u->a->theme;
     const colorf_t* color = b->bitset & BUTTON_STATE_PRESSED ? theme->color_background_pressed : theme->color_background;
-    pointf_t pt = ui->screen_xy(ui);
-    dc.fill(&dc, color, pt.x, pt.y, ui->w, ui->h);
+    pointf_t pt = u->screen_xy(u);
+    dc.fill(&dc, color, pt.x, pt.y, u->w, u->h);
     int k = (int)strlen(b->label) + 1;
     const char* mn = b->mnemonic;
     char letter[2] = {};
@@ -61,9 +61,9 @@ static void button_draw(ui_t* u) {
     float fh = f->height;
     float em = f->em;
     float baseline = f->baseline;
-    pt.y += (int)(baseline + (ui->h - fh) / 2);
+    pt.y += (int)(baseline + (u->h - fh) / 2);
     pt.x += em;
-    if (b->flip != null) { pt.x = checkbox_draw(ui, pt, (*b->flip != 0) ^ (b->inverse != 0)); }
+    if (b->flip != null) { pt.x = checkbox_draw(u, pt, (*b->flip != 0) ^ (b->inverse != 0)); }
     dc.text(&dc, theme->color_text, f, pt.x, pt.y, b->label, (int)strlen(b->label));
     if (m >= 0) { // draw highlighted mnemonic
         copy[m] = 0;
@@ -77,7 +77,7 @@ void checkbox_init(checkbox_t* cbx, ui_t* parent, void* that,
                  const char* label,
                  float x, float y, float w, float h) {
     btn_init(&cbx->btn, parent, that, key_flags, key, mnemonic, label, x, y, w, h);
-    cbx->btn.ui.draw = button_draw;
+    cbx->btn.u.draw = button_draw;
 }
 
 void checkbox_done(checkbox_t* cbx) {

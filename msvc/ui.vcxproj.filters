@@ -28,9 +28,6 @@
     <ClCompile Include="..\src\shaders_gles2.c">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\slider.c">
-      <Filter>src</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\stb_font.c">
       <Filter>src</Filter>
     </ClCompile>
@@ -90,9 +87,6 @@
       <Filter>inc</Filter>
     </ClInclude>
     <ClInclude Include="..\inc\shaders.h">
-      <Filter>inc</Filter>
-    </ClInclude>
-    <ClInclude Include="..\inc\slider.h">
       <Filter>inc</Filter>
     </ClInclude>
     <ClInclude Include="..\inc\stb_inc.h">
