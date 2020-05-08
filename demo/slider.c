@@ -61,11 +61,11 @@ static bool slider_click_inc_dec(slider_t* s, int direction, int d) {
 
 static void slider_autorepeat(timer_callback_t* tcb) {
     slider_t* s = (slider_t*)tcb->that;
-    if ((s->u.a->mouse_flags & MOUSE_LBUTTON_FLAG) == 0 && tcb->id > 0) {
+    if ((s->u.a->touch_flags & MOUSE_LBUTTON_FLAG) == 0 && tcb->id > 0) {
         s->u.a->timer_remove(s->u.a, tcb);
     } else {
-        const int x = s->u.a->last_mouse_x - s->u.x;
-        const int y = s->u.a->last_mouse_y - s->u.y;
+        const int x = s->u.a->last_touch_x - s->u.x;
+        const int y = s->u.a->last_touch_y - s->u.y;
         if (slider_click_inc_dec(s, slider_dec_inc(s, x, y), slider_scale(s))) {
             slider_notify(s);
         }
@@ -75,19 +75,19 @@ static void slider_autorepeat(timer_callback_t* tcb) {
 static void slider_start_autorepeat(timer_callback_t* tcb) {
     slider_t* s = (slider_t*)tcb->that;
     s->u.a->timer_remove(s->u.a, tcb);
-    if ((s->u.a->mouse_flags & MOUSE_LBUTTON_FLAG) != 0) {
+    if ((s->u.a->touch_flags & MOUSE_LBUTTON_FLAG) != 0) {
         s->timer_callback.callback = slider_autorepeat;
         s->timer_callback.ns = (1000ULL * NS_IN_MS) / 30; // 30 times per second
         s->u.a->timer_add(s->u.a, tcb);
     }
 }
 
-static bool slider_mouse(ui_t* u, int mouse_action, float x, float y) {
+static bool slider_touch(ui_t* u, int touch_action, float x, float y) {
     slider_t* s = (slider_t*)u;
     app_t* a = u->a;
     theme_t* theme = &u->a->theme;
     bool consumed = false;
-    if (s->u.focusable && (mouse_action & MOUSE_LBUTTON_DOWN) != 0) {
+    if (s->u.focusable && (touch_action & TOUCH_DOWN) != 0) {
         bool changed = slider_click_inc_dec(s, slider_dec_inc(s, x, y), slider_scale(s));
         if (changed) {
             if (s->timer_callback.id <= 0) {
@@ -99,7 +99,7 @@ static bool slider_mouse(ui_t* u, int mouse_action, float x, float y) {
             slider_notify(s);
             consumed = true;
         }
-    } else if (s->u.focusable && (a->mouse_flags & MOUSE_LBUTTON_FLAG)) { // drag with mouse button down
+    } else if (s->u.focusable && (a->touch_flags & MOUSE_LBUTTON_FLAG)) { // drag with mouse button down
         const float em4 = theme->font->em / 4;
         const float dec_width = font_text_width(theme->font, SLIDER_DEC_LABEL, -1) + em4;
         const float inc_width = font_text_width(theme->font, SLIDER_INC_LABEL, -1) + em4;
@@ -124,10 +124,10 @@ static bool slider_mouse(ui_t* u, int mouse_action, float x, float y) {
     return consumed;
 }
 
-static void slider_screen_mouse(ui_t* u, int mouse_action, float x, float y) {
+static void slider_screen_touch(ui_t* u, int touch_action, float x, float y) {
     slider_t* s = (slider_t*)u;
     app_t* a = u->a;
-    if (((a->mouse_flags & MOUSE_LBUTTON_FLAG) == 0 || (mouse_action & MOUSE_LBUTTON_UP) != 0) && s->timer_callback.id != 0) {
+    if (((a->touch_flags & MOUSE_LBUTTON_FLAG) == 0 || (touch_action & TOUCH_UP) != 0) && s->timer_callback.id != 0) {
         a->timer_remove(u->a, &s->timer_callback);
     }
 }
@@ -235,9 +235,9 @@ void slider_init(slider_t* s, ui_t* parent, void* that,
     assert(s->u.parent == parent);
     s->u.kind = UI_KIND_SLIDER;
     s->u.draw = slider_draw;
-    s->u.mouse = slider_mouse;
+    s->u.touch = slider_touch;
     s->u.keyboard = slider_keyboard;
-    s->u.screen_mouse = slider_screen_mouse;
+    s->u.screen_touch = slider_screen_touch;
 }
 
 void slider_done(slider_t* s) {

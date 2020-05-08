@@ -300,20 +300,21 @@ static int32_t handle_motion(glue_t* glue, AInputEvent* me) {
     int32_t index = (act & AMOTION_EVENT_ACTION_POINTER_INDEX_MASK) >> 8; // fragile. >> 8 assumes AMOTION_EVENT_ACTION_POINTER_INDEX_MASK = 0xFF00
     act = act & AMOTION_EVENT_ACTION_MASK;
     int action = 0;
-    int flags = a->mouse_flags;
+    int flags = a->touch_flags;
     switch (act) {
-        case AMOTION_EVENT_ACTION_DOWN        : action = MOUSE_LBUTTON_DOWN; flags |=  MOUSE_LBUTTON_FLAG; break;
-        case AMOTION_EVENT_ACTION_UP          : action = MOUSE_LBUTTON_UP;   flags &= ~MOUSE_LBUTTON_FLAG; break;
-        case AMOTION_EVENT_ACTION_HOVER_MOVE  : action = MOUSE_MOVE; break;
+        case AMOTION_EVENT_ACTION_DOWN        : action = TOUCH_DOWN; flags |=  MOUSE_LBUTTON_FLAG; break;
+        case AMOTION_EVENT_ACTION_UP          : action = TOUCH_UP;   flags &= ~MOUSE_LBUTTON_FLAG; break;
+        case AMOTION_EVENT_ACTION_HOVER_MOVE  : action = TOUCH_MOVE; break;
         case AMOTION_EVENT_ACTION_POINTER_DOWN: break; // touch event, "index" is "finger index"
         case AMOTION_EVENT_ACTION_POINTER_UP  : break;
-        case AMOTION_EVENT_ACTION_SCROLL      : traceln("TODO: AMOTION_EVENT_ACTION_SCROLL"); break; // mouse wheel generates it
+        // mouse wheel and deodorant ball generates scrolls:
+        case AMOTION_EVENT_ACTION_SCROLL      : traceln("TODO: AMOTION_EVENT_ACTION_SCROLL"); break;
         default: break;
     }
     if (index == 0) {
-        a->mouse_flags = flags;
-        a->last_mouse_x = x;
-        a->last_mouse_y = y;
+        a->touch_flags = flags;
+        a->last_touch_x = x;
+        a->last_touch_y = y;
     }
     assertion(a->touch != null, "touch() cannot be null");
     a->touch(a, index, action, x, y);

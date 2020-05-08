@@ -19,13 +19,18 @@ typedef struct font_s font_t;
 enum {
     // mouse state (flags)
     MOUSE_LBUTTON_FLAG = 0x10000, // present when mouse/finger is down (see finger_index)
-    MOUSE_MBUTTON_FLAG = 0x20000,
-    MOUSE_RBUTTON_FLAG = 0x40000,
+    MOUSE_MBUTTON_FLAG = 0x20000, // touch events do not have left and middle but have long press instead
+    MOUSE_RBUTTON_FLAG = 0x40000, // however long press is falling of being popular in UI thus not supported here
+
+    // touch (synonyms for mouse events)
+    TOUCH_MOVE         = 0x0001,
+    TOUCH_DOWN         = 0x0002,
+    TOUCH_UP           = 0x0004,
 
     // mouse actions not to be confused with flags
-    MOUSE_MOVE         = 0x0001,
-    MOUSE_LBUTTON_DOWN = 0x0002,
-    MOUSE_LBUTTON_UP   = 0x0004,
+    MOUSE_MOVE         = TOUCH_MOVE,
+    MOUSE_BUTTON_DOWN  = TOUCH_DOWN,
+    MOUSE_BUTTON_UP    = TOUCH_UP,
 
     // keyboad state (flags) not to be confused with KEY_CODE_SHIFT, KEY_CODE_ALT ...
     KEYBOARD_SHIFT       = 0x0001,
@@ -105,7 +110,7 @@ typedef struct timer_callback_s {
    1 Containers forward calls to children.
    2 Terminal leaves can impelement draw()
    3 Container may implement draw() but need to call draw_children() inside it
-   4 screen_mouse() is called for all (even hidden components). Used to "disarm" pressed buttons
+   4 screen_touch() is called for all (even hidden components). Used to "disarm" pressed buttons
    5 keyboard is called on all containers and terminal leaves. Compare yourself to app.focus to accept input
 */
 
@@ -117,8 +122,8 @@ typedef struct ui_s {
     void (*draw)(ui_t* u); // calls draw_children
     void (*draw_children)(ui_t* u);
     pointf_t (*screen_xy)(ui_t* u); // return ui element screen coordinates
-    bool (*mouse)(ui_t* u, int mouse_flags, float x, float y); // x,y in ui coordinates, return true if consumed
-    void (*screen_mouse)(ui_t* u, int mouse_flags, float screen_x, float screen_y); // x,y screen coordinates
+    bool (*touch)(ui_t* u, int touch_flags, float x, float y); // x,y in ui coordinates, return true if consumed
+    void (*screen_touch)(ui_t* u, int touch_flags, float screen_x, float screen_y); // x,y screen coordinates
     bool (*keyboard)(ui_t* u, int flags, int ch); // return true if consumed
     void (*focus)(ui_t* u, bool gain);
     int kind;
@@ -133,10 +138,10 @@ typedef struct ui_s {
     ui_t* children; // linked list of children
 } ui_t;
 
-extern const ui_t* ui_if; // UI interface
+extern const ui_t ui; // UI interface
 
 bool ui_set_focus(ui_t* u, int x, int y); // returns true if focus was set
-bool ui_dispatch_mouse(ui_t* u, int mouse_flags, float x, float y); // x,y in ui coordinates
-void ui_dispatch_screen_mouse(ui_t* u, int mouse_flags, float screen_x, float screen_y); // x,y screen coordinates
+bool ui_dispatch_touch(ui_t* u, int touch_flags, float x, float y); // x,y in ui coordinates
+void ui_dispatch_screen_touch(ui_t* u, int touch_flags, float screen_x, float screen_y); // x,y screen coordinates
 
 end_c

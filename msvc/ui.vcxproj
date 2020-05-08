@@ -19,6 +19,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\src\app.c" />
     <ClCompile Include="..\src\btn.c" />
     <ClCompile Include="..\src\button.c" />
     <ClCompile Include="..\src\checkbox.c" />

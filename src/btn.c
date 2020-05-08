@@ -18,15 +18,15 @@ static void btn_draw(ui_t* u) {
     assertion(false, "btn is abstract should not be used directly");
 }
 
-static bool btn_mouse(ui_t* u, int mouse_action, float x, float y) {
+static bool btn_touch(ui_t* u, int touch_action, float x, float y) {
     btn_t* b = (btn_t*)u;
     app_t* a = u->a;
     bool consumed = false;
-    if (mouse_action & MOUSE_LBUTTON_DOWN) {
+    if (touch_action & TOUCH_DOWN) {
         b->bitset |= BUTTON_STATE_PRESSED;
         a->invalidate(a);
         consumed = true;
-    } else if (mouse_action & MOUSE_LBUTTON_UP) {
+    } else if (touch_action & TOUCH_UP) {
         // TODO: (Leo) if we need 3 (or more) state flip this is the place to do it. b->flip = (b->flip + 1) % b->checkbox_wrap_around;
         if (b->flip  != null) { *b->flip = !*b->flip; }
         if (b->click != null) { b->click(u); }
@@ -38,7 +38,7 @@ static bool btn_mouse(ui_t* u, int mouse_action, float x, float y) {
     return consumed;
 }
 
-static void btn_screen_mouse(ui_t* u, int mouse_action, float x, float y) {
+static void btn_screen_touch(ui_t* u, int touch_action, float x, float y) {
     btn_t* b = (btn_t*)u;
     pointf_t pt = u->screen_xy(u);
     bool inside = pt.x <= x && x < pt.x + u->w && pt.y <= y && y < pt.y + u->h;
@@ -69,8 +69,8 @@ void btn_init(btn_t* b, ui_t* parent, void* that, int key_flags, int key,
     assert(b->u.parent == parent);
     b->u.kind = UI_KIND_BUTTON;
     b->u.draw = btn_draw;
-    b->u.mouse = btn_mouse;
-    b->u.screen_mouse = btn_screen_mouse;
+    b->u.touch = btn_touch;
+    b->u.screen_touch = btn_screen_touch;
 }
 
 void btn_done(btn_t* b) {

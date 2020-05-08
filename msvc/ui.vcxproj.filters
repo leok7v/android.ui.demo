@@ -49,6 +49,9 @@
     <ClCompile Include="..\src\texture.c">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\app.c">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="ext">

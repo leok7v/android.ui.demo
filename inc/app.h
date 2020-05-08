@@ -63,14 +63,17 @@ typedef struct app_s {
     ui_t  root;
     ui_t* focused; // ui that has keyboard focus or null
     int keyboard_flags; // last keyboard flags (CTRL, SHIFT, ALT, SYM, FN, NUMLOCK, CAPSLOCK)
-    int mouse_flags;    // last mouse button flags (for finger index == 0)
-    int last_mouse_x;   // last mouse screen coordinates
-    int last_mouse_y;
+    int touch_flags;    // last mouse buttons flags (for finger index == 0)
+    int last_touch_x;   // last touch/mouse screen coordinates
+    int last_touch_y;
     uint64_t time_in_nanoseconds; // since application start update on each event or animation
     theme_t theme;
 } app_t;
 
 extern app_t* app;
+
+bool app_dispatch_key(app_t* a, int flags, int keycode);
+bool app_dispatch_touch(app_t* a, int index, int action, int x, int y);
 
 enum { // logging level
     LOG_DEFAULT = 1,

@@ -98,8 +98,8 @@ static void init_slider(demo_t* d, slider_t* s, float x, float y, const char* la
     s->notify = slider_notify;
 }
 
-static bool textures_mouse(ui_t* u, int flags, float x, float y) {
-    if (flags & MOUSE_LBUTTON_UP) { traceln("click at %.1f %.1f", x, y); }
+static bool textures_touch(ui_t* u, int flags, float x, float y) {
+    if (flags & TOUCH_UP) { traceln("click at %.1f %.1f", x, y); }
     return false;
 }
 
@@ -143,10 +143,10 @@ static void test(ui_t* u) {
     dc.stadium(&dc, colors_nc.dirty_gold, x, y, 400, 200, r);
 }
 
-static bool content_mouse(ui_t* u, int mouse_action, float x, float y) {
+static bool content_touch(ui_t* u, int touch_action, float x, float y) {
     demo_t* d = (demo_t*)u->a->that;
     bool consumed = false;
-    if ((mouse_action & MOUSE_LBUTTON_UP) && d->testing) {
+    if ((touch_action & TOUCH_UP) && d->testing) {
         d->testing = false;
         u->a->invalidate(u->a);
         consumed = true;
@@ -229,7 +229,7 @@ static void on_test(ui_t* b) {
 
 static void init_ui(demo_t* d) {
     ui_t* content = &d->ui_content;
-    ui_if->init(content, &d->a.root, d, 0, 0, d->a.root.w, d->a.root.h);
+    ui.init(content, &d->a.root, d, 0, 0, d->a.root.w, d->a.root.h);
     float vgap = pt2px(&d->a, VERTICAL_GAP_PT);
     float hgap = pt2px(&d->a, HORIZONTAL_GAP_PT);
     float bh = d->font.height * 3 / 2; // button height
@@ -242,10 +242,10 @@ static void init_ui(demo_t* d) {
     content->init(&d->ui_ascii, content, d, 0, y, d->font.em * 26, d->font.em * 4);
     d->ui_ascii.draw = ascii_draw;
     content->draw  = content_draw;
-    content->mouse = content_mouse;
+    content->touch = content_touch;
     content->keyboard = content_keyboard;
     content->init(&d->ui_textures, content, d, 0, 0, 320 * 3 + 4, 240 + 2);
-    d->ui_textures.mouse = textures_mouse;
+    d->ui_textures.touch = textures_touch;
     d->ui_textures.draw = textures_draw;
     // sliders
     const int x = d->glyphs.btn.u.w + hgap;
@@ -403,7 +403,7 @@ static void resume(app_t* a) {
 static void init(app_t* a) { // init application
     demo_t* d = (demo_t*)a->that;
     a->root.that = &d;
-    app->root    = *ui_if;
+    app->root    = ui;
     app->root.a  = a;
     if (d->bitmaps[0].data == null) {
         texture_load_asset(&d->bitmaps[0], a, "cube-320x240.png");
@@ -420,60 +420,6 @@ static void done(app_t* a) {
     font_dispose(&d->font);
 }
 
-static bool dispatch_keyboard_shortcuts(ui_t* u, int flags, int keycode) {
-    bool consumed = false;
-    if (u->kind == UI_KIND_BUTTON && !u->hidden) {
-        btn_t* b = (btn_t*)u;
-        int kc = isalpha(keycode) ? tolower(keycode) : keycode;
-        int k = isalpha(b->key) ? tolower(b->key) : b->key;
-        if (!u->hidden && b->key_flags == flags && k == kc) {
-            // TODO: (Leo) if 3 (or more) states checkboxes are required this is the place to do it.
-            //       b->flip = (b->flip + 1) % b->flip_wrap_around;
-            if (b->flip != null) { *b->flip = !*b->flip; }
-            u->a->invalidate(u->a);
-            b->click(&b->u);
-            return true; // stop search
-        }
-    }
-    ui_t* c = u->children;
-    while (c != null && !consumed) {
-        if (!c->hidden) {
-            consumed = dispatch_keyboard_shortcuts(c, flags, keycode);
-        }
-        c = c->next;
-    }
-    return consumed;
-}
-
-static bool key(app_t* a, int flags, int keycode) {
-    bool consumed = false;
-    a->keyboard_flags = flags;
-    if (a->focused != null && a->focused->keyboard != null) {
-        consumed = a->focused->keyboard(a->focused, flags, keycode);
-    }
-    if (flags & KEYBOARD_KEY_PRESSED) {
-        int f = flags & ~(KEYBOARD_KEY_PRESSED|KEYBOARD_SHIFT|KEYBOARD_NUMLOCK|KEYBOARD_CAPSLOCK);
-        dispatch_keyboard_shortcuts(&a->root, f, keycode);
-    }
-    return consumed;
-}
-
-static bool touch(app_t* a, int index, int action, int x, int y) {
-    bool consumed = false;
-    if (index == 0) {
-        if (action & MOUSE_LBUTTON_DOWN) {
-            if (!ui_set_focus(&a->root, x, y)) {
-                a->focus(a, null); // kill focus if no focusable components were found
-            }
-        }
-        ui_dispatch_screen_mouse(&a->root, action, x, y);
-        consumed = ui_dispatch_mouse(&a->root, action, x, y);
-    } else {
-        // multi-touch gesture recognizer goes here
-    }
-    return consumed;
-}
-
 static demo_t demo = {
     /* a = */ {
         init,
@@ -485,14 +431,14 @@ static demo_t demo = {
         stop,
         resume,
         done,
-        key,
-        touch
+        app_dispatch_key,
+        app_dispatch_touch
     }
 };
 
 static_init(demo) {
     app = &demo.a;
-    app->that    = &demo;
+    app->that = &demo;
 }
 
 end_c
