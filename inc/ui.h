@@ -83,9 +83,10 @@ enum {
 
 enum {
     UI_KIND_CONTAINER   = 0,
-    UI_KIND_BUTTON      = 1,
-    UI_KIND_SLIDER      = 2,
-    UI_KIND_DECOR       = 3
+    UI_KIND_DECOR       = 1,
+    UI_KIND_BUTTON      = 2,
+    UI_KIND_SLIDER      = 3,
+    UI_KIND_EDIT        = 4
 };
 
 typedef struct app_s app_t;

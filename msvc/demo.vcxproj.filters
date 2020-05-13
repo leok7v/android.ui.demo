@@ -7,6 +7,9 @@
     <ClCompile Include="..\demo\slider.c">
       <Filter>demo</Filter>
     </ClCompile>
+    <ClCompile Include="..\demo\edit.c">
+      <Filter>demo</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="inc">
@@ -72,6 +75,9 @@
       <Filter>inc</Filter>
     </ClInclude>
     <ClInclude Include="..\demo\slider.h">
+      <Filter>demo</Filter>
+    </ClInclude>
+    <ClInclude Include="..\demo\edit.h">
       <Filter>demo</Filter>
     </ClInclude>
   </ItemGroup>

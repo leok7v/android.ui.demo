@@ -13,6 +13,7 @@
 #include "button.h"
 #include "checkbox.h"
 #include "slider.h"
+#include "edit.h"
 #include "toast.h"
 #include "screen_writer.h"
 #include "shaders.h"
@@ -54,6 +55,7 @@ typedef struct {
     int  slider2_maximum;
     int  slider2_current;
     char slider2_label[64];
+    edit_t edit;
 } demo_t;
 
 static inline_c float pt2px(app_t* a, float pt) { return pt * a->xdpi / 72.0f; }
@@ -248,7 +250,7 @@ static void init_ui(demo_t* d) {
     d->ui_textures.touch = textures_touch;
     d->ui_textures.draw = textures_draw;
     // sliders
-    const int x = d->glyphs.btn.u.w + hgap;
+    float x = d->glyphs.btn.u.w + hgap;
     y = 240 + vgap;
     d->slider1_minimum = 0;
     d->slider1_maximum = 255;
@@ -269,6 +271,13 @@ static void init_ui(demo_t* d) {
     d->glyphs.btn.flip = &d->ui_glyphs.hidden;
     d->glyphs.btn.inverse = true; // because flip point to hidden not to `shown` in the absence of that bit
     y += d->font.atlas.h;
+    // editor:
+    d->edit.u.a = &d->a;
+    d->edit.u.that = d;
+    d->edit.text = "Hello World!\r\nGood bye cruel Universe\nLast Line...";
+    d->edit.bytes = (int)strlen(d->edit.text);
+    // ascii width is d->font.em * 26
+    edit_init(&d->edit, content, d, d->font.em * 26 + 2 * hgap, y, d->font.em * 30, d->font.height * 5);
 }
 
 static void load_font(demo_t* d) {
@@ -384,6 +393,7 @@ static void hidden(app_t* a) {
     checkbox_done(&d->test);
     slider_done(&d->slider1);
     slider_done(&d->slider2);
+    edit_done(&d->edit);
     texture_deallocate(&d->font.atlas);
     for (int i = 0; i < countof(d->bitmaps); i++) { texture_deallocate(&d->bitmaps[i]); }
 //  shader_program_dispose(d->program_main);   d->program_main = 0;
