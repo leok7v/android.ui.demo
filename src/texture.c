@@ -23,7 +23,7 @@ static int load_asset(texture_t* b, app_t* a, const char* name) {
     int w = 0;
     int h = 0;
     int bytes_per_pixel = 0;
-    void* asset = a->asset_map(a, name, &data, &bytes);
+    void* asset = sys.asset_map(a, name, &data, &bytes);
     if (asset == null) {
         r = errno;
     } else {
@@ -40,7 +40,7 @@ static int load_asset(texture_t* b, app_t* a, const char* name) {
             b->ti = 0;
             b->data = p;
         }
-        a->asset_unmap(a, asset, &data, bytes);
+        sys.asset_unmap(a, asset, &data, bytes);
     }
     return r;
 }

@@ -38,21 +38,6 @@ typedef struct app_s {
     void (*done)(app_t* a);    // after pause() hidden() and stop()
     bool (*key)(app_t* a, int flags, int keycode); // dispatch keyboard, return true if consumed
     bool (*touch)(app_t* a, int index, int action, int x, int y); // index == finger for multitouch
-    // actions that application code can call:
-    void (*quit)(app_t* app);           // quit application/activity (on Android it will now exit process)
-    void (*exit)(app_t* app, int code); // trying to exit application gracefully with specified return code
-    void (*invalidate)(app_t* app);     // make application redraw once
-    // ui:
-    void (*focus)(app_t* app, ui_t* u); // set application keyboard focus on particular ui element or null
-    // timers:
-    int  (*timer_add)(app_t* a, timer_callback_t* tcb); // returns timer id > 0 or 0 if fails (too many timers)
-    void (*timer_remove)(app_t* a, timer_callback_t* tcb);
-    // assets/resources:
-    void* (*asset_map)(app_t* a, const char* name, const void* *data, int *bytes);
-    void  (*asset_unmap)(app_t* a, void* asset, const void* data, int bytes);
-    void  (*vibrate)(app_t* a, int vibration_effect);
-    void  (*show_keyboard)(app_t* a, bool on); // shows/hides soft keyboard
-    int   (*logln)(int level, const char* tag, const char* location, const char* format, va_list vl); // may be null
     // application state:
     void* that; // pointer to the application specific data
     void* glue; // pointer to the platform glue data
@@ -72,8 +57,23 @@ typedef struct app_s {
 
 extern app_t* app;
 
-bool app_dispatch_key(app_t* a, int flags, int keycode);
-bool app_dispatch_touch(app_t* a, int index, int action, int x, int y);
+typedef struct sys_s {
+    void  (*quit)(app_t* app);           // quit application/activity (on Android it will now exit process)
+    void  (*exit)(app_t* app, int code); // trying to exit application gracefully with specified return code
+    bool  (*dispatch_key)(app_t* a, int flags, int keycode);
+    bool  (*dispatch_touch)(app_t* a, int index, int action, int x, int y);
+    void  (*invalidate)(app_t* app);     // make application redraw once
+    void  (*focus)(app_t* app, ui_t* u); // set application keyboard focus on particular ui element or null
+    int   (*timer_add)(app_t* a, timer_callback_t* tcb); // returns timer id > 0 or 0 if fails (too many timers)
+    void  (*timer_remove)(app_t* a, timer_callback_t* tcb);
+    void* (*asset_map)(app_t* a, const char* name, const void* *data, int *bytes);
+    void  (*asset_unmap)(app_t* a, void* asset, const void* data, int bytes);
+    void  (*vibrate)(app_t* a, int vibration_effect);
+    void  (*show_keyboard)(app_t* a, bool on); // shows/hides soft keyboard
+    int   (*logln)(int level, const char* tag, const char* location, const char* format, va_list vl); // may be null
+} sys_t;
+
+extern const sys_t sys;
 
 enum { // logging level
     LOG_DEFAULT = 1,

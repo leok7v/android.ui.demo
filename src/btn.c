@@ -24,15 +24,15 @@ static bool btn_touch(ui_t* u, int touch_action, float x, float y) {
     bool consumed = false;
     if (touch_action & TOUCH_DOWN) {
         b->bitset |= BUTTON_STATE_PRESSED;
-        a->invalidate(a);
+        sys.invalidate(a);
         consumed = true;
     } else if (touch_action & TOUCH_UP) {
         // TODO: (Leo) if we need 3 (or more) state flip this is the place to do it. b->flip = (b->flip + 1) % b->checkbox_wrap_around;
         if (b->flip  != null) { *b->flip = !*b->flip; }
         if (b->click != null) { b->click(u); }
-        a->vibrate(a, EFFECT_CLICK);
+        sys.vibrate(a, EFFECT_CLICK);
         b->bitset &= ~BUTTON_STATE_PRESSED;
-        a->invalidate(a);
+        sys.invalidate(a);
         consumed = true;
     }
     return consumed;
@@ -44,7 +44,7 @@ static void btn_screen_touch(ui_t* u, int touch_action, float x, float y) {
     bool inside = pt.x <= x && x < pt.x + u->w && pt.y <= y && y < pt.y + u->h;
     if (!inside && (b->bitset & (BUTTON_STATE_PRESSED|BUTTON_STATE_ARMED) != 0)) {
         b->bitset &= ~(BUTTON_STATE_PRESSED|BUTTON_STATE_ARMED); // disarm button
-        u->a->invalidate(u->a);
+        sys.invalidate(u->a);
     }
 }
 

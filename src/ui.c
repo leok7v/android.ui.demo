@@ -132,7 +132,7 @@ static bool ui_set_focus(ui_t* u, int x, int y) {
     if (!focus_was_set && u->focusable) {
         const pointf_t pt = ui.screen_xy(u);
         focus_was_set = pt.x <= x && x < pt.x + u->w && pt.y <= y && y < pt.y + u->h;
-        if (focus_was_set) { u->a->focus(u->a, u); }
+        if (focus_was_set) { sys.focus(u->a, u); }
     }
     return focus_was_set;
 }

@@ -33,7 +33,7 @@ static toast_t* toast(app_t* a); // returns pointer to toast single instance
 
 static void timer_callback(timer_callback_t* timer_callback) {
     app_t* a = (app_t*)timer_callback->that;
-    a->invalidate(a);
+    sys.invalidate(a);
 }
 
 static void add(toast_t* t) {
@@ -44,7 +44,7 @@ static void add(toast_t* t) {
     t->toast_timer_callback.ns = t->nanoseconds + 1;
     t->toast_timer_callback.callback = timer_callback;
     t->toast_timer_callback.last_fired = 0;
-    a->timer_add(a, &t->toast_timer_callback);
+    sys.timer_add(a, &t->toast_timer_callback);
     ui.add(&a->root, &t->ui, 0, 0, 0, 0);
 }
 
@@ -52,7 +52,7 @@ static void cancel(toast_t* t) {
     // It is not an error to cancel inactive toast:
     if (t->toast_timer_callback.id != 0) {
         app_t* a = t->ui.a;
-        a->timer_remove(a, &t->toast_timer_callback);
+        sys.timer_remove(a, &t->toast_timer_callback);
         memset(&t->toast_timer_callback, 0, sizeof(t->toast_timer_callback));
         t->text[0] = 0; // toast OFF
         t->toast_start_time = 0;
@@ -136,7 +136,7 @@ static void print(toast_t* t, const char* format, ...) {
     assert(t->text[0] != 0);
     t->ui.hidden = false;
     add(t);
-    t->ui.a->invalidate(t->ui.a);
+    sys.invalidate(t->ui.a);
 }
 
 static toast_t* toast(app_t* a) {

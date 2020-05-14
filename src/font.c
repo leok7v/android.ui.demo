@@ -64,7 +64,7 @@ static int load_asset(font_t* f, app_t* a, const char* name, int hpx, int from, 
     int r = 0;
     int bytes = 0;
     const void* data = null;
-    void* asset = a->asset_map(a, name, &data, &bytes);
+    void* asset = sys.asset_map(a, name, &data, &bytes);
     assertion(asset != null, "asset \"%s\"not found", name);
     if (asset == null) {
         r = errno;
@@ -91,7 +91,7 @@ static int load_asset(font_t* f, app_t* a, const char* name, int hpx, int from, 
             r = pack_font_to_texture(f, data, chars, hpx, from, count);
             if (r == 0) { f->em = font_text_width(f, "M", 1); }
         }
-        a->asset_unmap(a, asset, data, bytes);
+        sys.asset_unmap(a, asset, data, bytes);
     }
     if (r != 0) { font_dispose(f); }
     return r;

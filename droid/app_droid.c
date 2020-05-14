@@ -417,7 +417,7 @@ static void on_native_window_created(ANativeActivity* na, ANativeWindow* window)
     init_display(glue);
     assertion(a->shown != null, "shown() cannot be null");
     a->shown(a, ANativeWindow_getWidth(window), ANativeWindow_getHeight(window));
-    a->invalidate(a);
+    sys.invalidate(a);
 }
 
 static void on_native_window_destroyed(ANativeActivity* na, ANativeWindow* window) {
@@ -426,7 +426,7 @@ static void on_native_window_destroyed(ANativeActivity* na, ANativeWindow* windo
     assert(glue->window == window);
     term_display(glue);
     if (a->hidden != null) { a->hidden(a); }
-    a->focus(a, null); // focus is lost
+    sys.focus(a, null); // focus is lost
     glue->window = null;
 }
 
@@ -445,13 +445,13 @@ static void on_low_memory(ANativeActivity* na) {
 static void on_native_window_resized(ANativeActivity* na, ANativeWindow* window) {
     glue_t* glue = (glue_t*)na->instance;
     assert(glue->window == window);
-    glue->a->invalidate(glue->a); // enqueue redraw command
+    sys.invalidate(glue->a); // enqueue redraw command
 }
 
 static void on_native_window_redraw_needed(ANativeActivity* na, ANativeWindow* window) {
     glue_t* glue = (glue_t*)na->instance;
     assert(glue->window == window);
-    glue->a->invalidate(glue->a); // enqueue redraw command
+    sys.invalidate(glue->a); // enqueue redraw command
 }
 
 static int looper_callback(int fd, int events, void* data) {
@@ -484,7 +484,7 @@ static void on_content_rect_changed(ANativeActivity* na, const ARect* rc) {
     app_t* a = glue->a;
     assertion(a->resized != null, "resized() cannot be null");
     a->resized(a, rc->left, rc->top, rc->right - rc->left, rc->bottom - rc->top);
-    a->invalidate(a);
+    sys.invalidate(a);
 }
 
 static void invalidate(app_t* app) {
@@ -835,18 +835,26 @@ static void create_activitiy(glue_t* glue, ANativeActivity* na, void* data, size
     app->init(app);
 }
 
+bool app_dispatch_key(app_t* a, int flags, int keycode);
+bool app_dispatch_touch(app_t* a, int index, int action, int x, int y);
+
+const sys_t sys = {
+    quit,
+    exit_,
+    app_dispatch_key,
+    app_dispatch_touch,
+    invalidate,
+    focus,
+    timer_add,
+    timer_remove,
+    asset_map,
+    asset_unmap,
+    vibrate,
+    show_keyboard,
+    logln
+};
+
 static void init_vtable(glue_t* glue) {
-    app->quit          = quit;
-    app->exit          = exit_;
-    app->invalidate    = invalidate;
-    app->focus         = focus;
-    app->timer_add     = timer_add;
-    app->timer_remove  = timer_remove;
-    app->asset_map     = asset_map;
-    app->asset_unmap   = asset_unmap;
-    app->vibrate       = vibrate;
-    app->show_keyboard = show_keyboard;
-    app->logln         = logln;
     app->glue = glue;
     glue->a = app;
 }

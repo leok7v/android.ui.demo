@@ -18,7 +18,7 @@ static const char* SLIDER_INC_LABEL = "[+]";
 
 static void slider_notify(slider_t* s) {
     s->notify(s);
-    s->u.a->invalidate(s->u.a); // after notify because notify may do something to layout etc...
+    sys.invalidate(s->u.a); // after notify because notify may do something to layout etc...
 }
 
 static int slider_scale(slider_t* s) {
@@ -62,7 +62,7 @@ static bool slider_click_inc_dec(slider_t* s, int direction, int d) {
 static void slider_autorepeat(timer_callback_t* tcb) {
     slider_t* s = (slider_t*)tcb->that;
     if ((s->u.a->touch_flags & MOUSE_LBUTTON_FLAG) == 0 && tcb->id > 0) {
-        s->u.a->timer_remove(s->u.a, tcb);
+        sys.timer_remove(s->u.a, tcb);
     } else {
         const int x = s->u.a->last_touch_x - s->u.x;
         const int y = s->u.a->last_touch_y - s->u.y;
@@ -74,11 +74,11 @@ static void slider_autorepeat(timer_callback_t* tcb) {
 
 static void slider_start_autorepeat(timer_callback_t* tcb) {
     slider_t* s = (slider_t*)tcb->that;
-    s->u.a->timer_remove(s->u.a, tcb);
+    sys.timer_remove(s->u.a, tcb);
     if ((s->u.a->touch_flags & MOUSE_LBUTTON_FLAG) != 0) {
         s->timer_callback.callback = slider_autorepeat;
         s->timer_callback.ns = (1000ULL * NS_IN_MS) / 30; // 30 times per second
-        s->u.a->timer_add(s->u.a, tcb);
+        sys.timer_add(s->u.a, tcb);
     }
 }
 
@@ -94,7 +94,7 @@ static bool slider_touch(ui_t* u, int touch_action, float x, float y) {
                 s->timer_callback.that = s;
                 s->timer_callback.callback = slider_start_autorepeat;
                 s->timer_callback.ns = 350ULL * NS_IN_MS; // first timer fires in 350 milliseconds
-                a->timer_add(a, &s->timer_callback);
+                sys.timer_add(a, &s->timer_callback);
             }
             slider_notify(s);
             consumed = true;
@@ -128,7 +128,7 @@ static void slider_screen_touch(ui_t* u, int touch_action, float x, float y) {
     slider_t* s = (slider_t*)u;
     app_t* a = u->a;
     if (((a->touch_flags & MOUSE_LBUTTON_FLAG) == 0 || (touch_action & TOUCH_UP) != 0) && s->timer_callback.id != 0) {
-        a->timer_remove(u->a, &s->timer_callback);
+        sys.timer_remove(u->a, &s->timer_callback);
     }
 }
 

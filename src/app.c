@@ -23,7 +23,7 @@ static bool dispatch_keyboard_shortcuts(ui_t* u, int flags, int keycode) {
             // TODO: (Leo) if 3 (or more) states checkboxes are required this is the place to do it.
             //       b->flip = (b->flip + 1) % b->flip_wrap_around;
             if (b->flip != null) { *b->flip = !*b->flip; }
-            u->a->invalidate(u->a);
+            sys.invalidate(u->a);
             b->click(&b->u);
             return true; // stop search
         }
@@ -72,7 +72,7 @@ bool app_dispatch_touch(app_t* a, int index, int action, int x, int y) {
     if (index == 0) {
         if (action & TOUCH_DOWN) {
             if (!ui.set_focus(&a->root, x, y)) {
-                a->focus(a, null); // kill focus if no focusable components were found
+                sys.focus(a, null); // kill focus if no focusable components were found
             }
         }
         ui.dispatch_screen_touch(&a->root, action, x, y);

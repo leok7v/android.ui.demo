@@ -150,7 +150,7 @@ static bool content_touch(ui_t* u, int touch_action, float x, float y) {
     bool consumed = false;
     if ((touch_action & TOUCH_UP) && d->testing) {
         d->testing = false;
-        u->a->invalidate(u->a);
+        sys.invalidate(u->a);
         consumed = true;
     }
     return consumed;
@@ -158,7 +158,7 @@ static bool content_touch(ui_t* u, int touch_action, float x, float y) {
 
 static bool content_keyboard(ui_t* u, int flags, int ch) {
     bool consumed = false;
-    if (ch == KEY_CODE_BACK) { u->a->quit(u->a); consumed = true; }
+    if (ch == KEY_CODE_BACK) { sys.quit(u->a); consumed = true; }
     return consumed;
 }
 
@@ -210,23 +210,23 @@ static void textures_draw(ui_t* u) {
 
 static void on_quit(ui_t* u) {
     app_t* a = u->a;
-    a->quit(a);
+    sys.quit(a);
 }
 
 static void on_exit(ui_t* u) {
     app_t* a = u->a;
-    a->exit(a, 153); // gdb shows octal 0o231 exit status for some reason...
+    sys.exit(a, 153); // gdb shows octal 0o231 exit status for some reason...
 }
 
 static void on_glyphs(ui_t* u) {
     app_t* a = u->a;
     demo_t* d = (demo_t*)a->that;
-    a->show_keyboard(a, !d->ui_glyphs.hidden);
+    sys.show_keyboard(a, !d->ui_glyphs.hidden);
 }
 
 static void on_test(ui_t* b) {
 //  app_t* a = u->a;
-//  b->btn.ui.a->invalidate(b->btn.ui.a); // no need to call invalidate here
+//  sys.invalidate(b->btn.ui.a); // no need to call invalidate here
 }
 
 static void init_ui(demo_t* d) {
@@ -331,13 +331,13 @@ static int create_gl_program(app_t* a, const char* name, int *program) {
         {GL_SHADER_FRAGMENT, names[1], null, 0}
     };
     for (int i = 0; i < countof(sources); i++) {
-        assets[i] = a->asset_map(a, sources[i].name, &sources[i].data, &sources[i].bytes);
+        assets[i] = sys.asset_map(a, sources[i].name, &sources[i].data, &sources[i].bytes);
         assertion(assets[i] != null, "asset \"%s\"not found", sources[i].name);
     }
     r = shader_program_create_and_link(program, sources, countof(sources));
     assert(r == 0);
     for (int i = 0; i < countof(sources); i++) {
-        a->asset_unmap(a, assets[i], sources[i].data, sources[i].bytes);
+        sys.asset_unmap(a, assets[i], sources[i].data, sources[i].bytes);
     }
     return r;
 }
@@ -430,6 +430,14 @@ static void done(app_t* a) {
     font_dispose(&d->font);
 }
 
+bool key(app_t* a, int flags, int keycode) {
+    return sys.dispatch_key(a, flags, keycode);
+}
+
+bool touch(app_t* a, int index, int action, int x, int y) {
+    return sys.dispatch_touch(a, index, action, x, y);
+}
+
 static demo_t demo = {
     /* a = */ {
         init,
@@ -441,8 +449,8 @@ static demo_t demo = {
         stop,
         resume,
         done,
-        app_dispatch_key,
-        app_dispatch_touch
+        key,
+        touch
     }
 };
 
