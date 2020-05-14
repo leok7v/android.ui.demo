@@ -1,14 +1,14 @@
 #include "ui.h"
-/* Copyright 2020 "Leo" Dmitry Kuznetsov
+/* Copyright 2020 "Leo" Dmitry Kuznetsov https://leok7v.github.io/
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
    You may obtain a copy of the License at
        http://www.apache.org/licenses/LICENSE-2.0
-   Unless required by applicable law or agreed to in writing, software distributed
-   under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
-   CONDITIONS OF ANY KIND, either express or implied. See the License for the specific
-   language governing permissions and limitations under the License.
-*/
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License. */
 #include "btn.h"
 #include "app.h"
 
@@ -51,22 +51,15 @@ static void btn_screen_touch(ui_t* u, int touch_action, float x, float y) {
 void btn_init(btn_t* b, ui_t* parent, void* that, int key_flags, int key,
               const char* mnemonic, const char* label,
               float x, float y, float w, float h) {
-    b->u = *parent;
-    b->u.that = that;
-    b->u.parent = null;
-    b->u.children = null;
-    b->u.next = null;
-    b->u.focusable = true; // buttons are focusable by default
-    b->u.hidden = false;
+    assert((void*)b == (void*)&b->u);
+    ui.init(&b->u, parent, that, x, y, w, h);
     b->click = null;
     b->key = key;
     b->key_flags = key_flags;
     b->mnemonic = mnemonic;
     b->label = label;
     b->bitset = 0;
-    assert((void*)b == (void*)&b->u);
-    ui.add(parent, &b->u, x, y, w, h);
-    assert(b->u.parent == parent);
+    b->u.focusable = true; // buttons are focusable by default
     b->u.kind = UI_KIND_BUTTON;
     b->u.draw = btn_draw;
     b->u.touch = btn_touch;

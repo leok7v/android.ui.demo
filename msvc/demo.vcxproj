@@ -27,7 +27,6 @@
     <ClInclude Include="..\demo\edit.h" />
     <ClInclude Include="..\demo\slider.h" />
     <ClInclude Include="..\inc\app.h" />
-    <ClInclude Include="..\inc\bitmap.h" />
     <ClInclude Include="..\inc\btn.h" />
     <ClInclude Include="..\inc\button.h" />
     <ClInclude Include="..\inc\c.h" />
@@ -39,7 +38,6 @@
     <ClInclude Include="..\inc\rt.h" />
     <ClInclude Include="..\inc\screen_writer.h" />
     <ClInclude Include="..\inc\shaders.h" />
-    <ClInclude Include="..\inc\slider.h" />
     <ClInclude Include="..\inc\stb_inc.h" />
     <ClInclude Include="..\inc\theme.h" />
     <ClInclude Include="..\inc\toast.h" />

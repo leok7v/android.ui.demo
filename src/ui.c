@@ -1,13 +1,13 @@
-/* Copyright 2020 "Leo" Dmitry Kuznetsov
+/* Copyright 2020 "Leo" Dmitry Kuznetsov https://leok7v.github.io/
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
    You may obtain a copy of the License at
        http://www.apache.org/licenses/LICENSE-2.0
-   Unless required by applicable law or agreed to in writing, software distributed
-   under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
-   CONDITIONS OF ANY KIND, either express or implied. See the License for the specific
-   language governing permissions and limitations under the License.
-*/
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License. */
 #include "ui.h"
 #include "app.h"
 
@@ -49,16 +49,22 @@ static void ui_remove(ui_t* container, ui_t* child) {
 }
 
 static void ui_init(ui_t* u, ui_t* parent, void* that, float x, float y, float w, float h) {
-    *u = *parent;
-    u->that = that;
-    u->parent = null;
-    u->children = null;
-    u->next = null;
-    u->focusable = false;
-    u->hidden = false;
-    u->decor = false;
+    assert(u->a == null);
+    assert(u->next == null);
+    assert(u->parent == null);
+    assert(u->children == null);
+    *u = ui_proto;
+    assert(u->next == null);
+    assert(u->parent == null);
     ui.add(parent, u, x, y, w, h);
-    u->kind = UI_KIND_CONTAINER;
+    u->a = app;
+    assert(u->parent == parent);
+    assert(u->children == null);
+    assert(!u->focusable);
+    assert(!u->hidden);
+    assert(!u->decor);
+    assert(u->kind == UI_KIND_CONTAINER);
+    u->that = that;
 }
 
 static void ui_done(ui_t* u) {

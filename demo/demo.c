@@ -1,13 +1,13 @@
-/* Copyright 2020 "Leo" Dmitry Kuznetsov
+/* Copyright 2020 "Leo" Dmitry Kuznetsov https://leok7v.github.io/
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
    You may obtain a copy of the License at
        http://www.apache.org/licenses/LICENSE-2.0
-   Unless required by applicable law or agreed to in writing, software distributed
-   under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
-   CONDITIONS OF ANY KIND, either express or implied. See the License for the specific
-   language governing permissions and limitations under the License.
-*/
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License. */
 #include "app.h"
 #include "dc.h"
 #include "button.h"
@@ -272,11 +272,9 @@ static void init_ui(demo_t* d) {
     d->glyphs.btn.inverse = true; // because flip point to hidden not to `shown` in the absence of that bit
     y += d->font.atlas.h;
     // editor:
-    d->edit.u.a = &d->a;
-    d->edit.u.that = d;
     d->edit.text = "Hello World!\r\nGood bye cruel Universe\nLast Line...";
     d->edit.bytes = (int)strlen(d->edit.text);
-    // ascii width is d->font.em * 26
+    // ui_ascii width is d->font.em * 26
     edit_init(&d->edit, content, d, d->font.em * 26 + 2 * hgap, y, d->font.em * 30, d->font.height * 5);
 }
 
@@ -383,10 +381,6 @@ static void hidden(app_t* a) {
     // Window surface may be different next time application is shown()
     // On Android application may continue running.
     toast_cancel();
-    ui.done(&d->ui_textures);
-    ui.done(&d->ui_glyphs);
-    ui.done(&d->ui_ascii);
-    ui.done(&d->ui_content);
     button_done(&d->quit);
     button_done(&d->exit);
     checkbox_done(&d->glyphs);
@@ -394,6 +388,10 @@ static void hidden(app_t* a) {
     slider_done(&d->slider1);
     slider_done(&d->slider2);
     edit_done(&d->edit);
+    ui.done(&d->ui_textures);
+    ui.done(&d->ui_glyphs);
+    ui.done(&d->ui_ascii);
+    ui.done(&d->ui_content);
     texture_deallocate(&d->font.atlas);
     for (int i = 0; i < countof(d->bitmaps); i++) { texture_deallocate(&d->bitmaps[i]); }
 //  shader_program_dispose(d->program_main);   d->program_main = 0;

@@ -15,6 +15,11 @@
 
 begin_c
 
+enum {
+    CR = '\r',
+    LF = '\n'
+};
+
 typedef struct edit_chunk_s {
     edit_chunk_t* next;
     edit_chunk_t* prev;
@@ -112,8 +117,8 @@ static edit_chunk_t* next_eol(edit_t* e, edit_chunk_t* c, int* position) {
     int pos = *position + 1;
     while (c != null) {
         int i = pos - c->pos;
-        while (i < c->count && c->text[i] != '\n') { i++; }
-        if (i < c->count) { assert(c->text[i] == '\n'); *position = i + 1; break; }
+        while (i < c->count && c->text[i] != LF) { i++; }
+        if (i < c->count) { assert(c->text[i] == LF); *position = i + 1; break; }
         edit_chunk_t* n = c->next;
         if (n != null) {
             n->pos = c->pos + c->count;
@@ -160,8 +165,8 @@ static void edit_draw(ui_t* u) {
         edit_chunk_t* next = next_eol(e, c, &eol);
         int m = min(n, next == null ? c->pos + c->count - pos : eol - pos);
         edit_read(e, text, pos, m); // TODO: can be optimized to start from chunk "c"
-        if (m > 0 && text[m] == '\n') { m--; } // do not draw '\n'
-        if (m > 0 && text[m] == '\r') { m--; } // do not draw '\r'
+        if (m > 0 && text[m] == LF) { m--; } // do not draw LF
+        if (m > 0 && text[m] == CR) { m--; } // do not draw CR
         dc.text(&dc, t->color_text, f, u->x, y, text, m);
         y += f->height;
         pos = eol;
@@ -187,21 +192,13 @@ void edit_read(edit_t* e, char* text, int position, int bytes) {
 
 void edit_init(edit_t* e, ui_t* parent, void* that, float x, float y, float w, float h) {
     assert((void*)e == (void*)&e->u);
-    e->u = *parent;
-    e->u.that = that;
-    e->u.parent = null;
-    e->u.children = null;
-    e->u.next = null;
-    e->u.focusable = true;
-    e->u.hidden = false;
-    assert(e->last_chunk == null);
-    app_t*   a = e->u.a;
+    app_t*   a = parent->a;
     theme_t* t = &a->theme;
     font_t*  f = t->font;
-    h = (h / f->height) * f->height;
+    h = (h / f->height) * f->height; // truncate instead of round up
     assertion(h > 0, "height must be at least f->height");
-    ui.add(parent, &e->u, x, y, w, h);
-    assert(e->u.parent == parent);
+    ui.init(&e->u, parent, that, x, y, w, h);
+    e->u.focusable = true;
     e->u.kind = UI_KIND_EDIT;
     e->u.draw = edit_draw;
     e->u.touch = edit_touch;
@@ -209,11 +206,12 @@ void edit_init(edit_t* e, ui_t* parent, void* that, float x, float y, float w, f
     e->u.focus = edit_focus;
     e->chunks = allocate(sizeof(edit_chunk_t));
     static const byte empty[1]; // simplifies null condition testing
-    e->chunks->text = e->text == null ? (byte*)empty : (byte*)e->text;
+    e->chunks->text  = e->text == null ? (byte*)empty : (byte*)e->text;
     e->chunks->count = e->bytes;
     assert(e->chunks->bytes == 0); // was not heap allocated
-    assert(e->chunks->kind == 0); // read only
+    assert(e->chunks->kind == 0);  // read only
     assert(e->chunks->prev == null && e->chunks->next == null); // allocate() zeros memory
+    assert(e->last_chunk == null);
 }
 
 void edit_done(edit_t* e) {

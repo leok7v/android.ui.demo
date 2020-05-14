@@ -1,13 +1,13 @@
-/* Copyright 2020 "Leo" Dmitry Kuznetsov
+/* Copyright 2020 "Leo" Dmitry Kuznetsov https://leok7v.github.io/
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
    You may obtain a copy of the License at
        http://www.apache.org/licenses/LICENSE-2.0
-   Unless required by applicable law or agreed to in writing, software distributed
-   under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
-   CONDITIONS OF ANY KIND, either express or implied. See the License for the specific
-   language governing permissions and limitations under the License.
-*/
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License. */
 #include "slider.h"
 #include "app.h"
 
@@ -214,25 +214,18 @@ static void slider_draw(ui_t* u) {
 void slider_init(slider_t* s, ui_t* parent, void* that,
                  const char* label, float x, float y, float w, float h,
                  int* minimum, int* maximum, int* current) {
+    assert((void*)s == (void*)&s->u);
     theme_t* theme = &parent->a->theme;
     const float em4 = theme->font->em / 4;
     const float dec_width = font_text_width(theme->font, SLIDER_DEC_LABEL, -1) + em4;
     const float inc_width = font_text_width(theme->font, SLIDER_INC_LABEL, -1) + em4;
-    s->u = *parent;
-    s->u.that = that;
-    s->u.parent = null;
-    s->u.children = null;
-    s->u.next = null;
-    s->u.focusable = true; // default: with buttons
-    s->u.hidden = false;
     s->notify = null;
     s->label = label;
     s->minimum = minimum;
     s->maximum = maximum;
     s->current = current;
-    assert((void*)s == (void*)&s->u);
-    ui.add(parent, &s->u, x, y, dec_width + w + inc_width, h);
-    assert(s->u.parent == parent);
+    ui.init(&s->u, parent, that, x, y, dec_width + w + inc_width, h);
+    s->u.focusable = true; // default: with buttons
     s->u.kind = UI_KIND_SLIDER;
     s->u.draw = slider_draw;
     s->u.touch = slider_touch;
