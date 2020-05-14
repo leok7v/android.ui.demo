@@ -40,7 +40,7 @@ static bool btn_touch(ui_t* u, int touch_action, float x, float y) {
 
 static void btn_screen_touch(ui_t* u, int touch_action, float x, float y) {
     btn_t* b = (btn_t*)u;
-    pointf_t pt = u->screen_xy(u);
+    pointf_t pt = ui.screen_xy(u);
     bool inside = pt.x <= x && x < pt.x + u->w && pt.y <= y && y < pt.y + u->h;
     if (!inside && (b->bitset & (BUTTON_STATE_PRESSED|BUTTON_STATE_ARMED) != 0)) {
         b->bitset &= ~(BUTTON_STATE_PRESSED|BUTTON_STATE_ARMED); // disarm button
@@ -65,7 +65,7 @@ void btn_init(btn_t* b, ui_t* parent, void* that, int key_flags, int key,
     b->label = label;
     b->bitset = 0;
     assert((void*)b == (void*)&b->u);
-    parent->add(parent, &b->u, x, y, w, h);
+    ui.add(parent, &b->u, x, y, w, h);
     assert(b->u.parent == parent);
     b->u.kind = UI_KIND_BUTTON;
     b->u.draw = btn_draw;
@@ -74,10 +74,8 @@ void btn_init(btn_t* b, ui_t* parent, void* that, int key_flags, int key,
 }
 
 void btn_done(btn_t* b) {
-    if (b != null) {
-        b->u.parent->remove(b->u.parent, &b->u);
-        memset(b, 0, sizeof(*b));
-    }
+    ui.done(&b->u);
+    memset(b, 0, sizeof(*b));
 }
 
 end_c

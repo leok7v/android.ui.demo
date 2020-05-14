@@ -200,7 +200,7 @@ void edit_init(edit_t* e, ui_t* parent, void* that, float x, float y, float w, f
     font_t*  f = t->font;
     h = (h / f->height) * f->height;
     assertion(h > 0, "height must be at least f->height");
-    parent->add(parent, &e->u, x, y, w, h);
+    ui.add(parent, &e->u, x, y, w, h);
     assert(e->u.parent == parent);
     e->u.kind = UI_KIND_EDIT;
     e->u.draw = edit_draw;
@@ -217,6 +217,7 @@ void edit_init(edit_t* e, ui_t* parent, void* that, float x, float y, float w, f
 }
 
 void edit_done(edit_t* e) {
+    ui.done(&e->u);
     edit_chunk_t* c = e->chunks;
     while (c != null) {
         edit_chunk_t* n = c->next;

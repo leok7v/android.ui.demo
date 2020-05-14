@@ -174,7 +174,7 @@ static void slider_draw(ui_t* u) {
     app_t* a = u->a;
     theme_t* theme = &a->theme;
     assertion(*s->maximum - *s->minimum > 0, "range must be positive [%d..%d]", *s->minimum, *s->maximum);
-    const pointf_t pt = u->screen_xy(u);
+    const pointf_t pt = ui.screen_xy(u);
     font_t* f = theme->font;
     const float fh = f->height;
     const float em4 = f->em / 4;
@@ -231,7 +231,7 @@ void slider_init(slider_t* s, ui_t* parent, void* that,
     s->maximum = maximum;
     s->current = current;
     assert((void*)s == (void*)&s->u);
-    parent->add(parent, &s->u, x, y, dec_width + w + inc_width, h);
+    ui.add(parent, &s->u, x, y, dec_width + w + inc_width, h);
     assert(s->u.parent == parent);
     s->u.kind = UI_KIND_SLIDER;
     s->u.draw = slider_draw;
@@ -242,7 +242,7 @@ void slider_init(slider_t* s, ui_t* parent, void* that,
 
 void slider_done(slider_t* s) {
     if (s != null) {
-        s->u.parent->remove(s->u.parent, &s->u);
+        ui.remove(s->u.parent, &s->u);
         memset(s, 0, sizeof(*s));
     }
 }

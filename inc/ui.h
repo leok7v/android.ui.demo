@@ -82,11 +82,11 @@ enum {
 };
 
 enum {
-    UI_KIND_CONTAINER   = 0,
-    UI_KIND_DECOR       = 1,
-    UI_KIND_BUTTON      = 2,
-    UI_KIND_SLIDER      = 3,
-    UI_KIND_EDIT        = 4
+    UI_KIND_CONTAINER = 0,
+    UI_KIND_DECOR     = 1,
+    UI_KIND_BUTTON    = 2,
+    UI_KIND_SLIDER    = 3,
+    UI_KIND_EDIT      = 4
 };
 
 typedef struct app_s app_t;
@@ -116,13 +116,8 @@ typedef struct timer_callback_s {
 */
 
 typedef struct ui_s {
-    void (*init)(ui_t* u, ui_t* parent, void* that, float x, float y, float w, float h); // x, y relative to parent
-    void (*done)(ui_t* u); // remove() ui from parent and dispose it
-    void (*add)(ui_t* u, ui_t* child, float x, float y, float w, float h);
-    void (*remove)(ui_t* u, ui_t* child);
     void (*draw)(ui_t* u); // calls draw_children
     void (*draw_children)(ui_t* u);
-    pointf_t (*screen_xy)(ui_t* u); // return ui element screen coordinates
     bool (*touch)(ui_t* u, int touch_flags, float x, float y); // x,y in ui coordinates, return true if consumed
     void (*screen_touch)(ui_t* u, int touch_flags, float screen_x, float screen_y); // x,y screen coordinates
     bool (*keyboard)(ui_t* u, int flags, int ch); // return true if consumed
@@ -139,10 +134,18 @@ typedef struct ui_s {
     ui_t* children; // linked list of children
 } ui_t;
 
-extern const ui_t ui; // UI interface
+typedef struct {
+    void (*init)(ui_t* u, ui_t* parent, void* that, float x, float y, float w, float h); // x, y relative to parent
+    void (*done)(ui_t* u); // remove() ui from parent and dispose it
+    void (*add)(ui_t* u, ui_t* child, float x, float y, float w, float h);
+    void (*remove)(ui_t* u, ui_t* child);
+    pointf_t (*screen_xy)(ui_t* u); // return ui element screen coordinates
+    bool (*set_focus)(ui_t* u, int x, int y); // returns true if focus was set
+    bool (*dispatch_touch)(ui_t* u, int touch_flags, float x, float y); // x,y in ui coordinates
+    void (*dispatch_screen_touch)(ui_t* u, int touch_flags, float screen_x, float screen_y); // x,y screen coordinates
+} ui_interface_t;
 
-bool ui_set_focus(ui_t* u, int x, int y); // returns true if focus was set
-bool ui_dispatch_touch(ui_t* u, int touch_flags, float x, float y); // x,y in ui coordinates
-void ui_dispatch_screen_touch(ui_t* u, int touch_flags, float screen_x, float screen_y); // x,y screen coordinates
+extern const ui_interface_t ui;
+extern const ui_t ui_proto; // prototype
 
 end_c

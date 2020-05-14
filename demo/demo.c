@@ -241,12 +241,12 @@ static void init_ui(demo_t* d) {
     init_checkbox(d, &d->test,   10, y, 0, 'x', "X", "Test",      on_test);   y += bh + vgap;
     init_checkbox(d, &d->glyphs, 10, y, 0, 'x', "X", "Glyphs",    on_glyphs); y += bh + vgap;
     // ascii and ui_textures views
-    content->init(&d->ui_ascii, content, d, 0, y, d->font.em * 26, d->font.em * 4);
+    ui.init(&d->ui_ascii, content, d, 0, y, d->font.em * 26, d->font.em * 4);
     d->ui_ascii.draw = ascii_draw;
     content->draw  = content_draw;
     content->touch = content_touch;
     content->keyboard = content_keyboard;
-    content->init(&d->ui_textures, content, d, 0, 0, 320 * 3 + 4, 240 + 2);
+    ui.init(&d->ui_textures, content, d, 0, 0, 320 * 3 + 4, 240 + 2);
     d->ui_textures.touch = textures_touch;
     d->ui_textures.draw = textures_draw;
     // sliders
@@ -264,7 +264,7 @@ static void init_ui(demo_t* d) {
     snprintf0(d->slider2_label, SLIDER2_LABEL, d->slider2_current);
     init_slider(d, &d->slider2, x, y, d->slider2_label, &d->slider2_minimum, &d->slider2_maximum, &d->slider2_current);
     y += bh + vgap;
-    content->init(&d->ui_glyphs, content, d, x, y, d->font.atlas.w, d->font.atlas.h);
+    ui.init(&d->ui_glyphs, content, d, x, y, d->font.atlas.w, d->font.atlas.h);
     d->ui_glyphs.draw = glyphs_draw;
     d->ui_glyphs.hidden = true;
     d->test.btn.flip = &d->testing;
@@ -383,10 +383,10 @@ static void hidden(app_t* a) {
     // Window surface may be different next time application is shown()
     // On Android application may continue running.
     toast_cancel();
-    d->ui_textures.done(&d->ui_textures);
-    d->ui_glyphs.done(&d->ui_glyphs);
-    d->ui_ascii.done(&d->ui_ascii);
-    d->ui_content.done(&d->ui_content);
+    ui.done(&d->ui_textures);
+    ui.done(&d->ui_glyphs);
+    ui.done(&d->ui_ascii);
+    ui.done(&d->ui_content);
     button_done(&d->quit);
     button_done(&d->exit);
     checkbox_done(&d->glyphs);
@@ -413,7 +413,7 @@ static void resume(app_t* a) {
 static void init(app_t* a) { // init application
     demo_t* d = (demo_t*)a->that;
     a->root.that = &d;
-    app->root    = ui;
+    app->root    = ui_proto;
     app->root.a  = a;
     if (d->bitmaps[0].data == null) {
         texture_load_asset(&d->bitmaps[0], a, "cube-320x240.png");

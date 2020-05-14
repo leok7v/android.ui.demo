@@ -45,7 +45,7 @@ static void add(toast_t* t) {
     t->toast_timer_callback.callback = timer_callback;
     t->toast_timer_callback.last_fired = 0;
     a->timer_add(a, &t->toast_timer_callback);
-    a->root.add(&a->root, &t->ui, 0, 0, 0, 0);
+    ui.add(&a->root, &t->ui, 0, 0, 0, 0);
 }
 
 static void cancel(toast_t* t) {
@@ -57,7 +57,7 @@ static void cancel(toast_t* t) {
         t->text[0] = 0; // toast OFF
         t->toast_start_time = 0;
         assertion(t->ui.parent == &a->root, "toast() must be added to ui_root");
-        a->root.remove(&a->root, &t->ui);
+        ui.remove(&a->root, &t->ui);
     } else {
         assertion(t->ui.parent == null, "parent=%p expected null", t->ui.parent);
     }

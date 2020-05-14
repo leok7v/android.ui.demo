@@ -57,14 +57,13 @@ static void ui_init(ui_t* u, ui_t* parent, void* that, float x, float y, float w
     u->focusable = false;
     u->hidden = false;
     u->decor = false;
-    parent->add(parent, u, x, y, w, h);
+    ui.add(parent, u, x, y, w, h);
     u->kind = UI_KIND_CONTAINER;
 }
 
 static void ui_done(ui_t* u) {
-    if (u != null) {
-        u->parent->remove(u->parent, u);
-    }
+    ui.remove(u->parent, u);
+    memset(u, 0, sizeof(*u));
 }
 
 static void ui_draw_childs(ui_t* u, bool decor) {
@@ -88,7 +87,7 @@ static bool ui_touch(ui_t* u, int touch_action, float x, float y) { return false
 
 static void ui_screen_touch(ui_t* u, int touch_action, float x, float y) { }
 
-bool ui_dispatch_touch(ui_t* u, int touch_action, float x, float y) {
+static bool ui_dispatch_touch(ui_t* u, int touch_action, float x, float y) {
     ui_t* c = u->children;
     bool consumed = false;
     while (c != null && !consumed) {
@@ -101,7 +100,7 @@ bool ui_dispatch_touch(ui_t* u, int touch_action, float x, float y) {
     return consumed;
 }
 
-void ui_dispatch_screen_touch(ui_t* u, int touch_action, float x, float y) {
+static void ui_dispatch_screen_touch(ui_t* u, int touch_action, float x, float y) {
     ui_t* c = u->children;
     while (c != null) { // do it even for hidden widgets
         if (c->screen_touch != null) { c->screen_touch(c, touch_action, x, y); }
@@ -121,7 +120,7 @@ static pointf_t ui_screen_xy(ui_t* u) {
     return pt;
 }
 
-bool ui_set_focus(ui_t* u, int x, int y) {
+static bool ui_set_focus(ui_t* u, int x, int y) {
     assert(u != null);
     ui_t* child = u->children;
     bool focus_was_set = false;
@@ -131,26 +130,31 @@ bool ui_set_focus(ui_t* u, int x, int y) {
         child = child->next;
     }
     if (!focus_was_set && u->focusable) {
-        const pointf_t pt = u->screen_xy(u);
+        const pointf_t pt = ui.screen_xy(u);
         focus_was_set = pt.x <= x && x < pt.x + u->w && pt.y <= y && y < pt.y + u->h;
         if (focus_was_set) { u->a->focus(u->a, u); }
     }
     return focus_was_set;
 }
 
-const ui_t ui = {
+const ui_interface_t ui = {
     ui_init,
     ui_done,
     ui_add,
     ui_remove,
+    ui_screen_xy,
+    ui_set_focus,
+    ui_dispatch_touch,
+    ui_dispatch_screen_touch
+};
+
+const ui_t ui_proto = {
     ui_draw,
     ui_draw_children,
-    ui_screen_xy,
     ui_touch,
     ui_screen_touch,
     ui_keyboard,
-    ui_focus,
-    /* kind: */ UI_KIND_CONTAINER,
+    ui_focus
 };
 
 end_c

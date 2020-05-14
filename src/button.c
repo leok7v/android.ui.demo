@@ -18,7 +18,7 @@ static void button_draw(ui_t* u) {
     btn_t* b = &((button_t*)u)->btn;
     theme_t* theme = &u->a->theme;
     const colorf_t* color = b->bitset & BUTTON_STATE_PRESSED ? theme->color_background_pressed : theme->color_background;
-    pointf_t pt = u->screen_xy(u);
+    pointf_t pt = ui.screen_xy(u);
     dc.fill(&dc, color, pt.x, pt.y, u->w, u->h);
     int k = (int)strlen(b->label) + 1;
     const char* mn = b->mnemonic;

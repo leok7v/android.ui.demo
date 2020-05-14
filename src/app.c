@@ -71,12 +71,12 @@ bool app_dispatch_touch(app_t* a, int index, int action, int x, int y) {
     bool consumed = false;
     if (index == 0) {
         if (action & TOUCH_DOWN) {
-            if (!ui_set_focus(&a->root, x, y)) {
+            if (!ui.set_focus(&a->root, x, y)) {
                 a->focus(a, null); // kill focus if no focusable components were found
             }
         }
-        ui_dispatch_screen_touch(&a->root, action, x, y);
-        consumed = ui_dispatch_touch(&a->root, action, x, y);
+        ui.dispatch_screen_touch(&a->root, action, x, y);
+        consumed = ui.dispatch_touch(&a->root, action, x, y);
     } else {
         // multi-touch gesture recognizer goes here
     }
